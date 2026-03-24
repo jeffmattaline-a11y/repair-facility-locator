@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repair Facility Locator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --blue: #1a56db;
+    --blue-light: #3b82f6;
+    --accent: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+    --vip: #7c3aed;
+    --blacklisted: #1f2937;
+    --opted-out: #d97706;
+    --duplicate: #6b7280;
+    --dnc: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--gray-50); color: var(--gray-800); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .header-right { font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+
+  .search-bar {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .search-bar label { font-size: 0.82rem; font-weight: 600; color: var(--gray-600); white-space: nowrap; }
+  .zip-input {
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    font-family: 'Barlow', sans-serif;
+    width: 130px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .zip-input:focus { border-color: var(--blue); }
+  .radius-select {
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-family: 'Barlow', sans-serif;
+    outline: none;
+    cursor: pointer;
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .radius-select:focus { border-color: var(--blue); }
+  .search-btn {
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 22px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .search-btn:hover { background: var(--blue-light); }
+  .search-btn:active { transform: scale(0.97); }
+  .result-count {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--gray-400);
+    white-space: nowrap;
+  }
+  .result-count strong { color: var(--gray-800); }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 380px;
+    min-width: 320px;
+    background: white;
+    border-right: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--gray-600); text-transform: uppercase; }
+
+  .status-filters {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .filter-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .filter-chip.active { opacity: 1; }
+  .filter-chip:not(.active) { opacity: 0.4; }
+
+  .results-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .result-item {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .result-item:hover, .result-item.active { background: #eff6ff; }
+  .result-item.active { border-left: 3px solid var(--blue); }
+  .result-number {
+    width: 26px; height: 26px;
+    background: var(--navy);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .result-info { flex: 1; min-width: 0; }
+  .result-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .result-addr {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .result-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .result-dist {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--blue);
+  }
+  .status-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--gray-400);
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--gray-600); }
+  .empty-state p { font-size: 0.83rem; line-height: 1.5; }
+
+  /* Map */
+  #map { flex: 1; z-index: 1; }
+
+  /* Popup */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    padding: 0;
+    overflow: hidden;
+    min-width: 260px;
+  }
+  .leaflet-popup-content { margin: 0; }
+  .popup-inner { padding: 16px 18px; }
+  .popup-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--navy); margin-bottom: 6px; }
+  .popup-addr { font-size: 0.82rem; color: var(--gray-600); line-height: 1.5; }
+  .popup-dist { font-size: 0.78rem; font-weight: 700; color: var(--blue); margin-top: 6px; }
+  .popup-status-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--gray-100); }
+
+  /* Loading */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,27,42,0.7);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+    color: white;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.05em; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--gray-800); color: white;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 0.88rem; font-weight: 500;
+    z-index: 9998; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  .no-results { padding: 32px 18px; text-align: center; color: var(--gray-400); font-size: 0.88rem; }
+
+  @media (max-width: 700px) {
+    .main { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; height: 240px; border-right: none; border-bottom: 1px solid var(--gray-200); }
+    #map { min-height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading 66,477 locations…</div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔧</div>
+    REPAIR FACILITY LOCATOR
+  </div>
+  <div class="header-right">Powered by location data</div>
+</header>
+
+<div class="search-bar">
+  <label for="zipInput">ZIP CODE</label>
+  <input class="zip-input" type="text" id="zipInput" placeholder="e.g. 63101" maxlength="5" pattern="\d{5}">
+  <label for="radiusSelect">RADIUS</label>
+  <select class="radius-select" id="radiusSelect">
+    <option value="10">10 miles</option>
+    <option value="25" selected>25 miles</option>
+    <option value="50">50 miles</option>
+    <option value="75">75 miles</option>
+    <option value="100">100 miles</option>
+    <option value="150">150 miles</option>
+    <option value="250">250 miles</option>
+  </select>
+  <button class="search-btn" onclick="doSearch()">🔍 SEARCH</button>
+  <div class="result-count" id="resultCount"></div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Results</span>
+    </div>
+    <div class="status-filters" id="statusFilters"></div>
+    <div class="results-list" id="resultsList">
+      <div class="empty-state">
+        <div class="icon">📍</div>
+        <h3>Find Nearby Facilities</h3>
+        <p>Enter a ZIP code and select a search radius to find repair facilities near you.</p>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Load data -->
+<script src="data_compact.js"></script>
+
+<script>
+// ── Constants ──
+const STATUS_CONFIG = {
+  'VIP':          { color: '#7c3aed', bg: '#ede9fe', label: 'VIP' },
+  'Blacklisted':  { color: '#1f2937', bg: '#f3f4f6', label: 'Blacklisted' },
+  'Opted Out':    { color: '#d97706', bg: '#fffbeb', label: 'Opted Out' },
+  'Duplicate':    { color: '#6b7280', bg: '#f9fafb', label: 'Duplicate' },
+  'Do Not Contact': { color: '#dc2626', bg: '#fef2f2', label: 'DNC' },
+};
+const DEFAULT_STATUS = { color: '#10b981', bg: '#d1fae5', label: 'Active' };
+
+// ── Data ──
+// LOC format: [id, name, address, city, state, zip, status]
+const IDX_ID=0,IDX_NAME=1,IDX_ADDR=2,IDX_CITY=3,IDX_STATE=4,IDX_ZIP=5,IDX_STATUS=6;
+
+// Build zip-level lookup from local storage overrides
+let localOverrides = {};
+try { localOverrides = JSON.parse(localStorage.getItem('locOverrides') || '{}'); } catch(e){}
+
+function getStatus(id) {
+  return localOverrides[id]?.status || LOC.find(r=>r[IDX_ID]===id)?.[IDX_STATUS] || '';
+}
+
+// ── ZIP → Lat/Lon via Nominatim ──
+const zipCache = {};
+async function zipToLatLon(zip) {
+  if (zipCache[zip]) return zipCache[zip];
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&countrycodes=us&format=json&limit=1`, {headers:{'Accept-Language':'en'}});
+    const d = await r.json();
+    if (d && d[0]) {
+      const ll = { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+      zipCache[zip] = ll;
+      return ll;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ── Haversine ──
+function haversine(lat1,lon1,lat2,lon2) {
+  const R = 3958.8, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ── Map ──
+const map = L.map('map', {zoomControl: true}).setView([39.5,-98.35],4);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  attribution:'© OpenStreetMap © CartoDB', maxZoom:19
+}).addTo(map);
+
+let markerLayer = L.layerGroup().addTo(map);
+let currentResults = [];
+let activeFilters = new Set();
+
+function makeIcon(status) {
+  const cfg = STATUS_CONFIG[status] || DEFAULT_STATUS;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+    <path d="M14 0C6.3 0 0 6.3 0 14c0 9.9 14 22 14 22s14-12.1 14-22C28 6.3 21.7 0 14 0z" fill="${cfg.color}"/>
+    <circle cx="14" cy="13" r="6" fill="white" opacity="0.9"/>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    iconSize:[28,36], iconAnchor:[14,36], popupAnchor:[0,-36],
+    className:''
+  });
+}
+
+function statusBadgeHTML(status) {
+  const cfg = STATUS_CONFIG[status];
+  if (!cfg && !status) return `<span class="status-badge" style="background:#d1fae5;color:#065f46">Active</span>`;
+  if (!cfg) return `<span class="status-badge" style="background:#e0e7ff;color:#3730a3">${status}</span>`;
+  return `<span class="status-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.label}</span>`;
+}
+
+function renderResults(results) {
+  currentResults = results;
+  const list = document.getElementById('resultsList');
+
+  // Build status filter chips
+  const statuses = new Set(results.map(r => r.status || 'Active'));
+  const filtersEl = document.getElementById('statusFilters');
+  filtersEl.innerHTML = '';
+  if (statuses.size > 1) {
+    // All chip
+    const allChip = document.createElement('span');
+    allChip.className = 'filter-chip active';
+    allChip.style.cssText = 'background:#e2e8f0;color:#1e293b;border-color:#cbd5e1';
+    allChip.textContent = 'ALL';
+    allChip.dataset.status = '__all__';
+    allChip.onclick = () => { activeFilters.clear(); updateFilterUI(); renderList(); };
+    filtersEl.appendChild(allChip);
+
+    statuses.forEach(s => {
+      const cfg = STATUS_CONFIG[s] || DEFAULT_STATUS;
+      const chip = document.createElement('span');
+      chip.className = 'filter-chip active';
+      chip.style.cssText = `background:${cfg.bg};color:${cfg.color};border-color:${cfg.color}`;
+      chip.textContent = cfg.label || s;
+      chip.dataset.status = s;
+      chip.onclick = () => {
+        if (activeFilters.has(s)) activeFilters.delete(s);
+        else activeFilters.add(s);
+        updateFilterUI();
+        renderList();
+      };
+      filtersEl.appendChild(chip);
+    });
+  }
+
+  renderList();
+}
+
+function updateFilterUI() {
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    if (c.dataset.status === '__all__') {
+      c.classList.toggle('active', activeFilters.size === 0);
+    } else {
+      c.classList.toggle('active', activeFilters.size === 0 || activeFilters.has(c.dataset.status));
+    }
+  });
+}
+
+function renderList() {
+  const list = document.getElementById('resultsList');
+  const filtered = activeFilters.size === 0
+    ? currentResults
+    : currentResults.filter(r => activeFilters.has(r.status || 'Active'));
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="no-results">No results match the selected filters.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.slice(0, 200).map((r, i) => `
+    <div class="result-item" id="ri-${r.id}" onclick="focusResult(${r.id})">
+      <div class="result-number">${i+1}</div>
+      <div class="result-info">
+        <div class="result-name">${escHTML(r.name)}</div>
+        <div class="result-addr">${escHTML(r.address)}, ${escHTML(r.city)}, ${r.state}</div>
+        <div class="result-meta">
+          <span class="result-dist">${r.dist.toFixed(1)} mi</span>
+          ${statusBadgeHTML(r.status)}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  if (filtered.length > 200) {
+    list.innerHTML += `<div class="no-results">Showing 200 of ${filtered.length}. Narrow your search.</div>`;
+  }
+
+  // Update map markers
+  markerLayer.clearLayers();
+  filtered.slice(0, 500).forEach(r => {
+    if (!r.lat || !r.lon) return;
+    const status = r.status || '';
+    const m = L.marker([r.lat,r.lon], {icon: makeIcon(status)});
+    m.bindPopup(`
+      <div class="popup-inner">
+        <div class="popup-name">${escHTML(r.name)}</div>
+        <div class="popup-addr">${escHTML(r.address)}<br>${escHTML(r.city)}, ${r.state} ${r.zip}</div>
+        <div class="popup-dist">${r.dist.toFixed(1)} miles away</div>
+        <div class="popup-status-row">${statusBadgeHTML(r.status)}</div>
+      </div>
+    `, {maxWidth: 280});
+    m.locationId = r.id;
+    m.on('click', () => {
+      document.querySelectorAll('.result-item').forEach(el => el.classList.remove('active'));
+      const el = document.getElementById('ri-'+r.id);
+      if (el) { el.classList.add('active'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+    });
+    markerLayer.addLayer(m);
+  });
+}
+
+function focusResult(id) {
+  document.querySelectorAll('.result-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('ri-'+id)?.classList.add('active');
+  markerLayer.eachLayer(m => {
+    if (m.locationId === id) { map.setView(m.getLatLng(), 14); m.openPopup(); }
+  });
+}
+
+function escHTML(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Main Search ──
+async function doSearch() {
+  const zipVal = document.getElementById('zipInput').value.trim();
+  const radius = parseInt(document.getElementById('radiusSelect').value);
+  if (!/^\d{5}$/.test(zipVal)) { showToast('Please enter a valid 5-digit ZIP code'); return; }
+
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.querySelector('.loading-text').textContent = 'Geocoding ZIP code…';
+
+  try {
+    const center = await zipToLatLon(zipVal);
+    if (!center) { showToast('Could not find that ZIP code. Try another.'); document.getElementById('loadingOverlay').style.display='none'; return; }
+
+    document.querySelector('.loading-text').textContent = 'Calculating distances…';
+    await new Promise(r => setTimeout(r, 20));
+
+    // For ungeocoded zips in our dataset, we need coords.
+    // Strategy: geocode unique zips on demand. But 12k zips is too many.
+    // Instead, use state centroid as fallback for items with unknown zip coords.
+    // We'll geocode the search zip and do a fast filter using state + zip prefix heuristic,
+    // then lazy-geocode the result set.
+
+    // Simple approach: use pre-built zip prefix lat/lon grid
+    // We'll use a synchronous haversine with the zip centroid approach
+    // For now: filter by checking zip proximity using a US zip centroid lookup
+
+    // Get zip centroids for all unique zips in our data
+    const uniqueZips = [...new Set(LOC.map(r=>r[IDX_ZIP]))].filter(z=>z.length===5);
+
+    // We'll batch-geocode via a simple in-memory approach
+    // For the search, we'll use a simplified deg-to-miles approximation to pre-filter
+    // 1 degree lat ≈ 69 miles, 1 degree lon ≈ 53 miles (at 39°N)
+    const latDelta = radius / 69;
+    const lonDelta = radius / 53;
+    const cLat = center.lat, cLon = center.lon;
+
+    // Get zip coords for unique zips in a pre-built table if available
+    // We'll geocode on the fly for just the zips we need
+    const neededZips = new Set(LOC.map(r=>r[IDX_ZIP]));
+    const zipCoords = {};
+
+    // Check cache
+    neededZips.forEach(z => { if (zipCache[z]) zipCoords[z] = zipCache[z]; });
+
+    // For uncached, use a pre-built static approximation
+    // We'll use a zip-to-state centroid as rough filter then geocode matched ones
+    // Actually: batch request unique zips in results via Nominatim with rate limiting
+    // For initial results: use state centroids + haversine for rough filter
+
+    const STATE_CENTERS = {
+      AL:[32.8,-86.8],AK:[64.2,-153.4],AZ:[34.3,-111.1],AR:[34.8,-92.2],CA:[36.8,-119.4],
+      CO:[39.0,-105.5],CT:[41.6,-72.7],DE:[39.0,-75.5],FL:[27.8,-81.6],GA:[32.2,-83.4],
+      HI:[20.8,-156.3],ID:[44.1,-114.5],IL:[40.0,-89.2],IN:[39.8,-86.1],IA:[41.9,-93.2],
+      KS:[38.5,-98.4],KY:[37.7,-84.7],LA:[31.2,-92.1],ME:[45.0,-69.4],MD:[39.0,-76.8],
+      MA:[42.1,-71.5],MI:[44.0,-84.7],MN:[46.4,-93.1],MS:[32.7,-89.7],MO:[38.5,-92.3],
+      MT:[47.0,-110.5],NE:[41.5,-99.7],NV:[38.5,-117.2],NH:[43.7,-71.6],NJ:[40.1,-74.4],
+      NM:[34.5,-105.8],NY:[42.9,-75.5],NC:[35.6,-79.7],ND:[47.5,-100.5],OH:[40.4,-82.7],
+      OK:[35.6,-97.5],OR:[44.0,-120.5],PA:[40.9,-77.8],RI:[41.7,-71.5],SC:[33.8,-80.9],
+      SD:[44.3,-99.9],TN:[35.9,-86.4],TX:[31.5,-99.3],UT:[39.3,-111.1],VT:[44.0,-72.7],
+      VA:[37.8,-78.2],WA:[47.4,-120.5],WV:[38.9,-80.5],WI:[44.6,-89.6],WY:[42.9,-107.6],
+      DC:[38.9,-77.0]
+    };
+
+    // Two-pass: rough state filter, then geocode unique zips in results
+    const candidateZips = new Set();
+    LOC.forEach(r => {
+      const sc = STATE_CENTERS[r[IDX_STATE]];
+      if (!sc) return;
+      const d = haversine(sc[0],sc[1],cLat,cLon);
+      if (d < radius + 300) candidateZips.add(r[IDX_ZIP]);
+    });
+
+    // Geocode unique candidate zips
+    document.querySelector('.loading-text').textContent = `Geocoding ${candidateZips.size} ZIP codes…`;
+    await new Promise(r => setTimeout(r, 10));
+
+    const toGeocode = [...candidateZips].filter(z => !zipCache[z]);
+
+    // Batch geocode with small batches
+    const BATCH = 5;
+    for (let i = 0; i < Math.min(toGeocode.length, 150); i += BATCH) {
+      const batch = toGeocode.slice(i, i+BATCH);
+      await Promise.all(batch.map(z => zipToLatLon(z)));
+      if (i % 50 === 0) {
+        document.querySelector('.loading-text').textContent = `Geocoding ZIPs… ${Math.min(i+BATCH, toGeocode.length)}/${Math.min(toGeocode.length,150)}`;
+        await new Promise(r => setTimeout(r, 10));
+      }
+    }
+
+    // Now compute actual distances
+    const results = [];
+    const seen = new Set();
+    LOC.forEach(r => {
+      const coords = zipCache[r[IDX_ZIP]];
+      if (!coords) return;
+      const d = haversine(coords.lat, coords.lon, cLat, cLon);
+      if (d > radius) return;
+      const key = r[IDX_NAME].toLowerCase().trim() + '|' + r[IDX_ZIP];
+      const isDup = seen.has(key);
+      seen.add(key);
+      const status = localOverrides[r[IDX_ID]]?.status ?? r[IDX_STATUS] ?? '';
+      results.push({
+        id: r[IDX_ID], name: r[IDX_NAME], address: r[IDX_ADDR],
+        city: r[IDX_CITY], state: r[IDX_STATE], zip: r[IDX_ZIP],
+        status, dist: d, lat: coords.lat, lon: coords.lon, isDup
+      });
+    });
+
+    results.sort((a,b) => a.dist - b.dist);
+    activeFilters.clear();
+
+    const countEl = document.getElementById('resultCount');
+    countEl.innerHTML = `<strong>${results.length}</strong> facilit${results.length===1?'y':'ies'} within ${radius} mi of <strong>${zipVal}</strong>`;
+
+    renderResults(results);
+
+    if (results.length > 0) {
+      const bounds = L.latLngBounds(results.slice(0,200).filter(r=>r.lat).map(r=>[r.lat,r.lon]));
+      map.fitBounds(bounds, {padding:[30,30]});
+    } else {
+      map.setView([cLat,cLon],10);
+      showToast('No facilities found in that radius. Try expanding your search.');
+    }
+
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// Enter key support
+document.getElementById('zipInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
+
+// Remove loading overlay once data is ready
+window.addEventListener('load', () => {
+  document.getElementById('loadingOverlay').style.display = 'none';
+});
+</script>
+</body>
+</html>

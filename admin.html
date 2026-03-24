@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repair Facility Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --blue: #1a56db;
+    --blue-light: #3b82f6;
+    --blue-pale: #eff6ff;
+    --accent: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--gray-50); color: var(--gray-800); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1.3rem;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .admin-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--navy);
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .header-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 24px;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+  }
+  .header-stats strong { color: white; }
+
+  /* Toolbar */
+  .toolbar {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .toolbar-search {
+    flex: 1;
+    min-width: 180px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .toolbar-search:focus { border-color: var(--blue); }
+  .toolbar-select {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    background: white;
+    cursor: pointer;
+  }
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--blue-light); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-success:hover { background: #059669; }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-ghost { background: var(--gray-100); color: var(--gray-700); }
+  .btn-ghost:hover { background: var(--gray-200); }
+  .btn:active { transform: scale(0.97); }
+
+  .selected-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--blue-pale);
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    font-size: 0.82rem;
+  }
+  .selected-actions span { color: var(--blue); font-weight: 600; }
+  .selected-actions.hidden { display: none; }
+
+  /* Table */
+  .table-wrap {
+    flex: 1;
+    overflow: auto;
+    background: white;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+  thead {
+    position: sticky; top: 0;
+    background: var(--gray-50);
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--gray-200);
+  }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-600);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--blue); }
+  th.sort-asc::after { content: ' ↑'; }
+  th.sort-desc::after { content: ' ↓'; }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  tr:hover td { background: var(--gray-50); }
+  tr.selected td { background: #eff6ff; }
+  tr.selected td:first-child { border-left: 3px solid var(--blue); }
+
+  .status-badge {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  .edit-btn {
+    background: none;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--gray-600);
+    font-family: 'Barlow', sans-serif;
+    transition: all 0.12s;
+  }
+  .edit-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-pale); }
+
+  /* Pagination */
+  .pagination {
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    color: var(--gray-600);
+  }
+  .page-btn {
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: 'Barlow', sans-serif;
+    transition: all 0.12s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+  .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .page-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .pagination-info { margin-left: auto; color: var(--gray-400); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,27,42,0.6);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    width: 560px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    transform: translateY(20px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .modal-close {
+    width: 32px; height: 32px;
+    border: none; background: var(--gray-100);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gray-600);
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--gray-200); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 10px; justify-content: flex-end; }
+
+  .form-row { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-input {
+    width: 100%;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--blue); }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .status-option {
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 8px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .status-option:hover { border-color: var(--blue); }
+  .status-option.selected { border-width: 2.5px; }
+
+  /* Bulk status modal */
+  .bulk-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--gray-800); color: white;
+    padding: 12px 18px; border-radius: 10px;
+    font-size: 0.88rem; font-weight: 500;
+    z-index: 9998; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    transform: translateY(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: #065f46; }
+  .toast.error { background: #991b1b; }
+
+  /* Import section */
+  .import-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--gray-400);
+  }
+  .import-zone:hover, .import-zone.drag-over {
+    border-color: var(--blue);
+    background: var(--blue-pale);
+    color: var(--blue);
+  }
+  .import-zone .icon { font-size: 2rem; margin-bottom: 8px; }
+  .import-zone p { font-size: 0.85rem; }
+
+  .checkbox { width: 15px; height: 15px; cursor: pointer; accent-color: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔧</div>
+    REPAIR FACILITY ADMIN
+    <span class="admin-badge">Backend</span>
+  </div>
+  <div class="header-stats">
+    <div>Total: <strong id="hdrTotal">—</strong></div>
+    <div>VIP: <strong id="hdrVip">—</strong></div>
+    <div>Blacklisted: <strong id="hdrBlacklist">—</strong></div>
+    <div>DNC: <strong id="hdrDnc">—</strong></div>
+    <div>Modified: <strong id="hdrModified">—</strong></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <input class="toolbar-search" type="text" id="searchInput" placeholder="🔍  Search name, address, city, ZIP…" oninput="applyFilters()">
+  <select class="toolbar-select" id="stateFilter" onchange="applyFilters()">
+    <option value="">All States</option>
+  </select>
+  <select class="toolbar-select" id="statusFilter" onchange="applyFilters()">
+    <option value="">All Statuses</option>
+    <option value="__active__">Active (no status)</option>
+  </select>
+  <button class="btn btn-primary" onclick="openAddModal()">＋ Add Location</button>
+  <button class="btn btn-ghost" onclick="openImportModal()">⬆ Import</button>
+  <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+
+  <div class="selected-actions hidden" id="selectedActions">
+    <span id="selectedCount">0</span> selected
+    <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.8rem" onclick="openBulkStatusModal()">Set Status</button>
+    <button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem" onclick="bulkDelete()">Delete</button>
+    <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.8rem" onclick="clearSelection()">✕</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th style="width:36px"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+        <th onclick="sortBy('id')" id="th-id">ID</th>
+        <th onclick="sortBy('name')" id="th-name">Facility Name</th>
+        <th onclick="sortBy('address')" id="th-address">Address</th>
+        <th onclick="sortBy('city')" id="th-city">City</th>
+        <th onclick="sortBy('state')" id="th-state">State</th>
+        <th onclick="sortBy('zip')" id="th-zip">ZIP</th>
+        <th onclick="sortBy('status')" id="th-status">Status</th>
+        <th style="width:80px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <button class="page-btn" id="btnFirst" onclick="goPage(1)">«</button>
+  <button class="page-btn" id="btnPrev" onclick="goPage(currentPage-1)">‹</button>
+  <div id="pageNumbers" style="display:flex;gap:4px"></div>
+  <button class="page-btn" id="btnNext" onclick="goPage(currentPage+1)">›</button>
+  <button class="page-btn" id="btnLast" onclick="goPage(totalPages)">»</button>
+  <div class="pagination-info" id="pageInfo"></div>
+</div>
+
+<!-- Edit/Add Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Edit Location</div>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <label class="form-label">Facility Name *</label>
+        <input class="form-input" type="text" id="editName" placeholder="e.g. Bob's Auto Repair">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Address</label>
+        <input class="form-input" type="text" id="editAddress" placeholder="123 Main St">
+      </div>
+      <div class="form-row-3">
+        <div>
+          <label class="form-label">City</label>
+          <input class="form-input" type="text" id="editCity">
+        </div>
+        <div>
+          <label class="form-label">State</label>
+          <input class="form-input" type="text" id="editState" maxlength="2" style="text-transform:uppercase">
+        </div>
+        <div>
+          <label class="form-label">ZIP</label>
+          <input class="form-input" type="text" id="editZip" maxlength="10">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Status</label>
+        <div class="status-grid" id="statusGrid"></div>
+      </div>
+      <div class="form-row" id="customStatusRow" style="display:none">
+        <label class="form-label">Custom Status</label>
+        <input class="form-input" type="text" id="editCustomStatus" placeholder="Enter custom status…">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" id="editNotes" rows="3" style="resize:vertical" placeholder="Internal notes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-success" onclick="saveRecord()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Status Modal -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Set Status for <span id="bulkCount">0</span> Records</div>
+      <button class="modal-close" onclick="closeModal('bulkModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="bulk-status-grid" id="bulkStatusGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('bulkModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="width:500px">
+    <div class="modal-header">
+      <div class="modal-title">Import Locations</div>
+      <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;color:var(--gray-600);margin-bottom:16px">Upload a CSV with columns: <strong>name, address, city, state, zip, status</strong> (header row required)</p>
+      <div class="import-zone" id="importZone" onclick="document.getElementById('csvFile').click()">
+        <div class="icon">📂</div>
+        <p>Click to select a CSV file<br><small>or drag & drop here</small></p>
+      </div>
+      <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleCSVImport(event)">
+      <div id="importPreview" style="margin-top:16px;display:none">
+        <div style="font-size:0.82rem;font-weight:600;color:var(--gray-600);margin-bottom:8px" id="importPreviewLabel"></div>
+        <div style="max-height:160px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:8px;font-size:0.78rem">
+          <table style="width:100%;border-collapse:collapse" id="importPreviewTable"></table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('importModal')">Cancel</button>
+      <button class="btn btn-success" id="importConfirmBtn" style="display:none" onclick="confirmImport()">Import Records</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Load data -->
+<script src="data_compact.js"></script>
+
+<script>
+// ─── Status config ───
+const STATUS_LIST = [
+  { key: 'VIP',            color: '#7c3aed', bg: '#ede9fe', label: 'VIP' },
+  { key: 'Blacklisted',    color: '#1f2937', bg: '#f3f4f6', label: 'Blacklisted' },
+  { key: 'Opted Out',      color: '#d97706', bg: '#fffbeb', label: 'Opted Out' },
+  { key: 'Duplicate',      color: '#6b7280', bg: '#f9fafb', label: 'Duplicate' },
+  { key: 'Do Not Contact', color: '#dc2626', bg: '#fef2f2', label: 'DNC' },
+  { key: 'Pending Review', color: '#0891b2', bg: '#ecfeff', label: 'Pending Review' },
+  { key: '__custom__',     color: '#64748b', bg: '#f1f5f9', label: '+ Custom…' },
+  { key: '',               color: '#10b981', bg: '#d1fae5', label: 'Active (Clear)' },
+];
+
+// ─── Data management ───
+const IDX = {id:0,name:1,addr:2,city:3,state:4,zip:5,status:6};
+let localOverrides = {};
+let addedLocations = [];
+let nextId = 70000;
+
+function loadStorage() {
+  try { localOverrides = JSON.parse(localStorage.getItem('adminOverrides') || '{}'); } catch(e){}
+  try { addedLocations = JSON.parse(localStorage.getItem('adminAdded') || '[]'); } catch(e){}
+  try { nextId = parseInt(localStorage.getItem('adminNextId') || '70000'); } catch(e){}
+}
+function saveStorage() {
+  localStorage.setItem('adminOverrides', JSON.stringify(localOverrides));
+  localStorage.setItem('adminAdded', JSON.stringify(addedLocations));
+  localStorage.setItem('adminNextId', String(nextId));
+}
+
+function getAllRecords() {
+  const base = LOC.map(r => ({
+    id: r[IDX.id],
+    name: r[IDX.name],
+    address: r[IDX.addr],
+    city: r[IDX.city],
+    state: r[IDX.state],
+    zip: r[IDX.zip],
+    status: localOverrides[r[IDX.id]]?.status ?? r[IDX.status] ?? '',
+    notes: localOverrides[r[IDX.id]]?.notes ?? '',
+    _added: false
+  }));
+  const added = addedLocations.map(r => ({...r, _added: true}));
+  return [...base, ...added];
+}
+
+// ─── State & filters ───
+let allRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
+const PAGE_SIZE = 100;
+let totalPages = 1;
+let sortCol = 'id';
+let sortDir = 'asc';
+let selectedIds = new Set();
+
+function init() {
+  loadStorage();
+  allRecords = getAllRecords();
+  populateFilters();
+  applyFilters();
+  updateHeaderStats();
+}
+
+function populateFilters() {
+  const states = [...new Set(allRecords.map(r=>r.state).filter(Boolean))].sort();
+  const stateEl = document.getElementById('stateFilter');
+  states.forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s; stateEl.appendChild(o);
+  });
+
+  const statusEl = document.getElementById('statusFilter');
+  const statuses = [...new Set(allRecords.map(r=>r.status).filter(Boolean))].sort();
+  statuses.forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s; statusEl.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const state = document.getElementById('stateFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  currentPage = 1;
+  selectedIds.clear();
+  updateSelectedUI();
+
+  filteredRecords = allRecords.filter(r => {
+    if (q) {
+      const hay = `${r.name} ${r.address} ${r.city} ${r.state} ${r.zip}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (state && r.state !== state) return false;
+    if (status === '__active__' && r.status !== '') return false;
+    if (status && status !== '__active__' && r.status !== status) return false;
+    return true;
+  });
+
+  sortRecords();
+  renderTable();
+  renderPagination();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  sortRecords();
+  renderTable();
+  renderPagination();
+}
+
+function sortRecords() {
+  const dir = sortDir === 'asc' ? 1 : -1;
+  filteredRecords.sort((a,b) => {
+    const av = String(a[sortCol]||'').toLowerCase();
+    const bv = String(b[sortCol]||'').toLowerCase();
+    if (sortCol === 'id') return (a.id - b.id) * dir;
+    return av.localeCompare(bv) * dir;
+  });
+  // Update sort indicators
+  document.querySelectorAll('th[id^="th-"]').forEach(th => { th.classList.remove('sort-asc','sort-desc'); });
+  const el = document.getElementById('th-'+sortCol);
+  if (el) el.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+}
+
+function renderTable() {
+  totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+  const start = (currentPage-1)*PAGE_SIZE, end = start+PAGE_SIZE;
+  const page = filteredRecords.slice(start, end);
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = page.map(r => {
+    const sc = statusConfig(r.status);
+    return `<tr id="row-${r.id}" class="${selectedIds.has(r.id)?'selected':''}">
+      <td><input type="checkbox" class="checkbox" data-id="${r.id}" ${selectedIds.has(r.id)?'checked':''} onchange="toggleSelect(${r.id},this.checked)"></td>
+      <td style="color:var(--gray-400);font-size:0.78rem">${r.id}</td>
+      <td title="${escHTML(r.name)}" style="font-weight:600;max-width:200px">${escHTML(r.name)}</td>
+      <td title="${escHTML(r.address)}">${escHTML(r.address)}</td>
+      <td>${escHTML(r.city)}</td>
+      <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700">${r.state}</td>
+      <td style="font-family:monospace">${r.zip}</td>
+      <td><span class="status-badge" style="background:${sc.bg};color:${sc.color}">${sc.label}</span></td>
+      <td><button class="edit-btn" onclick="openEditModal(${r.id})">Edit</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('selectAll').checked = page.length > 0 && page.every(r => selectedIds.has(r.id));
+}
+
+function statusConfig(status) {
+  const found = STATUS_LIST.find(s => s.key === status);
+  if (found && found.key !== '__custom__') return found;
+  if (status) return {color:'#3730a3',bg:'#e0e7ff',label:status};
+  return {color:'#10b981',bg:'#d1fae5',label:'Active'};
+}
+
+function renderPagination() {
+  const pn = document.getElementById('pageNumbers');
+  pn.innerHTML = '';
+  const range = [];
+  let start = Math.max(1, currentPage-2), end = Math.min(totalPages, currentPage+2);
+  if (start > 1) { addPageBtn(pn,1); if(start>2) pn.innerHTML += '<span style="color:var(--gray-400);padding:0 4px">…</span>'; }
+  for (let i=start;i<=end;i++) addPageBtn(pn,i);
+  if (end < totalPages) { if(end<totalPages-1) pn.innerHTML += '<span style="color:var(--gray-400);padding:0 4px">…</span>'; addPageBtn(pn,totalPages); }
+
+  document.getElementById('btnFirst').disabled = currentPage<=1;
+  document.getElementById('btnPrev').disabled = currentPage<=1;
+  document.getElementById('btnNext').disabled = currentPage>=totalPages;
+  document.getElementById('btnLast').disabled = currentPage>=totalPages;
+
+  const s=(currentPage-1)*PAGE_SIZE+1, e=Math.min(currentPage*PAGE_SIZE,filteredRecords.length);
+  document.getElementById('pageInfo').textContent = `${s.toLocaleString()}–${e.toLocaleString()} of ${filteredRecords.length.toLocaleString()} records`;
+}
+
+function addPageBtn(container, n) {
+  const b = document.createElement('button');
+  b.className = 'page-btn' + (n===currentPage?' active':'');
+  b.textContent = n;
+  b.onclick = () => goPage(n);
+  container.appendChild(b);
+}
+
+function goPage(n) {
+  currentPage = Math.max(1, Math.min(n, totalPages));
+  renderTable();
+  renderPagination();
+  document.querySelector('.table-wrap').scrollTop = 0;
+}
+
+// ─── Selection ───
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  const row = document.getElementById('row-'+id);
+  if (row) row.classList.toggle('selected', checked);
+  updateSelectedUI();
+}
+
+function toggleSelectAll(cb) {
+  const start = (currentPage-1)*PAGE_SIZE, end = start+PAGE_SIZE;
+  const page = filteredRecords.slice(start, end);
+  page.forEach(r => { if(cb.checked) selectedIds.add(r.id); else selectedIds.delete(r.id); });
+  renderTable();
+  updateSelectedUI();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderTable();
+  updateSelectedUI();
+}
+
+function updateSelectedUI() {
+  const el = document.getElementById('selectedActions');
+  el.classList.toggle('hidden', selectedIds.size === 0);
+  document.getElementById('selectedCount').textContent = selectedIds.size;
+}
+
+// ─── Modals ───
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+function buildStatusGrid(gridId, selectedStatus, onSelect) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = STATUS_LIST.map(s => {
+    const isSel = s.key === selectedStatus || (s.key==='' && !selectedStatus);
+    return `<div class="status-option ${isSel?'selected':''}"
+      style="background:${s.bg};color:${s.color};border-color:${isSel?s.color:'var(--gray-200)'}"
+      onclick="${onSelect}('${s.key}')"
+      data-key="${s.key}">${s.label}</div>`;
+  }).join('');
+}
+
+let editingId = null;
+let selectedStatus = '';
+
+function openAddModal() {
+  editingId = null;
+  selectedStatus = '';
+  document.getElementById('modalTitle').textContent = 'Add New Location';
+  document.getElementById('editId').value = '';
+  document.getElementById('editName').value = '';
+  document.getElementById('editAddress').value = '';
+  document.getElementById('editCity').value = '';
+  document.getElementById('editState').value = '';
+  document.getElementById('editZip').value = '';
+  document.getElementById('editNotes').value = '';
+  document.getElementById('editCustomStatus').value = '';
+  document.getElementById('customStatusRow').style.display = 'none';
+  buildStatusGrid('statusGrid', '', 'selectStatus');
+  openModal('editModal');
+}
+
+function openEditModal(id) {
+  const r = allRecords.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  selectedStatus = r.status || '';
+  document.getElementById('modalTitle').textContent = 'Edit Location';
+  document.getElementById('editId').value = id;
+  document.getElementById('editName').value = r.name || '';
+  document.getElementById('editAddress').value = r.address || '';
+  document.getElementById('editCity').value = r.city || '';
+  document.getElementById('editState').value = r.state || '';
+  document.getElementById('editZip').value = r.zip || '';
+  document.getElementById('editNotes').value = r.notes || '';
+  const isCustom = r.status && !STATUS_LIST.find(s=>s.key===r.status&&s.key!=='__custom__');
+  document.getElementById('editCustomStatus').value = isCustom ? r.status : '';
+  document.getElementById('customStatusRow').style.display = isCustom ? 'block' : 'none';
+  buildStatusGrid('statusGrid', isCustom ? '__custom__' : r.status, 'selectStatus');
+  openModal('editModal');
+}
+
+function selectStatus(key) {
+  selectedStatus = key;
+  document.getElementById('customStatusRow').style.display = key === '__custom__' ? 'block' : 'none';
+  document.querySelectorAll('#statusGrid .status-option').forEach(el => {
+    const s = STATUS_LIST.find(x=>x.key===el.dataset.key)||{color:'var(--gray-300)'};
+    const isMe = el.dataset.key === key;
+    el.classList.toggle('selected', isMe);
+    el.style.borderColor = isMe ? s.color : 'var(--gray-200)';
+  });
+}
+
+function saveRecord() {
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { showToast('Facility name is required', 'error'); return; }
+  const finalStatus = selectedStatus === '__custom__'
+    ? document.getElementById('editCustomStatus').value.trim()
+    : selectedStatus;
+  const rec = {
+    id: editingId || nextId++,
+    name,
+    address: document.getElementById('editAddress').value.trim(),
+    city: document.getElementById('editCity').value.trim(),
+    state: document.getElementById('editState').value.trim().toUpperCase(),
+    zip: document.getElementById('editZip').value.trim(),
+    status: finalStatus,
+    notes: document.getElementById('editNotes').value.trim(),
+  };
+
+  if (editingId) {
+    // Update override
+    const isBase = LOC.find(r => r[IDX.id] === editingId);
+    if (isBase) {
+      localOverrides[editingId] = {status: rec.status, notes: rec.notes};
+    } else {
+      const idx = addedLocations.findIndex(r => r.id === editingId);
+      if (idx >= 0) addedLocations[idx] = {...addedLocations[idx], ...rec};
+    }
+    const ar = allRecords.find(r => r.id === editingId);
+    if (ar) Object.assign(ar, rec);
+    showToast('Location updated', 'success');
+  } else {
+    rec._added = true;
+    addedLocations.push(rec);
+    allRecords.push(rec);
+    showToast('Location added', 'success');
+  }
+
+  saveStorage();
+  applyFilters();
+  updateHeaderStats();
+  closeModal('editModal');
+}
+
+// ─── Bulk status ───
+function openBulkStatusModal() {
+  if (selectedIds.size === 0) return;
+  document.getElementById('bulkCount').textContent = selectedIds.size;
+  const grid = document.getElementById('bulkStatusGrid');
+  grid.innerHTML = STATUS_LIST.filter(s=>s.key!=='__custom__').map(s => `
+    <div class="status-option"
+      style="background:${s.bg};color:${s.color};border-color:var(--gray-200)"
+      onclick="applyBulkStatus('${s.key}')">
+      ${s.label}
+    </div>
+  `).join('');
+  openModal('bulkModal');
+}
+
+function applyBulkStatus(status) {
+  selectedIds.forEach(id => {
+    const isBase = LOC.find(r => r[IDX.id] === id);
+    if (isBase) {
+      localOverrides[id] = {...(localOverrides[id]||{}), status};
+    } else {
+      const r = addedLocations.find(r => r.id === id);
+      if (r) r.status = status;
+    }
+    const ar = allRecords.find(r => r.id === id);
+    if (ar) ar.status = status;
+  });
+  saveStorage();
+  applyFilters();
+  updateHeaderStats();
+  clearSelection();
+  closeModal('bulkModal');
+  showToast(`Updated ${selectedIds.size || 'selected'} records`, 'success');
+}
+
+function bulkDelete() {
+  if (!confirm(`Delete ${selectedIds.size} selected record(s)? Base records will be hidden.`)) return;
+  selectedIds.forEach(id => {
+    const isBase = LOC.find(r => r[IDX.id] === id);
+    if (isBase) {
+      localOverrides[id] = {...(localOverrides[id]||{}), deleted: true};
+    } else {
+      const idx = addedLocations.findIndex(r => r.id === id);
+      if (idx >= 0) addedLocations.splice(idx,1);
+    }
+    const idx = allRecords.findIndex(r => r.id === id);
+    if (idx >= 0) allRecords.splice(idx,1);
+  });
+  saveStorage();
+  clearSelection();
+  applyFilters();
+  updateHeaderStats();
+  showToast('Records removed', 'success');
+}
+
+// ─── Header stats ───
+function updateHeaderStats() {
+  const records = getAllRecords().filter(r => !localOverrides[r.id]?.deleted);
+  document.getElementById('hdrTotal').textContent = records.length.toLocaleString();
+  document.getElementById('hdrVip').textContent = records.filter(r=>r.status==='VIP').length.toLocaleString();
+  document.getElementById('hdrBlacklist').textContent = records.filter(r=>r.status==='Blacklisted').length.toLocaleString();
+  document.getElementById('hdrDnc').textContent = records.filter(r=>r.status==='Do Not Contact').length.toLocaleString();
+  document.getElementById('hdrModified').textContent = Object.keys(localOverrides).length.toLocaleString();
+}
+
+// ─── Export CSV ───
+function exportCSV() {
+  const rows = [['id','name','address','city','state','zip','status','notes']];
+  filteredRecords.forEach(r => {
+    rows.push([r.id,r.name,r.address,r.city,r.state,r.zip,r.status,r.notes||''].map(v=>`"${String(v||'').replace(/"/g,'""')}"`));
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `repair_facilities_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  showToast(`Exported ${filteredRecords.length} records`);
+}
+
+// ─── Import CSV ───
+let importData = [];
+function openImportModal() {
+  importData = [];
+  document.getElementById('csvFile').value = '';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  openModal('importModal');
+}
+
+function handleCSVImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').filter(l=>l.trim());
+    if (lines.length < 2) { showToast('CSV appears empty', 'error'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+    const nameIdx = headers.indexOf('name');
+    const addrIdx = headers.indexOf('address');
+    const cityIdx = headers.indexOf('city');
+    const stateIdx = headers.indexOf('state');
+    const zipIdx = headers.indexOf('zip');
+    const statusIdx = headers.indexOf('status');
+    if (nameIdx < 0) { showToast('CSV must have a "name" column', 'error'); return; }
+    importData = lines.slice(1).map(line => {
+      const cols = line.match(/("([^"]*)"|[^,]+|(?<=,)(?=,)|(?<=,)$|^(?=,))/g)?.map(v=>v.replace(/^"|"$/g,'').trim())||line.split(',').map(v=>v.trim());
+      return {
+        name: cols[nameIdx]||'',
+        address: cols[addrIdx]||'',
+        city: cols[cityIdx]||'',
+        state: (cols[stateIdx]||'').toUpperCase(),
+        zip: cols[zipIdx]||'',
+        status: cols[statusIdx]||'',
+      };
+    }).filter(r=>r.name);
+
+    const preview = document.getElementById('importPreview');
+    preview.style.display = 'block';
+    document.getElementById('importPreviewLabel').textContent = `Preview: ${importData.length} records found`;
+    const table = document.getElementById('importPreviewTable');
+    const hdrs = ['name','address','city','state','zip','status'];
+    table.innerHTML = `<tr style="background:var(--gray-50)">${hdrs.map(h=>`<th style="padding:6px 10px;text-align:left;font-size:0.75rem;color:var(--gray-600);border-bottom:1px solid var(--gray-200)">${h}</th>`).join('')}</tr>` +
+      importData.slice(0,5).map(r=>`<tr>${hdrs.map(h=>`<td style="padding:5px 10px;border-bottom:1px solid var(--gray-100);font-size:0.78rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHTML(r[h])}</td>`).join('')}</tr>`).join('');
+    if (importData.length > 5) table.innerHTML += `<tr><td colspan="6" style="padding:6px 10px;font-size:0.75rem;color:var(--gray-400)">… and ${importData.length-5} more</td></tr>`;
+    document.getElementById('importConfirmBtn').style.display = 'block';
+    document.getElementById('importConfirmBtn').textContent = `Import ${importData.length} Records`;
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport() {
+  importData.forEach(r => {
+    const rec = {...r, id: nextId++, notes: '', _added: true};
+    addedLocations.push(rec);
+    allRecords.push(rec);
+  });
+  saveStorage();
+  applyFilters();
+  updateHeaderStats();
+  closeModal('importModal');
+  showToast(`Imported ${importData.length} records`, 'success');
+  importData = [];
+}
+
+// Drag & drop
+const zone = document.getElementById('importZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f){document.getElementById('csvFile').files=e.dataTransfer.files; handleCSVImport({target:{files:e.dataTransfer.files}});} });
+
+// ─── Utilities ───
+function escHTML(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── Init ───
+init();
+</script>
+</body>
+</html>
