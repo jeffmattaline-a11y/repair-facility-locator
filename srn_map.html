@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find a Repair Facility — SRN</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+<style>
+:root{--navy:#0d3e7a;--blue:#1a5fb4;--blue-lt:#e8f0fc;--blue-dk:#0a2d5a;--bg:#f4f6f9;--surface:#fff;--border:#dde1e8;--border2:#c8cdd6;--text:#1c2333;--text2:#4a5568;--text3:#8a93a2;--green:#2d8a4e;--green-bg:#e8f5ee;--red:#b91c1c;--gold:#92400e;--gold-bg:#fffbeb;--panel-w:380px;--hh:60px;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--text)}
+header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--navy);z-index:1000;display:flex;align-items:center;padding:0 20px;gap:14px;border-bottom:2px solid var(--blue-dk)}
+.logo{font-size:15px;font-weight:700;color:#fff;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.logo span{color:#7ab3f5}
+.sbar{flex:1;max-width:480px;display:flex;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1)}
+.sbar input{flex:1;border:none;background:transparent;color:#fff;font-size:14px;padding:0 14px;outline:none;font-family:inherit}
+.sbar input::placeholder{color:rgba(255,255,255,.5)}
+.sbar button{background:var(--blue);border:none;color:#fff;padding:0 16px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:background .15s}
+.sbar button:hover{background:#1251a0}
+.locbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:6px;transition:background .15s}
+.locbtn:hover{background:rgba(255,255,255,.22)}
+.locbtn svg{width:14px;height:14px;fill:currentColor}
+.hf{display:flex;gap:8px;margin-left:auto}
+.hfsel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-family:inherit;outline:none;cursor:pointer}
+.hfsel option{background:#1a3a6b;color:#fff}
+.layout{position:fixed;top:var(--hh);left:0;right:0;bottom:0;display:flex}
+.sidebar{width:var(--panel-w);flex-shrink:0;display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--border);z-index:100;overflow:hidden}
+.shead{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cnt{font-size:12px;color:var(--text3);font-family:monospace}
+.cnt strong{color:var(--blue)}
+.sortsel{font-size:11px;border:1px solid var(--border2);border-radius:5px;padding:3px 7px;background:var(--bg);color:var(--text2);font-family:inherit;outline:none;cursor:pointer}
+.results{flex:1;overflow-y:auto}
+.fcard{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:background .1s}
+.fcard:hover{background:var(--blue-lt)}
+.fcard.active{background:#dbeafe;border-left:3px solid var(--blue)}
+.fc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.fc-name{font-weight:600;font-size:14px;color:var(--blue);line-height:1.3;flex:1}
+.fc-dist{font-size:11px;color:var(--text3);font-family:monospace;white-space:nowrap;margin-top:2px}
+.fc-addr{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.4}
+.fc-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;font-family:monospace}
+.b-prf{background:var(--green-bg);color:var(--green);border:1px solid #a3d9b4}
+.b-std{background:var(--gold-bg);color:var(--gold);border:1px solid #fcd38a}
+.b-oth{background:#f0f9ff;color:#1e40af;border:1px solid #93c5fd}
+.fc-type{font-size:11px;color:var(--text3)}
+.fc-phone{font-size:11px;color:var(--text2);font-family:monospace}
+.nores{padding:40px 20px;text-align:center;color:var(--text3)}
+.nores p{font-size:15px;margin-bottom:6px}
+#map{flex:1;z-index:1}
+.dp{position:absolute;bottom:20px;right:20px;width:320px;background:var(--surface);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);border:1px solid var(--border2);z-index:500;overflow:hidden;transform:translateY(10px);opacity:0;transition:all .2s;pointer-events:none}
+.dp.show{transform:translateY(0);opacity:1;pointer-events:all}
+.sv-strip{width:100%;height:120px;background:#1a1a2e;position:relative;cursor:pointer;overflow:hidden;flex-shrink:0}
+.sv-strip iframe{width:100%;height:100%;border:none;pointer-events:none}
+.sv-strip .sv-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);opacity:0;transition:opacity .2s}
+.sv-strip:hover .sv-overlay{opacity:1}
+.sv-overlay-btn{background:rgba(255,255,255,.92);color:var(--navy);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
+.sv-strip .sv-no-img{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.5);font-size:12px}
+.sv-strip .sv-no-img svg{width:28px;height:28px;fill:rgba(255,255,255,.3)}
+/* full-screen street view modal */
+.sv-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;flex-direction:column}
+.sv-modal.open{display:flex}
+.sv-modal-bar{height:52px;background:#111;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+.sv-modal-title{color:#fff;font-size:14px;font-weight:500;flex:1}
+.sv-modal-close{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit}
+.sv-modal-close:hover{background:rgba(255,255,255,.22)}
+.sv-modal iframe{flex:1;border:none;width:100%}
+/* config notice */
+.sv-config-notice{background:#fff8e1;border-top:1px solid #ffe082;padding:8px 14px;font-size:11px;color:#7c5800;display:none;align-items:center;gap:6px}
+.sv-config-notice a{color:#1a5fb4}
+.dph{background:#1a3a6b;color:#fff;padding:12px 14px;display:flex;align-items:flex-start;gap:8px}
+.dpname{font-size:14px;font-weight:600;flex:1;line-height:1.3}
+.dpx{background:rgba(255,255,255,.2);border:none;color:#fff;width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.dpx:hover{background:rgba(255,255,255,.35)}
+.dpb{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.dprow{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text2)}
+.dprow svg{width:13px;height:13px;flex-shrink:0;fill:var(--text3);margin-top:1px}
+.dprow a{color:var(--blue);text-decoration:none}
+.dprow a:hover{text-decoration:underline}
+.dpbadges{display:flex;gap:5px;flex-wrap:wrap}
+.dpfoot{padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px}
+.dpbtn{flex:1;padding:7px;border-radius:6px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
+.dpbtn-dir{background:var(--blue);color:#fff}
+.dpbtn-dir:hover{background:var(--navy)}
+.dpbtn-call{background:var(--green-bg);color:var(--green);border:1px solid #a3d9b4}
+.dpbtn-offer{background:var(--gold-bg);color:var(--gold);border:1px solid #fcd38a}
+.pin-marker{width:28px;height:28px;border-radius:50% 50% 50% 0;background:var(--blue);border:2.5px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;transition:transform .15s}
+.pin-marker.prm{background:var(--green)}
+.pin-marker.std{background:var(--gold)}
+.pin-marker:hover,.pin-marker.sel{transform:rotate(-45deg) scale(1.25)}
+.pin-inner{width:8px;height:8px;background:#fff;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.mload{position:absolute;inset:0;background:rgba(244,246,249,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;gap:12px;font-size:14px;color:var(--text2)}
+.spin{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.geobar{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:12px;padding:6px 16px;border-radius:20px;z-index:800;white-space:nowrap;opacity:0;transition:opacity .3s}
+.geobar.show{opacity:1}
+@media(max-width:700px){.sidebar{position:absolute;bottom:0;left:0;right:0;width:100%;height:45%;top:auto;border-right:none;border-top:1px solid var(--border)}#map{position:absolute;top:0;left:0;right:0;height:55%}.dp{bottom:auto;top:10px;right:10px;left:10px;width:auto}.hf{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">SRN <span>Repair</span> Locator</div>
+  <div class="sbar">
+    <input id="si" placeholder="Zip code, city, or facility name…" onkeydown="if(event.key==='Enter')search()">
+    <button onclick="search()">Search</button>
+  </div>
+  <button class="locbtn" onclick="locateMe()">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    Near Me
+  </button>
+  <div class="hf">
+    <select class="hfsel" id="f-status" onchange="filter()"><option value="">All Statuses</option></select>
+    <select class="hfsel" id="f-type" onchange="filter()"><option value="">All Types</option></select>
+    <select class="hfsel" id="f-state" onchange="filter()"><option value="">All States</option></select>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="shead">
+      <span class="cnt" id="cnt">Loading…</span>
+      <select class="sortsel" id="sort" onchange="filter()">
+        <option value="dist">Sort: Distance</option>
+        <option value="name">Sort: Name</option>
+        <option value="status">Sort: Status</option>
+      </select>
+    </div>
+    <div class="results" id="results"></div>
+  </div>
+  <div id="map">
+    <div class="mload" id="mload"><div class="spin"></div><span id="mload-msg">Connecting to database…</span></div>
+  </div>
+</div>
+
+<div class="dp" id="dp">
+  <div class="dph"><div class="dpname" id="dpname"></div><button class="dpx" onclick="closeDP()">✕</button></div>
+  <!-- Street View strip -->
+  <div class="sv-strip" id="sv-strip" onclick="openSV()">
+    <div class="sv-no-img" id="sv-noimg">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <span>Street View unavailable</span>
+    </div>
+    <iframe id="sv-thumb" src="" style="display:none"></iframe>
+    <div class="sv-overlay"><button class="sv-overlay-btn">⊕ Expand Street View</button></div>
+  </div>
+  <div class="sv-config-notice" id="sv-notice">
+    Add your Google Maps API key to enable Street View. <a href="#" onclick="event.preventDefault()">See setup guide</a>
+  </div>
+  <div class="dpb">
+    <div class="dprow" id="dpaddr"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span></span></div>
+    <div class="dprow" id="dpphone"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg><span></span></div>
+    <div class="dpbadges" id="dpbadges"></div>
+    <div class="dprow" id="dpoffer" style="display:none"><svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg><a href="#" target="_blank" id="dpofferlink">View Current Offers</a></div>
+  </div>
+  <div class="dpfoot" id="dpfoot"></div>
+</div>
+
+<!-- Street View full-screen modal -->
+<div class="sv-modal" id="sv-modal">
+  <div class="sv-modal-bar">
+    <div class="sv-modal-title" id="sv-modal-title">Street View</div>
+    <button class="sv-modal-close" onclick="closeSV()">✕ Close</button>
+  </div>
+  <iframe id="sv-full" src="" allow="fullscreen"></iframe>
+</div>
+<div class="geobar" id="geobar"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// SUPABASE CONFIG — must match srn_admin.html
+// ══════════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://amfawopeshfzuxusruyq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GOOGLE MAPS API KEY — needed for Street View
+// 1. Go to https://console.cloud.google.com
+// 2. Enable "Maps Embed API" and "Street View Static API"
+// 3. Create an API key and paste it below
+// Leave as empty string '' to hide Street View until configured
+// ══════════════════════════════════════════════════════════════════════════════
+const GOOGLE_MAPS_KEY = '';
+// ══════════════════════════════════════════════════════════════════════════════
+let uLat=null, uLng=null, activeId=null;
+const gcache={};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth'};
+const bc=s=>BMAP[String(s||'').toUpperCase()]||'b-oth';
+const fmtP=p=>{const d=String(p||'').replace(/\D/g,'');return d.length===10?`(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`:p;};
+function hav(a,b,c,d){const R=3958.8,dL=rad(c-a),dO=rad(d-b);const x=Math.sin(dL/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function rad(d){return d*Math.PI/180;}
+const showGeo=msg=>{const e=document.getElementById('geobar');e.textContent=msg;e.classList.add('show');};
+const hideGeo=()=>document.getElementById('geobar').classList.remove('show');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ── Init map ──────────────────────────────────────────────────────────────────
+map=L.map('map',{zoomControl:false}).setView([39.5,-98.35],4);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+  subdomains:'abcd',maxZoom:20
+}).addTo(map);
+ml=L.layerGroup().addTo(map);
+map.on('click',closeDP);
+
+// ── Load from Supabase (public anon read) ────────────────────────────────────
+(async()=>{
+  try {
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/facilities?select=*&order=numeric_id.desc&limit=100000`,{
+      headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}
+    });
+    if(!r.ok)throw new Error(await r.text());
+    const raw=await r.json();
+    all=raw.filter(f=>f.status!=='DEL'&&f.status!=='DNC'&&f.status!=='BL');
+  } catch(e){
+    document.getElementById('mload-msg').textContent='Error loading data. Check Supabase config.';
+    console.error(e); return;
+  }
+  populateFilters();
+  await geocodeAndRender();
+})();
+
+function populateFilters(){
+  const mk=(id,vals)=>{const el=document.getElementById(id);if(!el)return;const cur=el.value;const opts=[...new Set(vals.filter(Boolean))].sort();el.innerHTML=el.options[0].outerHTML+opts.map(v=>`<option value="${v}">${v}</option>`).join('');el.value=cur;};
+  mk('f-status',all.map(f=>f.status));
+  mk('f-type',all.map(f=>f.shop_type));
+  mk('f-state',all.map(f=>f.state));
+}
+
+async function geocodeAddress(f){
+  const key=`${f.address},${f.city},${f.state},${f.zip}`;
+  if(gcache[key])return gcache[key];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${f.address}, ${f.city}, ${f.state} ${f.zip}, USA`)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    if(d&&d[0]){const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};gcache[key]=c;return c;}
+  }catch(e){}
+  return null;
+}
+
+async function geocodeAndRender(){
+  const need=all.filter(f=>!f.lat||!f.lng||isNaN(+f.lat));
+  if(need.length>0){
+    for(let i=0;i<need.length;i++){
+      const f=need[i];const c=await geocodeAddress(f);
+      if(c){f.lat=c.lat;f.lng=c.lng;}
+      showGeo(`Geocoding ${i+1}/${need.length}…`);
+      if(i<need.length-1)await sleep(1100);
+    }
+    hideGeo();
+  }
+  document.getElementById('mload').style.display='none';
+  filter();
+}
+
+function filter(){
+  const q=document.getElementById('si').value.trim().toLowerCase();
+  const fs=document.getElementById('f-status').value;
+  const ft=document.getElementById('f-type').value;
+  const fst=document.getElementById('f-state').value;
+  const sb=document.getElementById('sort').value;
+  disp=all.filter(f=>{
+    if(fs&&f.status!==fs)return false;
+    if(ft&&f.shop_type!==ft)return false;
+    if(fst&&f.state!==fst)return false;
+    if(q&&!`${f.name} ${f.city} ${f.state} ${f.zip} ${f.address} ${f.shop_type} ${f.phone}`.toLowerCase().includes(q))return false;
+    return f.lat&&f.lng&&!isNaN(+f.lat)&&!isNaN(+f.lng);
+  });
+  disp.forEach(f=>{f._d=(uLat!=null)?hav(uLat,uLng,+f.lat,+f.lng):null;});
+  if(sb==='dist')disp.sort((a,b)=>{if(a._d==null&&b._d==null)return(a.name||'').localeCompare(b.name||'');if(a._d==null)return 1;if(b._d==null)return-1;return a._d-b._d;});
+  else if(sb==='name')disp.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if(sb==='status'){const o={PRF:0,OPT:1,VIP:1,STD:2,NEW:3};disp.sort((a,b)=>(o[a.status]??9)-(o[b.status]??9)||(a.name||'').localeCompare(b.name||''));}
+  renderSidebar();renderMarkers();
+}
+
+function renderSidebar(){
+  document.getElementById('cnt').innerHTML=`<strong>${disp.length}</strong> facilit${disp.length===1?'y':'ies'} found`;
+  const el=document.getElementById('results');
+  if(!disp.length){el.innerHTML=`<div class="nores"><p>No facilities found</p><small>Try a different search or adjust filters</small></div>`;return;}
+  el.innerHTML=disp.map(f=>{
+    const dist=f._d!=null?`<span class="fc-dist">${f._d<1?(f._d*5280).toFixed(0)+' ft':f._d.toFixed(1)+' mi'}</span>`:'';
+    return`<div class="fcard${activeId===f.id?' active':''}" id="card-${f.id}" onclick="sel('${f.id}')">
+      <div class="fc-top"><div class="fc-name">${esc(f.name)}</div>${dist}</div>
+      <div class="fc-addr">${esc(f.address)}, ${esc(f.city)}, ${esc(f.state)} ${esc(f.zip)}</div>
+      <div class="fc-meta"><span class="badge ${bc(f.status)}">${f.status||'—'}</span>${f.shop_type?`<span class="fc-type">${esc(f.shop_type)}</span>`:''} ${f.phone?`<span class="fc-phone">${fmtP(f.phone)}</span>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMarkers(){
+  ml.clearLayers();mkrs={};
+  disp.forEach(f=>{
+    if(!f.lat||!f.lng)return;
+    const cls=(f.status==='PRF'||f.status==='OPT'||f.status==='VIP')?'prm':(f.status==='STD'?'std':'');
+    const icon=L.divIcon({className:'',html:`<div class="pin-marker ${cls}${activeId===f.id?' sel':''}"><div class="pin-inner"></div></div>`,iconSize:[28,28],iconAnchor:[14,28]});
+    const m=L.marker([+f.lat,+f.lng],{icon}).on('click',e=>{L.DomEvent.stopPropagation(e);sel(f.id);});
+    m.addTo(ml);mkrs[f.id]=m;
+  });
+}
+
+function sel(id){
+  activeId=id;
+  const f=all.find(x=>x.id===id);if(!f)return;
+  document.querySelectorAll('.fcard').forEach(c=>c.classList.remove('active'));
+  const card=document.getElementById(`card-${id}`);
+  if(card){card.classList.add('active');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  if(f.lat&&f.lng)map.panTo([+f.lat,+f.lng],{animate:true});
+  renderMarkers();
+
+  // ── Detail pane fields ──────────────────────────────────────────────────────
+  document.getElementById('dpname').textContent=f.name;
+  document.querySelector('#dpaddr span').textContent=`${f.address}, ${f.city}, ${f.state} ${f.zip}`;
+  const ph=document.getElementById('dpphone');
+  if(f.phone){document.querySelector('#dpphone span').innerHTML=`<a href="tel:${f.phone}">${fmtP(f.phone)}</a>`;ph.style.display='flex';}else ph.style.display='none';
+  let badges=`<span class="badge ${bc(f.status)}">${f.status||'—'}</span>`;
+  if(f.ev_certified)badges+=`<span class="badge b-oth">EV Certified</span>`;
+  if(f.accepts_shipped)badges+=`<span class="badge b-std">Ships Parts</span>`;
+  if(f.shop_type)badges+=`<span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1">${esc(f.shop_type)}</span>`;
+  document.getElementById('dpbadges').innerHTML=badges;
+  const orow=document.getElementById('dpoffer');
+  if(f.offer_url){document.getElementById('dpofferlink').href=f.offer_url;orow.style.display='flex';}else orow.style.display='none';
+  const murl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${f.address}, ${f.city}, ${f.state} ${f.zip}`)}`;
+  let btns=`<a class="dpbtn dpbtn-dir" href="${murl}" target="_blank">Get Directions</a>`;
+  if(f.phone)btns+=`<a class="dpbtn dpbtn-call" href="tel:${f.phone}">Call</a>`;
+  if(f.offer_url)btns+=`<a class="dpbtn dpbtn-offer" href="${f.offer_url}" target="_blank">Offers</a>`;
+  document.getElementById('dpfoot').innerHTML=btns;
+
+  // ── Street View ─────────────────────────────────────────────────────────────
+  const strip=document.getElementById('sv-strip');
+  const thumb=document.getElementById('sv-thumb');
+  const noimg=document.getElementById('sv-noimg');
+  const notice=document.getElementById('sv-notice');
+
+  if(!GOOGLE_MAPS_KEY){
+    // No key configured — show notice, hide strip
+    strip.style.display='none';
+    notice.style.display='flex';
+  } else {
+    strip.style.display='';
+    notice.style.display='none';
+    // Build Street View embed URL using lat/lng if available, else address
+    const loc = (f.lat&&f.lng&&!isNaN(+f.lat))
+      ? `${f.lat},${f.lng}`
+      : encodeURIComponent(`${f.address}, ${f.city}, ${f.state} ${f.zip}`);
+    const svUrl = `https://www.google.com/maps/embed/v1/streetview?key=${GOOGLE_MAPS_KEY}&location=${loc}&fov=90&heading=235&pitch=0`;
+    thumb.src = svUrl;
+    thumb.style.display='';
+    noimg.style.display='none';
+    // Store for full-screen open
+    strip.dataset.svUrl=svUrl;
+    strip.dataset.svName=f.name;
+  }
+
+  document.getElementById('dp').classList.add('show');
+}
+
+let _svFullUrl='', _svFullName='';
+function openSV(){
+  const strip=document.getElementById('sv-strip');
+  if(!strip.dataset.svUrl)return;
+  document.getElementById('sv-full').src=strip.dataset.svUrl;
+  document.getElementById('sv-modal-title').textContent=strip.dataset.svName||'Street View';
+  document.getElementById('sv-modal').classList.add('open');
+}
+function closeSV(){
+  document.getElementById('sv-modal').classList.remove('open');
+  document.getElementById('sv-full').src='';
+}
+
+function closeDP(){document.getElementById('dp').classList.remove('show');activeId=null;document.querySelectorAll('.fcard').forEach(c=>c.classList.remove('active'));}
+
+async function search(){
+  const raw=document.getElementById('si').value.trim();
+  if(!raw){filter();return;}
+  filter();
+  if(disp.length>0){
+    const pts=disp.filter(f=>f.lat&&f.lng&&!isNaN(+f.lat));
+    if(pts.length===1)map.setView([+pts[0].lat,+pts[0].lng],13,{animate:true});
+    else if(pts.length>1)map.fitBounds(L.latLngBounds(pts.map(f=>[+f.lat,+f.lng])).pad(.25),{animate:true});
+    return;
+  }
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(raw+', USA')}&format=json&limit=1`);
+    const d=await r.json();
+    if(d&&d[0]){
+      uLat=parseFloat(d[0].lat);uLng=parseFloat(d[0].lon);
+      map.setView([uLat,uLng],11,{animate:true});
+      if(window._uc)window._uc.remove();
+      window._uc=L.circleMarker([uLat,uLng],{radius:8,color:'#1a5fb4',fillColor:'#1a5fb4',fillOpacity:.4,weight:2}).addTo(map).bindTooltip('Search location');
+      filter();
+    }
+  }catch(e){}
+}
+
+function locateMe(){
+  if(!navigator.geolocation){alert('Geolocation not supported.');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    uLat=pos.coords.latitude;uLng=pos.coords.longitude;
+    map.setView([uLat,uLng],11,{animate:true});
+    if(window._uc)window._uc.remove();
+    window._uc=L.circleMarker([uLat,uLng],{radius:10,color:'#1a5fb4',fillColor:'#fff',fillOpacity:1,weight:3}).addTo(map).bindTooltip('You are here');
+    document.getElementById('sort').value='dist';
+    filter();
+  },()=>alert('Could not get your location.'));
+}
+</script>
+</body>
+</html>
