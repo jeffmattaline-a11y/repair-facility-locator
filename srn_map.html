@@ -183,6 +183,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const GOOGLE_MAPS_KEY = '';
 // ══════════════════════════════════════════════════════════════════════════════
 let uLat=null, uLng=null, activeId=null;
+let all=[], disp=[], mkrs={}, map, ml;
 const gcache={};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth'};
@@ -211,12 +212,20 @@ map.on('click',closeDP);
     let from = 0, done = false;
     const loadMsg = document.getElementById('mload-msg');
     while (!done) {
+      const to = from + PAGE - 1;
       const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/facilities?select=id,name,address,city,state,zip,phone,status,shop_type,lat,lng,ev_certified,accepts_shipped,offer_url&order=numeric_id.desc&limit=${PAGE}&offset=${from}`,
-        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+        `${SUPABASE_URL}/rest/v1/facilities?select=id,name,address,city,state,zip,phone,status,shop_type,lat,lng,ev_certified,accepts_shipped,offer_url&order=numeric_id.desc`,
+        { headers: {
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+          'Range': `${from}-${to}`,
+          'Range-Unit': 'items',
+          'Prefer': 'count=none'
+        }}
       );
       if (!r.ok) throw new Error(await r.text());
       const batch = await r.json();
+      if (!Array.isArray(batch) || batch.length === 0) { done = true; break; }
       all = all.concat(batch);
       loadMsg.textContent = `Loading… ${all.length.toLocaleString()} facilities`;
       if (batch.length < PAGE) done = true;
