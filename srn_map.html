@@ -204,17 +204,27 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 ml=L.layerGroup().addTo(map);
 map.on('click',closeDP);
 
-// ── Load from Supabase (public anon read) ────────────────────────────────────
+// ── Load from Supabase with pagination to get all records ────────────────────
 (async()=>{
   try {
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/facilities?select=*&order=numeric_id.desc&limit=100000`,{
-      headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}
-    });
-    if(!r.ok)throw new Error(await r.text());
-    const raw=await r.json();
-    all=raw.filter(f=>f.status!=='DEL'&&f.status!=='DNC'&&f.status!=='BL');
-  } catch(e){
-    document.getElementById('mload-msg').textContent='Error loading data. Check Supabase config.';
+    const PAGE = 1000;
+    let from = 0, done = false;
+    const loadMsg = document.getElementById('mload-msg');
+    while (!done) {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/facilities?select=id,name,address,city,state,zip,phone,status,shop_type,lat,lng,ev_certified,accepts_shipped,offer_url&order=numeric_id.desc&limit=${PAGE}&offset=${from}`,
+        { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+      );
+      if (!r.ok) throw new Error(await r.text());
+      const batch = await r.json();
+      all = all.concat(batch);
+      loadMsg.textContent = `Loading… ${all.length.toLocaleString()} facilities`;
+      if (batch.length < PAGE) done = true;
+      else from += PAGE;
+    }
+    all = all.filter(f => f.status !== 'DEL' && f.status !== 'DNC' && f.status !== 'BL');
+  } catch(e) {
+    document.getElementById('mload-msg').textContent = 'Error loading data. Check Supabase config.';
     console.error(e); return;
   }
   populateFilters();
