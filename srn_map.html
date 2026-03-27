@@ -231,7 +231,7 @@ map.on('click',closeDP);
       if (batch.length < PAGE) done = true;
       else from += PAGE;
     }
-    all = all.filter(f => f.status !== 'DEL' && f.status !== 'DNC' && f.status !== 'BL');
+    all = all.filter(f => f.status === 'PRF');
   } catch(e) {
     document.getElementById('mload-msg').textContent = 'Error loading data. Check Supabase config.';
     console.error(e); return;
@@ -311,8 +311,7 @@ function renderMarkers(){
   ml.clearLayers();mkrs={};
   disp.forEach(f=>{
     if(!f.lat||!f.lng)return;
-    const cls=(f.status==='PRF'||f.status==='OPT'||f.status==='VIP')?'prm':(f.status==='STD'?'std':'');
-    const icon=L.divIcon({className:'',html:`<div class="pin-marker ${cls}${activeId===f.id?' sel':''}"><div class="pin-inner"></div></div>`,iconSize:[28,28],iconAnchor:[14,28]});
+    const icon=L.divIcon({className:'',html:`<div class="pin-marker prm${activeId===f.id?' sel':''}"><div class="pin-inner"></div></div>`,iconSize:[28,28],iconAnchor:[14,28]});
     const m=L.marker([+f.lat,+f.lng],{icon}).on('click',e=>{L.DomEvent.stopPropagation(e);sel(f.id);});
     m.addTo(ml);mkrs[f.id]=m;
   });
