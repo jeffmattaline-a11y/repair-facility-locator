@@ -279,11 +279,20 @@ function filter(){
   const ft=document.getElementById('f-type').value;
   const fst=document.getElementById('f-state').value;
   const sb=document.getElementById('sort').value;
+  const isZip = /^\d{5}$/.test(q.trim());
   disp=all.filter(f=>{
     if(fs&&f.status!==fs)return false;
     if(ft&&f.shop_type!==ft)return false;
     if(fst&&f.state!==fst)return false;
-    if(q&&!`${f.name} ${f.city} ${f.state} ${f.zip} ${f.address} ${f.shop_type} ${f.phone}`.toLowerCase().includes(q))return false;
+    if(q){
+      if(isZip){
+        // Zip search: only match the zip field exactly
+        if((f.zip||'').replace(/\D/g,'').slice(0,5)!==q.trim())return false;
+      } else {
+        // General search: match name, city, state, address — NOT phone
+        if(!`${f.name} ${f.city} ${f.state} ${f.address} ${f.shop_type}`.toLowerCase().includes(q))return false;
+      }
+    }
     return f.lat&&f.lng&&!isNaN(+f.lat)&&!isNaN(+f.lng);
   });
   disp.forEach(f=>{f._d=(uLat!=null)?hav(uLat,uLng,+f.lat,+f.lng):null;});
@@ -391,6 +400,31 @@ function closeDP(){document.getElementById('dp').classList.remove('show');active
 async function search(){
   const raw=document.getElementById('si').value.trim();
   if(!raw){filter();return;}
+  const isZip=/^\d{5}$/.test(raw);
+
+  if(isZip){
+    // For zip codes: geocode to get center point, set user location, sort by distance
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(raw+', USA')}&format=json&limit=1`);
+      const d=await r.json();
+      if(d&&d[0]){
+        uLat=parseFloat(d[0].lat);uLng=parseFloat(d[0].lon);
+        document.getElementById('sort').value='dist';
+        // Show all PRF facilities sorted by distance from this zip center
+        // Clear the zip text filter so we show ALL nearby, not just same-zip
+        document.getElementById('si').value='';
+        filter();
+        map.setView([uLat,uLng],11,{animate:true});
+        if(window._uc)window._uc.remove();
+        window._uc=L.circleMarker([uLat,uLng],{radius:8,color:'#1a5fb4',fillColor:'#1a5fb4',fillOpacity:.4,weight:2}).addTo(map).bindTooltip(`ZIP: ${raw}`);
+        // Restore the search box value
+        document.getElementById('si').value=raw;
+      }
+    }catch(e){}
+    return;
+  }
+
+  // Non-zip: filter by text match first
   filter();
   if(disp.length>0){
     const pts=disp.filter(f=>f.lat&&f.lng&&!isNaN(+f.lat));
@@ -398,6 +432,7 @@ async function search(){
     else if(pts.length>1)map.fitBounds(L.latLngBounds(pts.map(f=>[+f.lat,+f.lng])).pad(.25),{animate:true});
     return;
   }
+  // Fallback: geocode and show nearby
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(raw+', USA')}&format=json&limit=1`);
     const d=await r.json();
