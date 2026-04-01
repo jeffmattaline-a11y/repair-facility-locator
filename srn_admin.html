@@ -70,6 +70,23 @@ td.nm:hover{text-decoration:underline}
 .ph .idb{font-family:monospace;font-size:11px;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:4px}
 .pclose{background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
 .pclose:hover{background:rgba(255,255,255,.25)}
+.ptabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:-20px -20px 20px;padding:0 20px;background:var(--bg)}
+.ptab{padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.ptab:hover{color:var(--text2)}
+.ptab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.hist-entry{padding:12px 0;border-bottom:1px solid var(--border);font-size:12px}
+.hist-entry:last-child{border-bottom:none}
+.hist-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.hist-who{font-weight:600;color:var(--text)}
+.hist-when{color:var(--text3);font-family:monospace;font-size:11px}
+.hist-changes{display:flex;flex-direction:column;gap:3px}
+.hist-change{display:flex;gap:8px;font-size:11px;align-items:baseline}
+.hist-field{font-weight:600;color:var(--text2);min-width:100px;flex-shrink:0}
+.hist-old{color:var(--red);text-decoration:line-through;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-new{color:var(--green);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-arrow{color:var(--text3)}
+.hist-empty{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+.hist-loading{text-align:center;padding:24px;color:var(--text3);font-size:12px}
 .pbody{padding:20px}
 .stitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
@@ -158,7 +175,13 @@ td.nm:hover{text-decoration:underline}
 <div class="panel">
   <div class="ph"><h2 id="ptitle">Add Facility</h2><span class="idb" id="pbadge" style="display:none"></span><button class="pclose" onclick="closePanel()">✕</button></div>
   <div class="pbody">
-    <div class="stitle">Basic Information</div>
+    <div class="ptabs" id="ptabs" style="display:none">
+      <button class="ptab on" onclick="switchTab('details')">Details</button>
+      <button class="ptab" onclick="switchTab('history')">Change History</button>
+    </div>
+
+    <!-- DETAILS TAB -->
+    <div id="tab-details">
     <div class="grid">
       <div class="field s2"><label>Name <span class="r">*</span></label><input id="f-name"></div>
       <div class="field"><label>Phone</label><input id="f-phone"></div>
@@ -220,12 +243,19 @@ td.nm:hover{text-decoration:underline}
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="f-ev" style="accent-color:var(--blue)"> EV Certified</label>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="f-shipped" style="accent-color:var(--blue)"> Accepts Shipped Parts</label>
     </div>
+    </div><!-- end tab-details -->
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" style="display:none">
+      <div id="hist-body"><div class="hist-loading">Loading history…</div></div>
+    </div>
+
   </div>
   <div class="pfoot">
     <button class="btn btn-del" id="del-btn" onclick="confirmDel()" style="display:none">Delete</button>
     <div class="sp"></div>
     <button class="btn btn-ghost" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-save" onclick="saveFac()">Save Changes</button>
+    <button class="btn btn-save" id="save-btn" onclick="saveFac()">Save Changes</button>
   </div>
 </div>
 </div>
@@ -296,6 +326,18 @@ const api = {
   async del(id) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'DELETE',headers:hdrs()});
     if(!r.ok) throw new Error(await r.text());
+  },
+  async logHistory(entry) {
+    await fetch(`${SUPABASE_URL}/rest/v1/facility_history`,{
+      method:'POST',
+      headers:hdrs({'Prefer':'return=minimal'}),
+      body:JSON.stringify(entry)
+    });
+  },
+  async getHistory(facilityId) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
   }
 };
 
@@ -405,7 +447,16 @@ function clr(){
   document.getElementById('f-shipped').checked=false;
 }
 
-function openAdd(){editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';document.getElementById('del-btn').style.display='none';document.getElementById('ov').classList.add('open');}
+function openAdd(){
+  editId=null;clr();
+  document.getElementById('ptitle').textContent='Add Facility';
+  document.getElementById('pbadge').style.display='none';
+  document.getElementById('del-btn').style.display='none';
+  document.getElementById('ptabs').style.display='none';
+  document.getElementById('save-btn').style.display='';
+  switchTab('details');
+  document.getElementById('ov').classList.add('open');
+}
 
 function openEdit(id){
   const f=data.find(x=>x.id===id);if(!f)return;
@@ -424,10 +475,47 @@ function openEdit(id){
   document.getElementById('f-shipped').checked=!!f.accepts_shipped;
   const lk=document.getElementById('f-offer-link');
   if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}
+  document.getElementById('ptabs').style.display='flex';
+  document.getElementById('save-btn').style.display='';
+  switchTab('details');
   document.getElementById('ov').classList.add('open');
 }
 
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
+
+function switchTab(tab){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.ptab').forEach(t=>{if(t.textContent.toLowerCase().includes(tab==='details'?'detail':'history'))t.classList.add('on');});
+  document.getElementById('tab-details').style.display = tab==='details' ? '' : 'none';
+  document.getElementById('tab-history').style.display = tab==='history' ? '' : 'none';
+  document.getElementById('save-btn').style.display = tab==='details' ? '' : 'none';
+  if(tab==='history' && editId) loadHistory(editId);
+}
+
+async function loadHistory(facilityId){
+  const el=document.getElementById('hist-body');
+  el.innerHTML='<div class="hist-loading">Loading history…</div>';
+  try {
+    const rows = await api.getHistory(facilityId);
+    if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}
+    const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL'};
+    el.innerHTML=rows.map(r=>{
+      const changes=r.changes||{};
+      const changeLines=Object.entries(changes).map(([k,v])=>`
+        <div class="hist-change">
+          <span class="hist-field">${LABELS[k]||k}</span>
+          <span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span>
+          <span class="hist-arrow">→</span>
+          <span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span>
+        </div>`).join('');
+      const when=new Date(r.changed_at).toLocaleString();
+      return`<div class="hist-entry">
+        <div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div>
+        <div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div>
+      </div>`;
+    }).join('');
+  } catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
+}
 
 async function saveFac(){
   const g=i=>document.getElementById(i);
@@ -454,6 +542,26 @@ async function saveFac(){
   showDbl('Saving…');
   try {
     const [saved]=await api.upsert(rec);
+
+    // Build diff of changed fields
+    const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url'];
+    const changes={};
+    if(editId && existing){
+      TRACK.forEach(k=>{
+        const oldVal = existing[k]??null;
+        const newVal = rec[k]??null;
+        if(String(oldVal)!==String(newVal)) changes[k]={from:oldVal,to:newVal};
+      });
+    }
+
+    // Log to history table
+    await api.logHistory({
+      facility_id: saved.id,
+      facility_name: saved.name,
+      changed_by: userEmail,
+      changes: Object.keys(changes).length ? changes : null
+    });
+
     if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}
     else data.unshift(saved);
     rebuild();go();closePanel();
