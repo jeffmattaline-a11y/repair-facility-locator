@@ -122,6 +122,29 @@ td.nm:hover{text-decoration:underline}
 /* Session expired overlay */
 .session-expired-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .session-expired-ov.open{display:flex}
+
+/* Address validation overlay */
+.addr-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.addr-ov.open{display:flex}
+.addr-box{background:#fff;border-radius:12px;width:100%;max-width:540px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
+.addr-box-head{background:#1a3a6b;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:8px}
+.addr-box-head h3{font-size:15px;font-weight:600;flex:1}
+.addr-box-icon{font-size:18px}
+.addr-box-body{padding:20px}
+.addr-box-body p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.addr-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.addr-col{background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.addr-col.suggested{border-color:#a3d9b4;background:var(--green-bg)}
+.addr-col label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);display:block;margin-bottom:8px}
+.addr-col.suggested label{color:var(--green)}
+.addr-line{font-size:13px;color:var(--text);line-height:1.6}
+.addr-diff{background:#fff3cd;border-radius:3px;padding:0 2px;font-weight:600;color:#92400e}
+.addr-warn{background:#fffbeb;border:1px solid #fcd38a;border-radius:8px;padding:12px 14px;font-size:13px;color:#92400e;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+.addr-warn-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.addr-box-foot{padding:14px 20px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.addr-box-foot .sp{flex:1}
+.btn-accept{background:var(--green);color:#fff;border:none}
+.btn-accept:hover{background:#236b3d}
 .session-expired-box{background:#fff;border-radius:12px;padding:32px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .session-expired-box h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px}
 .session-expired-box p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
@@ -152,6 +175,39 @@ td.nm:hover{text-decoration:underline}
     <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')reAuth()"></div>
     <button class="lbtn" onclick="reAuth()">Sign Back In</button>
     <div class="lerr" id="re-err"></div>
+  </div>
+</div>
+
+<!-- Address Validation Overlay -->
+<div class="addr-ov" id="addr-ov">
+  <div class="addr-box">
+    <div class="addr-box-head">
+      <span class="addr-box-icon">📍</span>
+      <h3 id="addr-ov-title">Address Suggestion</h3>
+    </div>
+    <div class="addr-box-body">
+      <div id="addr-warn" class="addr-warn" style="display:none">
+        <span class="addr-warn-icon">⚠️</span>
+        <span id="addr-warn-msg"></span>
+      </div>
+      <p id="addr-ov-msg"></p>
+      <div class="addr-compare" id="addr-compare">
+        <div class="addr-col">
+          <label>You entered</label>
+          <div class="addr-line" id="addr-entered"></div>
+        </div>
+        <div class="addr-col suggested">
+          <label>✓ Google suggests</label>
+          <div class="addr-line" id="addr-suggested"></div>
+        </div>
+      </div>
+    </div>
+    <div class="addr-box-foot">
+      <button class="btn btn-ghost" onclick="addrKeepOriginal()">Keep Original</button>
+      <div class="sp"></div>
+      <button class="btn btn-ghost" onclick="addrGoBack()">✎ Edit Address</button>
+      <button class="btn btn-accept btn-save" id="addr-accept-btn" onclick="addrAcceptSuggestion()">✓ Use Suggested</button>
+    </div>
   </div>
 </div>
 
@@ -647,28 +703,177 @@ async function loadHistory(facilityId){
   } catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
 }
 
-async function saveFac(){
-  const g=i=>document.getElementById(i);
-  const name=g('f-name').value.trim();
-  if(!name){toast('Name is required.','err');return;}
-  if(!g('f-city').value.trim()||!g('f-state-i').value.trim()||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}
-  const existing=editId?data.find(f=>f.id===editId):null;
-  const rec={
-    ...(editId&&{id:editId}),
-    numeric_id:existing?.numeric_id||null,
-    name, phone:g('f-phone').value.trim(), contact:g('f-contact').value.trim(),
-    contact_email:g('f-cemail').value.trim(), address:g('f-addr').value.trim(),
-    city:g('f-city').value.trim(), state:g('f-state-i').value.trim().toUpperCase(),
-    zip:g('f-zip').value.trim(), country:g('f-country').value.trim()||'USA',
-    website:g('f-web').value.trim()||null, email1:g('f-email').value.trim()||null,
-    lat:g('f-lat').value.trim()||null, lng:g('f-lng').value.trim()||null,
-    labor:g('f-labor').value||null, status:g('f-status-i').value,
-    shop_type:g('f-type-i').value||null, software:g('f-sw').value||null,
-    labor_guide:g('f-lg').value||null, form_type:g('f-ft').value,
-    ev_certified:g('f-ev').checked, accepts_shipped:g('f-shipped').checked,
-    offer_url:g('f-offer-url').value.trim()||null,
-    added_on:existing?.added_on||today(), edited_on:today(), edited_by:userEmail
+// ── Google Address Validation ─────────────────────────────────────────────────
+const GOOGLE_API_KEY = 'AIzaSyBHA_zbUQam9J-Y5kW3xZFlaPJG1vcxNMY';
+
+// Holds the pending record + callback while the addr dialog is open
+let addrPending = null;
+
+async function geocodeAddress(addr, city, state, zip, country) {
+  const full = `${addr}, ${city}, ${state} ${zip}, ${country||'USA'}`;
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(full)}&key=${GOOGLE_API_KEY}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  if (data.status !== 'OK' || !data.results?.length) return null;
+  return data.results[0];
+}
+
+function parseGeoResult(result) {
+  const get = (types) => {
+    for (const t of types) {
+      const c = result.address_components.find(x => x.types.includes(t));
+      if (c) return c;
+    }
+    return null;
   };
+  return {
+    address: [
+      get(['street_number'])?.long_name,
+      get(['route'])?.long_name
+    ].filter(Boolean).join(' '),
+    city:    get(['locality','sublocality','neighborhood'])?.long_name || '',
+    state:   get(['administrative_area_level_1'])?.short_name || '',
+    zip:     get(['postal_code'])?.long_name || '',
+    country: get(['country'])?.short_name || 'US',
+    lat:     result.geometry.location.lat,
+    lng:     result.geometry.location.lng,
+    formatted: result.formatted_address
+  };
+}
+
+function highlightDiff(entered, suggested) {
+  if (!suggested || entered.toLowerCase() === suggested.toLowerCase()) return esc(suggested||entered);
+  // Highlight the suggested value if it differs
+  return `<span class="addr-diff">${esc(suggested)}</span>`;
+}
+
+async function validateAndSave(rec, existing) {
+  // Only validate if address fields are present
+  const addr  = rec.address || '';
+  const city  = rec.city    || '';
+  const state = rec.state   || '';
+  const zip   = rec.zip     || '';
+  if (!addr || !city || !state || !zip) { await doSave(rec, existing); return; }
+
+  showDbl('Validating address…');
+  let geoResult = null;
+  try { geoResult = await geocodeAddress(addr, city, state, zip, rec.country); }
+  catch(e) { /* network error — skip validation, save anyway */ }
+  hideDbl();
+
+  if (!geoResult) {
+    // Could not validate — warn but allow save
+    showAddrDialog({
+      mode: 'unverified',
+      rec, existing,
+      entered: { address: addr, city, state, zip }
+    });
+    return;
+  }
+
+  const parsed = parseGeoResult(geoResult);
+
+  // Check if anything meaningful differs
+  const addrMatch  = addr.toLowerCase()  === parsed.address.toLowerCase();
+  const cityMatch  = city.toLowerCase()  === parsed.city.toLowerCase();
+  const stateMatch = state.toUpperCase() === parsed.state.toUpperCase();
+  const zipMatch   = zip                 === parsed.zip;
+  const allMatch   = addrMatch && cityMatch && stateMatch && zipMatch;
+
+  if (allMatch) {
+    // Perfect match — auto-fill lat/lng silently and save
+    if (!rec.lat && !rec.lng) {
+      rec.lat = String(parsed.lat);
+      rec.lng = String(parsed.lng);
+    }
+    await doSave(rec, existing);
+    return;
+  }
+
+  // Something differs — show the dialog
+  showAddrDialog({
+    mode: 'suggestion',
+    rec, existing,
+    entered:   { address: addr,         city,         state,         zip },
+    suggested: { address: parsed.address, city: parsed.city, state: parsed.state, zip: parsed.zip,
+                 lat: String(parsed.lat), lng: String(parsed.lng) }
+  });
+}
+
+function showAddrDialog({ mode, rec, existing, entered, suggested }) {
+  addrPending = { rec, existing, suggested };
+
+  const warn   = document.getElementById('addr-warn');
+  const warnMsg= document.getElementById('addr-warn-msg');
+  const compare= document.getElementById('addr-compare');
+  const title  = document.getElementById('addr-ov-title');
+  const msg    = document.getElementById('addr-ov-msg');
+  const acceptBtn = document.getElementById('addr-accept-btn');
+
+  if (mode === 'unverified') {
+    title.textContent = 'Address Could Not Be Verified';
+    msg.textContent   = 'Google could not find this address. You can go back and correct it, or save it as entered.';
+    warn.style.display = 'flex';
+    warnMsg.textContent = 'This address was not found in Google Maps. It may be incorrect or missing information.';
+    compare.style.display = 'none';
+    acceptBtn.style.display = 'none';
+  } else {
+    title.textContent = 'Address Correction Suggested';
+    msg.textContent   = 'Google found a corrected version of this address. Accepting will also fill in the latitude and longitude automatically.';
+    warn.style.display = 'none';
+    compare.style.display = 'grid';
+    acceptBtn.style.display = '';
+
+    document.getElementById('addr-entered').innerHTML =
+      `${esc(entered.address)}<br>${esc(entered.city)}, ${esc(entered.state)} ${esc(entered.zip)}`;
+
+    document.getElementById('addr-suggested').innerHTML =
+      `${highlightDiff(entered.address, suggested.address)}<br>` +
+      `${highlightDiff(entered.city, suggested.city)}, ` +
+      `${highlightDiff(entered.state, suggested.state)} ` +
+      `${highlightDiff(entered.zip, suggested.zip)}`;
+  }
+
+  document.getElementById('addr-ov').classList.add('open');
+}
+
+function addrAcceptSuggestion() {
+  if (!addrPending) return;
+  const { rec, existing, suggested } = addrPending;
+  // Apply Google's corrections
+  rec.address = suggested.address || rec.address;
+  rec.city    = suggested.city    || rec.city;
+  rec.state   = suggested.state   || rec.state;
+  rec.zip     = suggested.zip     || rec.zip;
+  rec.lat     = suggested.lat     || rec.lat;
+  rec.lng     = suggested.lng     || rec.lng;
+  // Also update the form fields so they reflect the corrected values
+  const s = (id, v) => { const e = document.getElementById(id); if(e && v) e.value = v; };
+  s('f-addr', rec.address); s('f-city', rec.city);
+  s('f-state-i', rec.state); s('f-zip', rec.zip);
+  s('f-lat', rec.lat); s('f-lng', rec.lng);
+  closeAddrDialog();
+  doSave(rec, existing);
+}
+
+function addrKeepOriginal() {
+  if (!addrPending) return;
+  const { rec, existing } = addrPending;
+  closeAddrDialog();
+  doSave(rec, existing);
+}
+
+function addrGoBack() {
+  closeAddrDialog();
+  addrPending = null;
+  // Panel stays open for editing
+}
+
+function closeAddrDialog() {
+  document.getElementById('addr-ov').classList.remove('open');
+}
+
+async function doSave(rec, existing) {
   showDbl('Saving…');
   try {
     const [saved] = await withAuthRetry(() => api.upsert(rec));
@@ -702,6 +907,31 @@ async function saveFac(){
     }
   }
   hideDbl();
+}
+
+async function saveFac(){
+  const g=i=>document.getElementById(i);
+  const name=g('f-name').value.trim();
+  if(!name){toast('Name is required.','err');return;}
+  if(!g('f-city').value.trim()||!g('f-state-i').value.trim()||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}
+  const existing=editId?data.find(f=>f.id===editId):null;
+  const rec={
+    ...(editId&&{id:editId}),
+    numeric_id:existing?.numeric_id||null,
+    name, phone:g('f-phone').value.trim(), contact:g('f-contact').value.trim(),
+    contact_email:g('f-cemail').value.trim(), address:g('f-addr').value.trim(),
+    city:g('f-city').value.trim(), state:g('f-state-i').value.trim().toUpperCase(),
+    zip:g('f-zip').value.trim(), country:g('f-country').value.trim()||'USA',
+    website:g('f-web').value.trim()||null, email1:g('f-email').value.trim()||null,
+    lat:g('f-lat').value.trim()||null, lng:g('f-lng').value.trim()||null,
+    labor:g('f-labor').value||null, status:g('f-status-i').value,
+    shop_type:g('f-type-i').value||null, software:g('f-sw').value||null,
+    labor_guide:g('f-lg').value||null, form_type:g('f-ft').value,
+    ev_certified:g('f-ev').checked, accepts_shipped:g('f-shipped').checked,
+    offer_url:g('f-offer-url').value.trim()||null,
+    added_on:existing?.added_on||today(), edited_on:today(), edited_by:userEmail
+  };
+  await validateAndSave(rec, existing);
 }
 
 function confirmDel(){delId=editId;const f=data.find(x=>x.id===editId);document.getElementById('cfm-msg').textContent=`Delete "${f?.name}"? This cannot be undone.`;document.getElementById('cfm-ov').classList.add('open');}
