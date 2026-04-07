@@ -709,13 +709,43 @@ const GOOGLE_API_KEY = 'AIzaSyBHA_zbUQam9J-Y5kW3xZFlaPJG1vcxNMY';
 // Holds the pending record + callback while the addr dialog is open
 let addrPending = null;
 
+// Load the Google Maps JS API (browser-compatible, no CORS issues)
+let googleMapsReady = false;
+let googleMapsLoading = false;
+let googleMapsCallbacks = [];
+
+function loadGoogleMaps() {
+  return new Promise((resolve, reject) => {
+    if (googleMapsReady) { resolve(); return; }
+    googleMapsCallbacks.push({ resolve, reject });
+    if (googleMapsLoading) return;
+    googleMapsLoading = true;
+    window.__googleMapsLoaded = () => {
+      googleMapsReady = true;
+      googleMapsCallbacks.forEach(cb => cb.resolve());
+      googleMapsCallbacks = [];
+    };
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=geocoding&callback=__googleMapsLoaded`;
+    s.onerror = () => {
+      googleMapsLoading = false;
+      googleMapsCallbacks.forEach(cb => cb.reject(new Error('Google Maps failed to load')));
+      googleMapsCallbacks = [];
+    };
+    document.head.appendChild(s);
+  });
+}
+
 async function geocodeAddress(addr, city, state, zip, country) {
+  await loadGoogleMaps();
   const full = `${addr}, ${city}, ${state} ${zip}, ${country||'USA'}`;
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(full)}&key=${GOOGLE_API_KEY}`;
-  const r = await fetch(url);
-  const data = await r.json();
-  if (data.status !== 'OK' || !data.results?.length) return null;
-  return data.results[0];
+  return new Promise((resolve) => {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: full }, (results, status) => {
+      if (status === 'OK' && results?.length) resolve(results[0]);
+      else resolve(null);
+    });
+  });
 }
 
 function parseGeoResult(result) {
@@ -735,8 +765,8 @@ function parseGeoResult(result) {
     state:   get(['administrative_area_level_1'])?.short_name || '',
     zip:     get(['postal_code'])?.long_name || '',
     country: get(['country'])?.short_name || 'US',
-    lat:     result.geometry.location.lat,
-    lng:     result.geometry.location.lng,
+    lat:     result.geometry.location.lat(),
+    lng:     result.geometry.location.lng(),
     formatted: result.formatted_address
   };
 }
@@ -758,7 +788,13 @@ async function validateAndSave(rec, existing) {
   showDbl('Validating address…');
   let geoResult = null;
   try { geoResult = await geocodeAddress(addr, city, state, zip, rec.country); }
-  catch(e) { /* network error — skip validation, save anyway */ }
+  catch(e) {
+    console.error('Geocode error:', e);
+    hideDbl();
+    // API load failure — warn but allow save
+    showAddrDialog({ mode: 'unverified', rec, existing, entered: { address: addr, city, state, zip } });
+    return;
+  }
   hideDbl();
 
   if (!geoResult) {
