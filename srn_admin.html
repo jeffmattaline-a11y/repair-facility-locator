@@ -1277,34 +1277,56 @@ const ADDR_ABBR = {
 function normAddr(a) {
   if (!a) return '';
   let s = String(a).toLowerCase().trim();
+  // Remove punctuation and extra spaces first
+  s = s.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
   // Expand OR contract abbreviations (normalize to short form)
   Object.entries(ADDR_ABBR).forEach(([long, short]) => {
     s = s.replace(new RegExp(`\\b${long}\\b`, 'g'), short);
   });
-  return s.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+  // Remove all spaces to handle "ClarksonWoods" vs "Clarkson Woods"
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+// Normalize just the street name portion (no number) for fuzzy compare
+function normStreetName(a) {
+  if (!a) return '';
+  // Strip leading house number
+  return normAddr(a).replace(/^\d+\s*/, '').trim();
 }
 
 // Simple Levenshtein similarity ratio 0–1
 function similarity(a, b) {
   if (!a || !b) return 0;
   if (a === b) return 1;
+  // Also try comparing with spaces removed (catches "ClarksonWoods" vs "Clarkson Woods")
+  const aNS = a.replace(/\s/g,''), bNS = b.replace(/\s/g,'');
+  if (aNS === bNS) return 1;
   const la = a.length, lb = b.length;
   const max = Math.max(la, lb);
   if (max === 0) return 1;
-  // Fast path for very different lengths
-  if (Math.abs(la - lb) / max > 0.5) return 0;
+  if (Math.abs(la - lb) / max > 0.6) return 0;
   const dp = Array.from({length: la + 1}, (_, i) => Array.from({length: lb + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
   for (let i = 1; i <= la; i++)
     for (let j = 1; j <= lb; j++)
       dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-  return 1 - dp[la][lb] / max;
+  const levSim = 1 - dp[la][lb] / max;
+  // Return best of regular and no-space comparison
+  const laNS = aNS.length, lbNS = bNS.length, maxNS = Math.max(laNS, lbNS);
+  if (maxNS === 0) return levSim;
+  const dp2 = Array.from({length: laNS + 1}, (_, i) => Array.from({length: lbNS + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= laNS; i++)
+    for (let j = 1; j <= lbNS; j++)
+      dp2[i][j] = aNS[i-1] === bNS[j-1] ? dp2[i-1][j-1] : 1 + Math.min(dp2[i-1][j], dp2[i][j-1], dp2[i-1][j-1]);
+  return Math.max(levSim, 1 - dp2[laNS][lbNS] / maxNS);
 }
 
 // Check one record against a list — returns array of matches
 function findDupesFor(rec, candidates, excludeId = null) {
   const recPhone = normPhone(rec.phone);
   const recAddr  = normAddr(rec.address);
+  const recStreet = normStreetName(rec.address);
   const recName  = (rec.name || '').toLowerCase().trim();
+  const recZip   = (rec.zip || '').trim();
   const matches  = [];
 
   for (const c of candidates) {
@@ -1321,24 +1343,48 @@ function findDupesFor(rec, candidates, excludeId = null) {
       confidence += 60;
     }
 
-    // Address match (fuzzy, same state)
-    const cAddr = normAddr(c.address);
-    if (recAddr && cAddr && rec.state === c.state) {
-      const addrSim = similarity(recAddr, cAddr);
-      if (addrSim >= 0.85) {
-        reasons.push(`address match (${Math.round(addrSim * 100)}%)`);
+    // Address match — same state, fuzzy street name, or same zip + similar street
+    const cAddr   = normAddr(c.address);
+    const cStreet = normStreetName(c.address);
+    const cZip    = (c.zip || '').trim();
+    const sameState = rec.state === c.state;
+    const sameZip   = recZip && cZip && recZip === cZip;
+
+    if (recAddr && cAddr && sameState) {
+      const addrSim   = similarity(recAddr, cAddr);
+      const streetSim = similarity(recStreet, cStreet);
+      const bestSim   = Math.max(addrSim, streetSim);
+
+      if (bestSim >= 0.80) {
+        reasons.push(`address match (${Math.round(bestSim * 100)}%)`);
         confidence += 50;
+      } else if (sameZip && streetSim >= 0.70) {
+        // Same zip + fairly similar street = good enough
+        reasons.push(`address match (zip+street ${Math.round(streetSim * 100)}%)`);
+        confidence += 45;
       }
     }
 
-    // Name similarity bonus
-    const cName = (c.name || '').toLowerCase().trim();
-    if (recName && cName) {
+    // Same zip + very similar name = flag even without address/phone
+    if (sameZip) {
+      const cName = (c.name || '').toLowerCase().trim();
       const nameSim = similarity(recName, cName);
-      if (nameSim >= 0.75) confidence += 20;
+      if (nameSim >= 0.70 && confidence === 0) {
+        reasons.push(`name match (${Math.round(nameSim * 100)}%)`);
+        confidence += 40;
+      } else if (nameSim >= 0.65) {
+        confidence += 15; // bonus on top of existing match
+      }
     }
 
-    if (reasons.length > 0 && confidence >= 55) {
+    // Name similarity bonus (any state match)
+    if (confidence > 0) {
+      const cName = (c.name || '').toLowerCase().trim();
+      const nameSim = similarity(recName, cName);
+      if (nameSim >= 0.65) confidence += 15;
+    }
+
+    if (reasons.length > 0 && confidence >= 45) {
       matches.push({ facility: c, reasons, confidence });
     }
   }
