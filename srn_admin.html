@@ -124,6 +124,38 @@ td.nm:hover{text-decoration:underline}
 .session-expired-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .session-expired-ov.open{display:flex}
 
+/* Duplicate detection overlay */
+.dup-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:7500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
+.dup-ov.open{display:flex}
+.dup-box{background:#fff;border-radius:12px;width:100%;max-width:620px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;margin:auto}
+.dup-head{background:#92400e;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:8px}
+.dup-head h3{font-size:15px;font-weight:600;flex:1}
+.dup-body{padding:20px}
+.dup-body p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.dup-match{background:#fffbeb;border:1px solid #fcd38a;border-radius:8px;padding:14px;margin-bottom:12px}
+.dup-match-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dup-match-name{font-weight:600;font-size:13px;color:var(--navy)}
+.dup-match-reason{font-size:11px;font-weight:600;color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:20px;font-family:monospace}
+.dup-match-detail{font-size:12px;color:var(--text2);line-height:1.6}
+.dup-foot{padding:14px 20px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* Find Duplicates scan report */
+.dup-report-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:7500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
+.dup-report-ov.open{display:flex}
+.dup-report-box{background:#fff;border-radius:12px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;margin:auto}
+.dup-report-head{background:#1a3a6b;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:2}
+.dup-report-head h3{font-size:15px;font-weight:600;flex:1}
+.dup-report-body{padding:20px;max-height:70vh;overflow-y:auto}
+.dup-pair{border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.dup-pair-head{background:#fffbeb;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.dup-pair-label{font-size:11px;font-weight:700;color:#92400e;font-family:monospace}
+.dup-pair-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.dup-pair-rec{padding:12px 14px;font-size:12px;line-height:1.7}
+.dup-pair-rec:first-child{border-right:1px solid var(--border)}
+.dup-pair-rec strong{display:block;font-size:13px;color:var(--blue);cursor:pointer;margin-bottom:2px}
+.dup-pair-rec strong:hover{text-decoration:underline}
+.dup-report-foot{padding:14px 20px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+
 /* Address validation overlay */
 .addr-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .addr-ov.open{display:flex}
@@ -214,6 +246,40 @@ td.nm:hover{text-decoration:underline}
 
 <div class="dbl" id="dbl" style="display:none"><div class="spin"></div><span id="dbl-msg">Loading…</span></div>
 
+<!-- Duplicate Warning Overlay (single save) -->
+<div class="dup-ov" id="dup-ov">
+  <div class="dup-box">
+    <div class="dup-head"><span style="font-size:18px">⚠️</span><h3>Possible Duplicate Detected</h3></div>
+    <div class="dup-body">
+      <p id="dup-ov-msg">This facility may already exist in the database. Review the potential match below before saving.</p>
+      <div id="dup-matches"></div>
+    </div>
+    <div class="dup-foot">
+      <button class="btn btn-ghost" onclick="dupGoBack()">✎ Edit Record</button>
+      <div class="sp"></div>
+      <button class="btn btn-ghost" onclick="dupFlagAndSave()">⚑ Flag as NRV &amp; Save</button>
+      <button class="btn btn-save" onclick="dupSaveAnyway()">Save Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- Find Duplicates Scan Report -->
+<div class="dup-report-ov" id="dup-report-ov">
+  <div class="dup-report-box">
+    <div class="dup-report-head">
+      <span style="font-size:18px">🔍</span>
+      <h3>Duplicate Scan Report</h3>
+      <button class="pclose" onclick="document.getElementById('dup-report-ov').classList.remove('open')">✕</button>
+    </div>
+    <div class="dup-report-body" id="dup-report-body"></div>
+    <div class="dup-report-foot">
+      <span id="dup-report-summary" style="font-size:12px;color:var(--text3)"></span>
+      <div class="sp"></div>
+      <button class="btn btn-ghost" onclick="document.getElementById('dup-report-ov').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
 <nav>
   <div class="brand">SRN <span>Facility</span> Manager</div>
   <div class="sp"></div>
@@ -223,6 +289,7 @@ td.nm:hover{text-decoration:underline}
   <button class="nb" onclick="document.getElementById('imp-file').click()">⬆ Import</button>
   <input type="file" id="imp-file" accept=".json,.xlsx,.xls,.csv" style="display:none" onchange="importFile(event)">
   <button class="nb" onclick="openMap()" title="Open public locator map">🗺 View Map</button>
+  <button class="nb" onclick="findDuplicates()" title="Scan for duplicate facilities">🔍 Find Dupes</button>
   <button class="nb primary" onclick="openAdd()">+ Add Facility</button>
   <div class="ubadge"><span id="u-email"></span><button class="sout" onclick="signOut()">Sign out</button></div>
 </nav>
@@ -976,7 +1043,7 @@ async function saveFac(){
     notes:g('f-notes').value.trim()||null,
     added_on:existing?.added_on||today(), edited_on:today(), edited_by:userEmail
   };
-  await validateAndSave(rec, existing);
+  await checkDupesAndSave(rec, existing);
 }
 
 function confirmDel(){delId=editId;const f=data.find(x=>x.id===editId);document.getElementById('cfm-msg').textContent=`Delete "${f?.name}"? This cannot be undone.`;document.getElementById('cfm-ov').classList.add('open');}
@@ -1079,7 +1146,7 @@ function showImportSummary(clean, flagged, total) {
           <div style="font-size:12px;color:#7e22ce;margin-top:2px">⚠ Needs Review</div>
         </div>
       </div>
-      ${flagged > 0 ? `<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.</p>` : '<p style="font-size:12px;color:var(--green)">All addresses verified successfully!</p>'}
+      ${flagged > 0 ? `<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.<br>Notes on each record explain whether it was flagged for address issues or a possible duplicate.</p>` : '<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}
       <button class="btn btn-save" onclick="document.getElementById('import-summary-ov').classList.remove('open')" style="margin-top:16px;padding:8px 24px">Done</button>
     </div>`;
   let ov = document.getElementById('import-summary-ov');
@@ -1150,10 +1217,29 @@ async function mergeAndUpload(rows) {
   for (let i = 0; i < valid.length; i++) {
     const rec = valid[i];
     if (i % 10 === 0) showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);
-    const result = await geocodeForImport(rec);
-    if (result.status === 'ok') clean++;
-    else { flagged++; if (result.status === 'unverified') { rec.status = rec.status || 'NRV'; rec.notes = rec.notes ? rec.notes + ' | Address could not be verified by Google' : 'Address could not be verified by Google'; } }
-    valid[i] = result.rec;
+
+    // Address validation
+    const geoResult = await geocodeForImport(rec);
+    if (geoResult.status === 'ok') clean++;
+    else {
+      flagged++;
+      if (geoResult.status === 'unverified') {
+        rec.status = rec.status || 'NRV';
+        rec.notes = rec.notes ? rec.notes + ' | Address could not be verified by Google' : 'Address could not be verified by Google';
+      }
+    }
+    valid[i] = geoResult.rec;
+
+    // Duplicate check against existing DB + already-processed batch records
+    const dupMatches = await checkDupesForImport(valid[i], data, valid.slice(0, i));
+    if (dupMatches.length > 0) {
+      const best = dupMatches[0];
+      const dupNote = `Possible duplicate of: "${best.facility.name}" (ID: ${best.facility.numeric_id||best.facility.id}) — matched on ${best.reasons.join(' + ')}`;
+      valid[i].status = 'NRV';
+      valid[i].notes = valid[i].notes ? `${valid[i].notes} | ${dupNote}` : dupNote;
+      flagged++;
+    }
+
     await new Promise(r => setTimeout(r, GEO_THROTTLE));
   }
 
@@ -1170,7 +1256,242 @@ async function mergeAndUpload(rows) {
   showImportSummary(clean, flagged, total);
 }
 
-function importFile(e){
+// ══════════════════════════════════════════════════════════════════════════════
+// DUPLICATE DETECTION
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Normalize phone — strip everything except digits
+function normPhone(p) {
+  if (!p) return '';
+  return String(p).replace(/\D/g, '').replace(/^1/, ''); // strip leading 1
+}
+
+// Normalize address for fuzzy comparison
+const ADDR_ABBR = {
+  'street':'st','drive':'dr','avenue':'ave','boulevard':'blvd','road':'rd',
+  'lane':'ln','court':'ct','place':'pl','circle':'cir','trail':'trl',
+  'parkway':'pkwy','highway':'hwy','suite':'ste','building':'bldg',
+  'north':'n','south':'s','east':'e','west':'w',
+  'northeast':'ne','northwest':'nw','southeast':'se','southwest':'sw'
+};
+function normAddr(a) {
+  if (!a) return '';
+  let s = String(a).toLowerCase().trim();
+  // Expand OR contract abbreviations (normalize to short form)
+  Object.entries(ADDR_ABBR).forEach(([long, short]) => {
+    s = s.replace(new RegExp(`\\b${long}\\b`, 'g'), short);
+  });
+  return s.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Simple Levenshtein similarity ratio 0–1
+function similarity(a, b) {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const la = a.length, lb = b.length;
+  const max = Math.max(la, lb);
+  if (max === 0) return 1;
+  // Fast path for very different lengths
+  if (Math.abs(la - lb) / max > 0.5) return 0;
+  const dp = Array.from({length: la + 1}, (_, i) => Array.from({length: lb + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= la; i++)
+    for (let j = 1; j <= lb; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return 1 - dp[la][lb] / max;
+}
+
+// Check one record against a list — returns array of matches
+function findDupesFor(rec, candidates, excludeId = null) {
+  const recPhone = normPhone(rec.phone);
+  const recAddr  = normAddr(rec.address);
+  const recName  = (rec.name || '').toLowerCase().trim();
+  const matches  = [];
+
+  for (const c of candidates) {
+    if (c.id && c.id === excludeId) continue;
+    if (c === rec) continue;
+
+    const reasons = [];
+    let confidence = 0;
+
+    // Phone match (exact after normalization)
+    const cPhone = normPhone(c.phone);
+    if (recPhone && cPhone && recPhone === cPhone && recPhone.length >= 7) {
+      reasons.push('phone match');
+      confidence += 60;
+    }
+
+    // Address match (fuzzy, same state)
+    const cAddr = normAddr(c.address);
+    if (recAddr && cAddr && rec.state === c.state) {
+      const addrSim = similarity(recAddr, cAddr);
+      if (addrSim >= 0.85) {
+        reasons.push(`address match (${Math.round(addrSim * 100)}%)`);
+        confidence += 50;
+      }
+    }
+
+    // Name similarity bonus
+    const cName = (c.name || '').toLowerCase().trim();
+    if (recName && cName) {
+      const nameSim = similarity(recName, cName);
+      if (nameSim >= 0.75) confidence += 20;
+    }
+
+    if (reasons.length > 0 && confidence >= 55) {
+      matches.push({ facility: c, reasons, confidence });
+    }
+  }
+
+  // Sort by confidence descending
+  return matches.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+}
+
+// Pending dup save context
+let dupPending = null;
+
+// Called from saveFac flow — check for dupes before saving
+async function checkDupesAndSave(rec, existing) {
+  const excludeId = rec.id || null;
+  const sameState = data.filter(f => f.state === rec.state);
+  const matches = findDupesFor(rec, sameState, excludeId);
+
+  if (matches.length === 0) {
+    await validateAndSave(rec, existing);
+    return;
+  }
+
+  // Show dup warning dialog
+  dupPending = { rec, existing };
+  const container = document.getElementById('dup-matches');
+  container.innerHTML = matches.map(m => {
+    const f = m.facility;
+    return `<div class="dup-match">
+      <div class="dup-match-head">
+        <span class="dup-match-name">${esc(f.name)}</span>
+        <span class="dup-match-reason">${m.reasons.join(' + ')}</span>
+      </div>
+      <div class="dup-match-detail">
+        ${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>
+        ${f.phone?'📞 '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;·&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>
+        Status: <strong>${esc(f.status||'—')}</strong>
+        <br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dup-ov').classList.add('open');
+}
+
+function dupGoBack() {
+  document.getElementById('dup-ov').classList.remove('open');
+  dupPending = null;
+}
+
+function dupSaveAnyway() {
+  if (!dupPending) return;
+  const { rec, existing } = dupPending;
+  document.getElementById('dup-ov').classList.remove('open');
+  dupPending = null;
+  validateAndSave(rec, existing);
+}
+
+function dupFlagAndSave() {
+  if (!dupPending) return;
+  const { rec, existing } = dupPending;
+  rec.status = 'NRV';
+  const dupNote = 'Flagged as possible duplicate — review before approving.';
+  rec.notes = rec.notes ? `${rec.notes} | ${dupNote}` : dupNote;
+  document.getElementById('dup-ov').classList.remove('open');
+  dupPending = null;
+  validateAndSave(rec, existing);
+}
+
+function closeAllOverlays() {
+  ['dup-ov','dup-report-ov','addr-ov'].forEach(id => document.getElementById(id)?.classList.remove('open'));
+}
+
+// ── Full database duplicate scan ──────────────────────────────────────────────
+async function findDuplicates() {
+  showDbl('Scanning for duplicates…');
+
+  // Group by state for performance
+  const byState = {};
+  data.forEach(f => {
+    const st = f.state || '__';
+    if (!byState[st]) byState[st] = [];
+    byState[st].push(f);
+  });
+
+  const pairs = [];
+  const seen  = new Set();
+
+  const states = Object.keys(byState);
+  for (let si = 0; si < states.length; si++) {
+    const group = byState[states[si]];
+    showDbl(`Scanning ${states[si]}… (${si+1}/${states.length} states)`);
+    // Yield to UI every state
+    await new Promise(r => setTimeout(r, 0));
+
+    for (let i = 0; i < group.length; i++) {
+      const rec = group[i];
+      const candidates = group.slice(i + 1);
+      const matches = findDupesFor(rec, candidates);
+      for (const m of matches) {
+        const key = [rec.id, m.facility.id].sort().join('|');
+        if (!seen.has(key)) {
+          seen.add(key);
+          pairs.push({ a: rec, b: m.facility, reasons: m.reasons, confidence: m.confidence });
+        }
+      }
+    }
+  }
+
+  hideDbl();
+
+  const body = document.getElementById('dup-report-body');
+  const summary = document.getElementById('dup-report-summary');
+
+  if (pairs.length === 0) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';
+    summary.textContent = 'No duplicates found';
+  } else {
+    pairs.sort((a, b) => b.confidence - a.confidence);
+    body.innerHTML = pairs.map(p => `
+      <div class="dup-pair">
+        <div class="dup-pair-head">
+          <span class="dup-pair-label">${p.reasons.join(' + ')}</span>
+          <span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span>
+        </div>
+        <div class="dup-pair-body">
+          <div class="dup-pair-rec">
+            <strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>
+            ${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>
+            ${p.a.phone?'📞 '+esc(p.a.phone)+'<br>':''}
+            ID: ${p.a.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span>
+          </div>
+          <div class="dup-pair-rec">
+            <strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>
+            ${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>
+            ${p.b.phone?'📞 '+esc(p.b.phone)+'<br>':''}
+            ID: ${p.b.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span>
+          </div>
+        </div>
+      </div>`).join('');
+    summary.textContent = `${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;
+  }
+
+  document.getElementById('dup-report-ov').classList.add('open');
+}
+
+// ── Hook dup check into import ────────────────────────────────────────────────
+async function checkDupesForImport(rec, existingData, batchSoFar) {
+  const candidates = [
+    ...existingData.filter(f => f.state === rec.state),
+    ...batchSoFar.filter(f => f.state === rec.state)
+  ];
+  return findDupesFor(rec, candidates);
+}
   const f=e.target.files[0];if(!f)return;
   const ext=f.name.split('.').pop().toLowerCase();
   if(ext==='json'){const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;mergeAndUpload(d);}catch{toast('Invalid JSON.','err');}};rd.readAsText(f);}
