@@ -114,9 +114,20 @@ td.nm:hover{text-decoration:underline}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.ok{background:var(--green)}
 .toast.err{background:var(--red)}
+.toast.warn{background:#b45309}
 .dbl{position:fixed;inset:0;background:rgba(244,246,249,.85);display:flex;align-items:center;justify-content:center;z-index:500;gap:12px;font-size:14px;color:var(--text2)}
 .spin{width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Session expired overlay */
+.session-expired-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.session-expired-ov.open{display:flex}
+.session-expired-box{background:#fff;border-radius:12px;padding:32px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.session-expired-box h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.session-expired-box p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.session-expired-box .lf{text-align:left}
+.session-expired-box .lbtn{margin-top:8px}
+.session-expired-box .lerr{text-align:center}
 </style>
 </head>
 <body>
@@ -129,6 +140,18 @@ td.nm:hover{text-decoration:underline}
     <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
     <button class="lbtn" onclick="signIn()">Sign In</button>
     <div class="lerr" id="l-err"></div>
+  </div>
+</div>
+
+<!-- Session Expired Re-auth Overlay -->
+<div class="session-expired-ov" id="session-expired-ov">
+  <div class="session-expired-box">
+    <h3>🔒 Session Expired</h3>
+    <p>Your session has timed out. Please enter your password to continue — your unsaved work is still open.</p>
+    <div class="lf"><label>Email</label><input type="email" id="re-email" readonly style="background:#f4f6f9;color:#4a5568"></div>
+    <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')reAuth()"></div>
+    <button class="lbtn" onclick="reAuth()">Sign Back In</button>
+    <div class="lerr" id="re-err"></div>
   </div>
 </div>
 
@@ -270,9 +293,6 @@ td.nm:hover{text-decoration:underline}
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG
-// 1. Go to https://supabase.com → your project → Settings → API
-// 2. Copy "Project URL" → SUPABASE_URL
-// 3. Copy "anon public" key → SUPABASE_ANON
 // ══════════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
@@ -280,8 +300,114 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const TABLE = 'facilities';
 const PG = 25;
-let token = null, userEmail = '', data = [], filtered = [];
+let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
 let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
+let refreshTimer = null;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// JWT REFRESH SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Detect if an error response is a JWT/auth expiry
+function isAuthError(errMsg) {
+  if (!errMsg) return false;
+  const s = String(errMsg).toLowerCase();
+  return s.includes('jwt expired') || s.includes('pgrst303') ||
+         s.includes('invalid jwt') || s.includes('token is expired') ||
+         s.includes('401');
+}
+
+// Attempt to silently refresh the access token using the refresh token
+async function tryRefreshToken() {
+  if (!refreshToken) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    const res = await r.json();
+    if (res.access_token) {
+      token = res.access_token;
+      if (res.refresh_token) refreshToken = res.refresh_token;
+      scheduleTokenRefresh();
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Schedule a proactive refresh 45 minutes after login (tokens last ~1 hour)
+function scheduleTokenRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(async () => {
+    const ok = await tryRefreshToken();
+    if (ok) {
+      toast('Session refreshed.', '', 2000);
+    } else {
+      // Silent refresh failed — prompt re-auth
+      showReAuthOverlay();
+    }
+  }, 45 * 60 * 1000); // 45 minutes
+}
+
+// Show the re-auth overlay (session expired, ask for password again)
+function showReAuthOverlay() {
+  document.getElementById('re-email').value = userEmail;
+  document.getElementById('re-pass').value = '';
+  document.getElementById('re-err').textContent = '';
+  document.getElementById('session-expired-ov').classList.add('open');
+  setTimeout(() => document.getElementById('re-pass').focus(), 100);
+}
+
+// Re-authenticate without losing the open panel/form state
+async function reAuth() {
+  const pass = document.getElementById('re-pass').value;
+  const err  = document.getElementById('re-err');
+  err.textContent = '';
+  if (!pass) { err.textContent = 'Password is required.'; return; }
+  try {
+    const res = await api.signIn(userEmail, pass);
+    if (res.error || !res.access_token) {
+      err.textContent = res.error?.message || 'Invalid password.';
+      return;
+    }
+    token = res.access_token;
+    if (res.refresh_token) refreshToken = res.refresh_token;
+    scheduleTokenRefresh();
+    document.getElementById('session-expired-ov').classList.remove('open');
+    toast('Session restored. You can continue where you left off.', 'ok', 3500);
+  } catch (e) {
+    err.textContent = 'Connection error. Please try again.';
+  }
+}
+
+// Wrap any API call: if it fails with a JWT error, refresh and retry once
+async function withAuthRetry(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    if (isAuthError(e.message)) {
+      // Try silent refresh first
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        try {
+          return await fn(); // retry with new token
+        } catch (e2) {
+          throw e2;
+        }
+      } else {
+        // Silent refresh failed — show re-auth overlay then throw
+        // so the caller can show its loading spinner etc. properly
+        showReAuthOverlay();
+        throw new Error('Session expired — please sign back in and retry.');
+      }
+    }
+    throw e;
+  }
+}
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 const hdrs = (extra={}) => ({
@@ -350,16 +476,20 @@ async function signIn() {
   try {
     const res = await api.signIn(email, pass);
     if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}
-    token=res.access_token; userEmail=email;
+    token=res.access_token;
+    refreshToken=res.refresh_token||null;
+    userEmail=email;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('u-email').textContent=email;
+    scheduleTokenRefresh(); // start the background refresh cycle
     await loadData();
   } catch(e){err.textContent='Connection error — check Supabase URL.';}
 }
 
 async function signOut() {
+  if (refreshTimer) clearTimeout(refreshTimer);
   await api.signOut().catch(()=>{});
-  token=null; data=[]; filtered=[];
+  token=null; refreshToken=null; data=[]; filtered=[];
   document.getElementById('tbody').innerHTML='';
   document.getElementById('login-screen').style.display='flex';
 }
@@ -541,7 +671,7 @@ async function saveFac(){
   };
   showDbl('Saving…');
   try {
-    const [saved]=await api.upsert(rec);
+    const [saved] = await withAuthRetry(() => api.upsert(rec));
 
     // Build diff of changed fields
     const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url'];
@@ -554,19 +684,23 @@ async function saveFac(){
       });
     }
 
-    // Log to history table
-    await api.logHistory({
+    // Log to history table (best-effort, don't block save on failure)
+    await withAuthRetry(() => api.logHistory({
       facility_id: saved.id,
       facility_name: saved.name,
       changed_by: userEmail,
       changes: Object.keys(changes).length ? changes : null
-    });
+    })).catch(()=>{});
 
     if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}
     else data.unshift(saved);
     rebuild();go();closePanel();
     toast(editId?'Facility updated.':'Facility added.','ok');
-  } catch(e){toast('Save failed: '+e.message,'err',6000);}
+  } catch(e){
+    if (!e.message.includes('sign back in')) {
+      toast('Save failed: '+e.message,'err',6000);
+    }
+  }
   hideDbl();
 }
 
@@ -574,8 +708,14 @@ function confirmDel(){delId=editId;const f=data.find(x=>x.id===editId);document.
 function closeCfm(){document.getElementById('cfm-ov').classList.remove('open');}
 async function doDel(){
   showDbl('Deleting…');
-  try{await api.del(delId);data=data.filter(f=>f.id!==delId);rebuild();go();closeCfm();closePanel();toast('Deleted.','ok');}
-  catch(e){toast('Delete failed: '+e.message,'err',6000);}
+  try {
+    await withAuthRetry(() => api.del(delId));
+    data=data.filter(f=>f.id!==delId);rebuild();go();closeCfm();closePanel();toast('Deleted.','ok');
+  } catch(e){
+    if (!e.message.includes('sign back in')) {
+      toast('Delete failed: '+e.message,'err',6000);
+    }
+  }
   hideDbl();
 }
 
@@ -587,7 +727,6 @@ document.getElementById('f-offer-url').addEventListener('input',e=>{const v=e.ta
 function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='srn_facilities.json';a.click();}
 
 function openMap(){
-  // Works locally (same folder) and on GitHub Pages (same repo)
   const base = window.location.href.replace(/srn_admin\.html.*$/, '');
   window.open(base + 'srn_map.html', '_blank');
 }
@@ -634,20 +773,15 @@ const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','nu
 function normDate(v){
   if(!v) return null;
   const s = String(v).trim();
-  // Already correct MM-DD-YYYY
   if(/^\d{2}-\d{2}-\d{4}$/.test(s)) return s;
-  // M/D/YYYY or M/DD/YYYY or MM/DD/YYYY (Excel default)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(m) {
     const yr = m[3].length===2 ? '20'+m[3] : m[3];
     return `${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;
   }
-  // M/D/YYYY with timestamp e.g. 3/24/2026 12:00:00 AM
   const mt = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);
   if(mt) return `${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;
-  // Excel serial number (rare)
   if(/^\d{5}$/.test(s)){const d=new Date(Math.round((+s-25569)*86400*1000));return`${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}-${d.getUTCFullYear()}`;}
-  // ISO or other parseable
   try{const d=new Date(s);if(!isNaN(d)&&d.getFullYear()>1970&&d.getFullYear()<2100)return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;}catch(e){}
   return null;
 }
@@ -658,7 +792,8 @@ async function mergeAndUpload(rows){
   for(let i=0;i<valid.length;i+=BATCH){
     const batch=valid.slice(i,i+BATCH);
     showDbl(`Uploading ${Math.min(done+BATCH,total).toLocaleString()} / ${total.toLocaleString()}…`);
-    await api.upsertBatch(batch);done+=batch.length;
+    await withAuthRetry(() => api.upsertBatch(batch));
+    done+=batch.length;
   }
   await loadData();toast(`Imported ${done.toLocaleString()} records.`,'ok',4000);
 }
