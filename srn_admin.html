@@ -1492,6 +1492,8 @@ async function checkDupesForImport(rec, existingData, batchSoFar) {
   ];
   return findDupesFor(rec, candidates);
 }
+
+function importFile(e){
   const f=e.target.files[0];if(!f)return;
   const ext=f.name.split('.').pop().toLowerCase();
   if(ext==='json'){const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;mergeAndUpload(d);}catch{toast('Invalid JSON.','err');}};rd.readAsText(f);}
