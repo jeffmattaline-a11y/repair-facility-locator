@@ -882,6 +882,22 @@ async function validateAndSave(rec, existing) {
     return;
   }
 
+  // Check quality of the geocode result
+  const locationType = geoResult.geometry?.location_type;
+  const partialMatch = geoResult.partial_match === true;
+  const highConfidence = ['ROOFTOP', 'RANGE_INTERPOLATED'].includes(locationType);
+
+  // If Google couldn't pinpoint the street (partial match or low-confidence result)
+  // treat it as unverified rather than a suggestion
+  if (partialMatch || !highConfidence) {
+    showAddrDialog({
+      mode: 'unverified',
+      rec, existing,
+      entered: { address: addr, city, state, zip }
+    });
+    return;
+  }
+
   const parsed = parseGeoResult(geoResult);
 
   // Check if anything meaningful differs
@@ -1176,7 +1192,16 @@ async function geocodeForImport(rec) {
           resolve({ status: 'unverified', rec });
           return;
         }
-        const parsed = parseGeoResult(results[0]);
+        const result = results[0];
+        // Check confidence — partial match or low location type = unverified
+        const locationType  = result.geometry?.location_type;
+        const partialMatch  = result.partial_match === true;
+        const highConfidence = ['ROOFTOP', 'RANGE_INTERPOLATED'].includes(locationType);
+        if (partialMatch || !highConfidence) {
+          resolve({ status: 'unverified', rec });
+          return;
+        }
+        const parsed = parseGeoResult(result);
         const addrMatch  = (rec.address||'').toLowerCase() === parsed.address.toLowerCase();
         const cityMatch  = (rec.city||'').toLowerCase()    === parsed.city.toLowerCase();
         const stateMatch = (rec.state||'').toUpperCase()   === parsed.state.toUpperCase();
