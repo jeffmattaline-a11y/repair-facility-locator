@@ -199,6 +199,18 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
+<!-- Set Password Screen (shown when arriving via invite link) -->
+<div class="login-screen" id="set-pass-screen" style="display:none">
+  <div class="login-box">
+    <h1>Welcome to SRN</h1>
+    <p id="set-pass-msg">You've been invited. Please set a password to activate your account.</p>
+    <div class="lf"><label>New Password</label><input type="password" id="sp-pass" placeholder="Choose a password" onkeydown="if(event.key==='Enter')setPassword()"></div>
+    <div class="lf"><label>Confirm Password</label><input type="password" id="sp-pass2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')setPassword()"></div>
+    <button class="lbtn" onclick="setPassword()">Set Password & Sign In</button>
+    <div class="lerr" id="sp-err"></div>
+  </div>
+</div>
+
 <!-- Session Expired Re-auth Overlay -->
 <div class="session-expired-ov" id="session-expired-ov">
   <div class="session-expired-box">
@@ -598,6 +610,63 @@ const api = {
 };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
+
+// Check on page load if arriving via an invite link (token in URL hash)
+(function checkInviteToken() {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const params = new URLSearchParams(hash.replace('#', ''));
+  const accessToken = params.get('access_token');
+  const type = params.get('type');
+  // Supabase sets type=invite or type=recovery for password-setting flows
+  if (accessToken && (type === 'invite' || type === 'recovery' || type === 'signup')) {
+    // Store token so setPassword can use it
+    window._inviteToken = accessToken;
+    // Hide regular login, show set-password screen
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('set-pass-screen').style.display = 'flex';
+    setTimeout(() => document.getElementById('sp-pass').focus(), 100);
+    // Clean the token from the URL bar
+    history.replaceState(null, '', window.location.pathname);
+  }
+})();
+
+async function setPassword() {
+  const pass  = document.getElementById('sp-pass').value;
+  const pass2 = document.getElementById('sp-pass2').value;
+  const err   = document.getElementById('sp-err');
+  err.textContent = '';
+  if (!pass || pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pass !== pass2) { err.textContent = 'Passwords do not match.'; return; }
+  if (!window._inviteToken) { err.textContent = 'Invite token missing. Please use the original invite link.'; return; }
+  try {
+    // Use the invite token to set the new password
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${window._inviteToken}`
+      },
+      body: JSON.stringify({ password: pass })
+    });
+    const res = await r.json();
+    if (res.error) { err.textContent = res.error.message || 'Could not set password.'; return; }
+    // Password set — now sign in properly
+    userEmail = res.email || '';
+    token = window._inviteToken;
+    refreshToken = null;
+    window._inviteToken = null;
+    document.getElementById('set-pass-screen').style.display = 'none';
+    document.getElementById('u-email').textContent = userEmail;
+    scheduleTokenRefresh();
+    toast('Password set! Welcome to SRN.', 'ok', 3500);
+    await loadData();
+  } catch(e) {
+    err.textContent = 'Connection error. Please try again.';
+  }
+}
+
 async function signIn() {
   const email=document.getElementById('l-email').value.trim();
   const pass=document.getElementById('l-pass').value;
