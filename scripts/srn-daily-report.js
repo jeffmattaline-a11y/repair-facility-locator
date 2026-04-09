@@ -17,7 +17,7 @@ const {
 // ---------------------------------------------------------------------------
 async function fetchNewFacilities() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/facilities?created_at=gte.${since}&select=id,facility_name,city,state,zip,phone,status,created_at&order=created_at.desc`;
+  const url = `${SUPABASE_URL}/rest/v1/facilities?created_at=gte.${since}&select=id,name,city,state,zip,phone,status,created_at&order=created_at.desc`;
 
   const res = await fetch(url, {
     headers: {
