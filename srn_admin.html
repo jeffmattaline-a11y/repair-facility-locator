@@ -119,12 +119,8 @@ td.nm:hover{text-decoration:underline}
 .dbl{position:fixed;inset:0;background:rgba(244,246,249,.85);display:flex;align-items:center;justify-content:center;z-index:500;gap:12px;font-size:14px;color:var(--text2)}
 .spin{width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* Session expired overlay */
 .session-expired-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .session-expired-ov.open{display:flex}
-
-/* Duplicate detection overlay */
 .dup-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:7500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
 .dup-ov.open{display:flex}
 .dup-box{background:#fff;border-radius:12px;width:100%;max-width:620px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;margin:auto}
@@ -138,8 +134,6 @@ td.nm:hover{text-decoration:underline}
 .dup-match-reason{font-size:11px;font-weight:600;color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:20px;font-family:monospace}
 .dup-match-detail{font-size:12px;color:var(--text2);line-height:1.6}
 .dup-foot{padding:14px 20px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-
-/* Find Duplicates scan report */
 .dup-report-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:7500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
 .dup-report-ov.open{display:flex}
 .dup-report-box{background:#fff;border-radius:12px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;margin:auto}
@@ -155,8 +149,6 @@ td.nm:hover{text-decoration:underline}
 .dup-pair-rec strong{display:block;font-size:13px;color:var(--blue);cursor:pointer;margin-bottom:2px}
 .dup-pair-rec strong:hover{text-decoration:underline}
 .dup-report-foot{padding:14px 20px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
-
-/* Address validation overlay */
 .addr-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .addr-ov.open{display:flex}
 .addr-box{background:#fff;border-radius:12px;width:100%;max-width:540px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
@@ -199,7 +191,6 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Set Password Screen (shown when arriving via invite link) -->
 <div class="login-screen" id="set-pass-screen" style="display:none">
   <div class="login-box">
     <h1>Welcome to SRN</h1>
@@ -211,7 +202,6 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Session Expired Re-auth Overlay -->
 <div class="session-expired-ov" id="session-expired-ov">
   <div class="session-expired-box">
     <h3>🔒 Session Expired</h3>
@@ -223,7 +213,6 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Address Validation Overlay -->
 <div class="addr-ov" id="addr-ov">
   <div class="addr-box">
     <div class="addr-box-head">
@@ -258,7 +247,6 @@ td.nm:hover{text-decoration:underline}
 
 <div class="dbl" id="dbl" style="display:none"><div class="spin"></div><span id="dbl-msg">Loading…</span></div>
 
-<!-- Duplicate Warning Overlay (single save) -->
 <div class="dup-ov" id="dup-ov">
   <div class="dup-box">
     <div class="dup-head"><span style="font-size:18px">⚠️</span><h3>Possible Duplicate Detected</h3></div>
@@ -275,7 +263,6 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Find Duplicates Scan Report -->
 <div class="dup-report-ov" id="dup-report-ov">
   <div class="dup-report-box">
     <div class="dup-report-head">
@@ -338,8 +325,6 @@ td.nm:hover{text-decoration:underline}
       <button class="ptab on" onclick="switchTab('details')">Details</button>
       <button class="ptab" onclick="switchTab('history')">Change History</button>
     </div>
-
-    <!-- DETAILS TAB -->
     <div id="tab-details">
     <div class="grid">
       <div class="field s2"><label>Name <span class="r">*</span></label><input id="f-name"></div>
@@ -408,13 +393,10 @@ td.nm:hover{text-decoration:underline}
     <div class="field" style="margin-bottom:4px">
       <textarea id="f-notes" rows="3" style="font-family:inherit;font-size:13px;border:1px solid var(--border2);border-radius:5px;padding:7px 9px;background:var(--bg);color:var(--text);outline:none;resize:vertical;width:100%" placeholder="Internal notes, address validation flags, review comments…"></textarea>
     </div>
-    </div><!-- end tab-details -->
-
-    <!-- HISTORY TAB -->
+    </div>
     <div id="tab-history" style="display:none">
       <div id="hist-body"><div class="hist-loading">Loading history…</div></div>
     </div>
-
   </div>
   <div class="pfoot">
     <button class="btn btn-del" id="del-btn" onclick="confirmDel()" style="display:none">Delete</button>
@@ -433,12 +415,8 @@ td.nm:hover{text-decoration:underline}
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════════════════
-// SUPABASE CONFIG
-// ══════════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
-// ══════════════════════════════════════════════════════════════════════════════
 
 const TABLE = 'facilities';
 const PG = 25;
@@ -446,11 +424,6 @@ let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
 let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
 let refreshTimer = null;
 
-// ══════════════════════════════════════════════════════════════════════════════
-// JWT REFRESH SYSTEM
-// ══════════════════════════════════════════════════════════════════════════════
-
-// Detect if an error response is a JWT/auth expiry
 function isAuthError(errMsg) {
   if (!errMsg) return false;
   const s = String(errMsg).toLowerCase();
@@ -459,7 +432,6 @@ function isAuthError(errMsg) {
          s.includes('401');
 }
 
-// Attempt to silently refresh the access token using the refresh token
 async function tryRefreshToken() {
   if (!refreshToken) return false;
   try {
@@ -476,26 +448,18 @@ async function tryRefreshToken() {
       return true;
     }
     return false;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 }
 
-// Schedule a proactive refresh 45 minutes after login (tokens last ~1 hour)
 function scheduleTokenRefresh() {
   if (refreshTimer) clearTimeout(refreshTimer);
   refreshTimer = setTimeout(async () => {
     const ok = await tryRefreshToken();
-    if (ok) {
-      toast('Session refreshed.', '', 2000);
-    } else {
-      // Silent refresh failed — prompt re-auth
-      showReAuthOverlay();
-    }
-  }, 45 * 60 * 1000); // 45 minutes
+    if (ok) { toast('Session refreshed.', '', 2000); }
+    else { showReAuthOverlay(); }
+  }, 45 * 60 * 1000);
 }
 
-// Show the re-auth overlay (session expired, ask for password again)
 function showReAuthOverlay() {
   document.getElementById('re-email').value = userEmail;
   document.getElementById('re-pass').value = '';
@@ -504,7 +468,6 @@ function showReAuthOverlay() {
   setTimeout(() => document.getElementById('re-pass').focus(), 100);
 }
 
-// Re-authenticate without losing the open panel/form state
 async function reAuth() {
   const pass = document.getElementById('re-pass').value;
   const err  = document.getElementById('re-err');
@@ -512,37 +475,23 @@ async function reAuth() {
   if (!pass) { err.textContent = 'Password is required.'; return; }
   try {
     const res = await api.signIn(userEmail, pass);
-    if (res.error || !res.access_token) {
-      err.textContent = res.error?.message || 'Invalid password.';
-      return;
-    }
+    if (res.error || !res.access_token) { err.textContent = res.error?.message || 'Invalid password.'; return; }
     token = res.access_token;
     if (res.refresh_token) refreshToken = res.refresh_token;
     scheduleTokenRefresh();
     document.getElementById('session-expired-ov').classList.remove('open');
     toast('Session restored. You can continue where you left off.', 'ok', 3500);
-  } catch (e) {
-    err.textContent = 'Connection error. Please try again.';
-  }
+  } catch (e) { err.textContent = 'Connection error. Please try again.'; }
 }
 
-// Wrap any API call: if it fails with a JWT error, refresh and retry once
 async function withAuthRetry(fn) {
-  try {
-    return await fn();
-  } catch (e) {
+  try { return await fn(); }
+  catch (e) {
     if (isAuthError(e.message)) {
-      // Try silent refresh first
       const refreshed = await tryRefreshToken();
       if (refreshed) {
-        try {
-          return await fn(); // retry with new token
-        } catch (e2) {
-          throw e2;
-        }
+        try { return await fn(); } catch (e2) { throw e2; }
       } else {
-        // Silent refresh failed — show re-auth overlay then throw
-        // so the caller can show its loading spinner etc. properly
         showReAuthOverlay();
         throw new Error('Session expired — please sign back in and retry.');
       }
@@ -551,7 +500,6 @@ async function withAuthRetry(fn) {
   }
 }
 
-// ── API helpers ───────────────────────────────────────────────────────────────
 const hdrs = (extra={}) => ({
   'Content-Type':'application/json',
   'apikey': SUPABASE_ANON,
@@ -565,9 +513,7 @@ const api = {
     const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({email,password:pass})});
     return r.json();
   },
-  async signOut() {
-    await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:hdrs()});
-  },
+  async signOut() { await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:hdrs()}); },
   async getAll() {
     const PAGE = 1000;
     let from = 0, all = [], done = false;
@@ -596,11 +542,7 @@ const api = {
     if(!r.ok) throw new Error(await r.text());
   },
   async logHistory(entry) {
-    await fetch(`${SUPABASE_URL}/rest/v1/facility_history`,{
-      method:'POST',
-      headers:hdrs({'Prefer':'return=minimal'}),
-      body:JSON.stringify(entry)
-    });
+    await fetch(`${SUPABASE_URL}/rest/v1/facility_history`,{method:'POST',headers:hdrs({'Prefer':'return=minimal'}),body:JSON.stringify(entry)});
   },
   async getHistory(facilityId) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});
@@ -609,24 +551,17 @@ const api = {
   }
 };
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
-
-// Check on page load if arriving via an invite link (token in URL hash)
 (function checkInviteToken() {
   const hash = window.location.hash;
   if (!hash) return;
   const params = new URLSearchParams(hash.replace('#', ''));
   const accessToken = params.get('access_token');
   const type = params.get('type');
-  // Supabase sets type=invite or type=recovery for password-setting flows
   if (accessToken && (type === 'invite' || type === 'recovery' || type === 'signup')) {
-    // Store token so setPassword can use it
     window._inviteToken = accessToken;
-    // Hide regular login, show set-password screen
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('set-pass-screen').style.display = 'flex';
     setTimeout(() => document.getElementById('sp-pass').focus(), 100);
-    // Clean the token from the URL bar
     history.replaceState(null, '', window.location.pathname);
   }
 })();
@@ -640,19 +575,13 @@ async function setPassword() {
   if (pass !== pass2) { err.textContent = 'Passwords do not match.'; return; }
   if (!window._inviteToken) { err.textContent = 'Invite token missing. Please use the original invite link.'; return; }
   try {
-    // Use the invite token to set the new password
     const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON,
-        'Authorization': `Bearer ${window._inviteToken}`
-      },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${window._inviteToken}` },
       body: JSON.stringify({ password: pass })
     });
     const res = await r.json();
     if (res.error) { err.textContent = res.error.message || 'Could not set password.'; return; }
-    // Password set — now sign in properly
     userEmail = res.email || '';
     token = window._inviteToken;
     refreshToken = null;
@@ -662,9 +591,7 @@ async function setPassword() {
     scheduleTokenRefresh();
     toast('Password set! Welcome to SRN.', 'ok', 3500);
     await loadData();
-  } catch(e) {
-    err.textContent = 'Connection error. Please try again.';
-  }
+  } catch(e) { err.textContent = 'Connection error. Please try again.'; }
 }
 
 async function signIn() {
@@ -680,7 +607,7 @@ async function signIn() {
     userEmail=email;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('u-email').textContent=email;
-    scheduleTokenRefresh(); // start the background refresh cycle
+    scheduleTokenRefresh();
     await loadData();
   } catch(e){err.textContent='Connection error — check Supabase URL.';}
 }
@@ -693,7 +620,6 @@ async function signOut() {
   document.getElementById('login-screen').style.display='flex';
 }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
 async function loadData() {
   showDbl('Loading facilities…');
   try { data=await api.getAll(); }
@@ -701,7 +627,6 @@ async function loadData() {
   hideDbl(); rebuild(); go();
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -764,7 +689,6 @@ function pgRender() {
 function pgRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);if(c<=4)return[1,2,3,4,5,'…',t];if(c>=t-3)return[1,'…',t-4,t-3,t-2,t-1,t];return[1,'…',c-1,c,c+1,'…',t];}
 function goPage(p){const t=Math.ceil(filtered.length/PG);if(p<1||p>t)return;page=p;render();pgRender();document.querySelector('.tbl-wrap').scrollTop=0;}
 
-// ── Panel ─────────────────────────────────────────────────────────────────────
 function clr(){
   ['f-name','f-phone','f-contact','f-cemail','f-addr','f-city','f-state-i','f-zip','f-web','f-email','f-lat','f-lng','f-labor','f-offer-url','f-notes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
   const lk=document.getElementById('f-offer-link');lk.style.display='none';lk.href='#';
@@ -847,13 +771,8 @@ async function loadHistory(facilityId){
   } catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
 }
 
-// ── Google Address Validation ─────────────────────────────────────────────────
 const GOOGLE_API_KEY = 'AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0';
-
-// Holds the pending record + callback while the addr dialog is open
 let addrPending = null;
-
-// Load the Google Maps JS API (browser-compatible, no CORS issues)
 let googleMapsReady = false;
 let googleMapsLoading = false;
 let googleMapsCallbacks = [];
@@ -901,10 +820,7 @@ function parseGeoResult(result) {
     return null;
   };
   return {
-    address: [
-      get(['street_number'])?.long_name,
-      get(['route'])?.long_name
-    ].filter(Boolean).join(' '),
+    address: [get(['street_number'])?.long_name, get(['route'])?.long_name].filter(Boolean).join(' '),
     city:    get(['locality','sublocality','neighborhood'])?.long_name || '',
     state:   get(['administrative_area_level_1'])?.short_name || '',
     zip:     get(['postal_code'])?.long_name || '',
@@ -917,191 +833,75 @@ function parseGeoResult(result) {
 
 function highlightDiff(entered, suggested) {
   if (!suggested || entered.toLowerCase() === suggested.toLowerCase()) return esc(suggested||entered);
-  // Highlight the suggested value if it differs
   return `<span class="addr-diff">${esc(suggested)}</span>`;
 }
 
 async function validateAndSave(rec, existing) {
-  // Only validate if address fields are present
-  const addr  = rec.address || '';
-  const city  = rec.city    || '';
-  const state = rec.state   || '';
-  const zip   = rec.zip     || '';
-  if (!addr || !city || !state || !zip) { await doSave(rec, existing); return; }
-
+  const addr=rec.address||'',city=rec.city||'',state=rec.state||'',zip=rec.zip||'';
+  if (!addr||!city||!state||!zip) { await doSave(rec, existing); return; }
   showDbl('Validating address…');
   let geoResult = null;
   try { geoResult = await geocodeAddress(addr, city, state, zip, rec.country); }
-  catch(e) {
-    console.error('Geocode error:', e);
-    hideDbl();
-    // API load failure — warn but allow save
-    showAddrDialog({ mode: 'unverified', rec, existing, entered: { address: addr, city, state, zip } });
-    return;
-  }
+  catch(e) { hideDbl(); showAddrDialog({ mode:'unverified', rec, existing, entered:{address:addr,city,state,zip} }); return; }
   hideDbl();
-
-  if (!geoResult) {
-    // Could not validate — warn but allow save
-    showAddrDialog({
-      mode: 'unverified',
-      rec, existing,
-      entered: { address: addr, city, state, zip }
-    });
-    return;
-  }
-
-  // Check quality of the geocode result
+  if (!geoResult) { showAddrDialog({ mode:'unverified', rec, existing, entered:{address:addr,city,state,zip} }); return; }
   const locationType = geoResult.geometry?.location_type;
   const partialMatch = geoResult.partial_match === true;
-  const highConfidence = ['ROOFTOP', 'RANGE_INTERPOLATED'].includes(locationType);
-
-  // If Google couldn't pinpoint the street (partial match or low-confidence result)
-  // treat it as unverified rather than a suggestion
-  if (partialMatch || !highConfidence) {
-    showAddrDialog({
-      mode: 'unverified',
-      rec, existing,
-      entered: { address: addr, city, state, zip }
-    });
-    return;
-  }
-
+  const highConfidence = ['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);
+  if (partialMatch || !highConfidence) { showAddrDialog({ mode:'unverified', rec, existing, entered:{address:addr,city,state,zip} }); return; }
   const parsed = parseGeoResult(geoResult);
-
-  // Check if anything meaningful differs
-  const addrMatch  = addr.toLowerCase()  === parsed.address.toLowerCase();
-  const cityMatch  = city.toLowerCase()  === parsed.city.toLowerCase();
-  const stateMatch = state.toUpperCase() === parsed.state.toUpperCase();
-  const zipMatch   = zip                 === parsed.zip;
-  const allMatch   = addrMatch && cityMatch && stateMatch && zipMatch;
-
-  if (allMatch) {
-    // Perfect match — auto-fill lat/lng silently and save
-    if (!rec.lat && !rec.lng) {
-      rec.lat = String(parsed.lat);
-      rec.lng = String(parsed.lng);
-    }
-    await doSave(rec, existing);
-    return;
-  }
-
-  // Something differs — show the dialog
-  showAddrDialog({
-    mode: 'suggestion',
-    rec, existing,
-    entered:   { address: addr,         city,         state,         zip },
-    suggested: { address: parsed.address, city: parsed.city, state: parsed.state, zip: parsed.zip,
-                 lat: String(parsed.lat), lng: String(parsed.lng) }
-  });
+  const allMatch = addr.toLowerCase()===parsed.address.toLowerCase() && city.toLowerCase()===parsed.city.toLowerCase() && state.toUpperCase()===parsed.state.toUpperCase() && zip===parsed.zip;
+  if (allMatch) { if(!rec.lat&&!rec.lng){rec.lat=String(parsed.lat);rec.lng=String(parsed.lng);} await doSave(rec, existing); return; }
+  showAddrDialog({ mode:'suggestion', rec, existing, entered:{address:addr,city,state,zip}, suggested:{address:parsed.address,city:parsed.city,state:parsed.state,zip:parsed.zip,lat:String(parsed.lat),lng:String(parsed.lng)} });
 }
 
 function showAddrDialog({ mode, rec, existing, entered, suggested }) {
   addrPending = { rec, existing, suggested };
-
-  const warn   = document.getElementById('addr-warn');
-  const warnMsg= document.getElementById('addr-warn-msg');
-  const compare= document.getElementById('addr-compare');
-  const title  = document.getElementById('addr-ov-title');
-  const msg    = document.getElementById('addr-ov-msg');
-  const acceptBtn = document.getElementById('addr-accept-btn');
-
+  const warn=document.getElementById('addr-warn'),warnMsg=document.getElementById('addr-warn-msg');
+  const compare=document.getElementById('addr-compare'),title=document.getElementById('addr-ov-title');
+  const msg=document.getElementById('addr-ov-msg'),acceptBtn=document.getElementById('addr-accept-btn');
   if (mode === 'unverified') {
-    title.textContent = 'Address Could Not Be Verified';
-    msg.textContent   = 'Google could not find this address. You can go back and correct it, or save it as entered.';
-    warn.style.display = 'flex';
-    warnMsg.textContent = 'This address was not found in Google Maps. It may be incorrect or missing information.';
-    compare.style.display = 'none';
-    acceptBtn.style.display = 'none';
+    title.textContent='Address Could Not Be Verified';
+    msg.textContent='Google could not find this address. You can go back and correct it, or save it as entered.';
+    warn.style.display='flex';warnMsg.textContent='This address was not found in Google Maps. It may be incorrect or missing information.';
+    compare.style.display='none';acceptBtn.style.display='none';
   } else {
-    title.textContent = 'Address Correction Suggested';
-    msg.textContent   = 'Google found a corrected version of this address. Accepting will also fill in the latitude and longitude automatically.';
-    warn.style.display = 'none';
-    compare.style.display = 'grid';
-    acceptBtn.style.display = '';
-
-    document.getElementById('addr-entered').innerHTML =
-      `${esc(entered.address)}<br>${esc(entered.city)}, ${esc(entered.state)} ${esc(entered.zip)}`;
-
-    document.getElementById('addr-suggested').innerHTML =
-      `${highlightDiff(entered.address, suggested.address)}<br>` +
-      `${highlightDiff(entered.city, suggested.city)}, ` +
-      `${highlightDiff(entered.state, suggested.state)} ` +
-      `${highlightDiff(entered.zip, suggested.zip)}`;
+    title.textContent='Address Correction Suggested';
+    msg.textContent='Google found a corrected version of this address. Accepting will also fill in the latitude and longitude automatically.';
+    warn.style.display='none';compare.style.display='grid';acceptBtn.style.display='';
+    document.getElementById('addr-entered').innerHTML=`${esc(entered.address)}<br>${esc(entered.city)}, ${esc(entered.state)} ${esc(entered.zip)}`;
+    document.getElementById('addr-suggested').innerHTML=`${highlightDiff(entered.address,suggested.address)}<br>${highlightDiff(entered.city,suggested.city)}, ${highlightDiff(entered.state,suggested.state)} ${highlightDiff(entered.zip,suggested.zip)}`;
   }
-
   document.getElementById('addr-ov').classList.add('open');
 }
 
 function addrAcceptSuggestion() {
   if (!addrPending) return;
   const { rec, existing, suggested } = addrPending;
-  // Apply Google's corrections
-  rec.address = suggested.address || rec.address;
-  rec.city    = suggested.city    || rec.city;
-  rec.state   = suggested.state   || rec.state;
-  rec.zip     = suggested.zip     || rec.zip;
-  rec.lat     = suggested.lat     || rec.lat;
-  rec.lng     = suggested.lng     || rec.lng;
-  // Also update the form fields so they reflect the corrected values
-  const s = (id, v) => { const e = document.getElementById(id); if(e && v) e.value = v; };
-  s('f-addr', rec.address); s('f-city', rec.city);
-  s('f-state-i', rec.state); s('f-zip', rec.zip);
-  s('f-lat', rec.lat); s('f-lng', rec.lng);
-  closeAddrDialog();
-  doSave(rec, existing);
+  rec.address=suggested.address||rec.address;rec.city=suggested.city||rec.city;
+  rec.state=suggested.state||rec.state;rec.zip=suggested.zip||rec.zip;
+  rec.lat=suggested.lat||rec.lat;rec.lng=suggested.lng||rec.lng;
+  const s=(id,v)=>{const e=document.getElementById(id);if(e&&v)e.value=v;};
+  s('f-addr',rec.address);s('f-city',rec.city);s('f-state-i',rec.state);s('f-zip',rec.zip);s('f-lat',rec.lat);s('f-lng',rec.lng);
+  closeAddrDialog();doSave(rec, existing);
 }
-
-function addrKeepOriginal() {
-  if (!addrPending) return;
-  const { rec, existing } = addrPending;
-  closeAddrDialog();
-  doSave(rec, existing);
-}
-
-function addrGoBack() {
-  closeAddrDialog();
-  addrPending = null;
-  // Panel stays open for editing
-}
-
-function closeAddrDialog() {
-  document.getElementById('addr-ov').classList.remove('open');
-}
+function addrKeepOriginal() { if(!addrPending)return;const{rec,existing}=addrPending;closeAddrDialog();doSave(rec,existing); }
+function addrGoBack() { closeAddrDialog();addrPending=null; }
+function closeAddrDialog() { document.getElementById('addr-ov').classList.remove('open'); }
 
 async function doSave(rec, existing) {
   showDbl('Saving…');
   try {
     const [saved] = await withAuthRetry(() => api.upsert(rec));
-
-    // Build diff of changed fields
     const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes'];
     const changes={};
-    if(editId && existing){
-      TRACK.forEach(k=>{
-        const oldVal = existing[k]??null;
-        const newVal = rec[k]??null;
-        if(String(oldVal)!==String(newVal)) changes[k]={from:oldVal,to:newVal};
-      });
-    }
-
-    // Log to history table (best-effort, don't block save on failure)
-    await withAuthRetry(() => api.logHistory({
-      facility_id: saved.id,
-      facility_name: saved.name,
-      changed_by: userEmail,
-      changes: Object.keys(changes).length ? changes : null
-    })).catch(()=>{});
-
+    if(editId&&existing){TRACK.forEach(k=>{const oldVal=existing[k]??null,newVal=rec[k]??null;if(String(oldVal)!==String(newVal))changes[k]={from:oldVal,to:newVal};});}
+    await withAuthRetry(() => api.logHistory({facility_id:saved.id,facility_name:saved.name,changed_by:userEmail,changes:Object.keys(changes).length?changes:null})).catch(()=>{});
     if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}
     else data.unshift(saved);
     rebuild();go();closePanel();
     toast(editId?'Facility updated.':'Facility added.','ok');
-  } catch(e){
-    if (!e.message.includes('sign back in')) {
-      toast('Save failed: '+e.message,'err',6000);
-    }
-  }
+  } catch(e){ if(!e.message.includes('sign back in'))toast('Save failed: '+e.message,'err',6000); }
   hideDbl();
 }
 
@@ -1136,13 +936,9 @@ function closeCfm(){document.getElementById('cfm-ov').classList.remove('open');}
 async function doDel(){
   showDbl('Deleting…');
   try {
-    await withAuthRetry(() => api.del(delId));
+    await withAuthRetry(()=>api.del(delId));
     data=data.filter(f=>f.id!==delId);rebuild();go();closeCfm();closePanel();toast('Deleted.','ok');
-  } catch(e){
-    if (!e.message.includes('sign back in')) {
-      toast('Delete failed: '+e.message,'err',6000);
-    }
-  }
+  } catch(e){ if(!e.message.includes('sign back in'))toast('Delete failed: '+e.message,'err',6000); }
   hideDbl();
 }
 
@@ -1150,7 +946,6 @@ function toast(msg,type='',dur=2800){const t=document.getElementById('toast');t.
 
 document.getElementById('f-offer-url').addEventListener('input',e=>{const v=e.target.value.trim(),lk=document.getElementById('f-offer-link');if(v&&v.startsWith('http')){lk.href=v;lk.style.display='inline-block';}else lk.style.display='none';});
 
-// ── Export / Import ───────────────────────────────────────────────────────────
 function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='srn_facilities.json';a.click();}
 
 function openMap(){
@@ -1167,16 +962,8 @@ function downloadTemplate(){
     'EV Certified','Accepts Shipped','Offer URL',
     'Added On','Added By','Numeric ID'
   ];
-  const example = [
-    'Spitzer Ford St Marys','988 S St Marys St','St Marys','PA','15857','USA',
-    '8147811010','Justine Leslie','jleslie@spitzer.com','https://www.spitzerford.com',
-    '41.401970','-78.561205','PRF','Dealership',
-    '180.00','Mitchell','Mitchell1','Web',
-    'FALSE','FALSE','',
-    '03-24-2026','SRN Online Form','133696'
-  ];
   const notes = [
-    '* Required','* Required','* Required','* Required — 2-letter code e.g. MO','* Required','Default: USA',
+    '* Required','* Required','* Required','* Required — 2-letter state code (e.g. MO)','* Required','Default: USA',
     'Digits only e.g. 8005551234','Contact person name','Contact email address','Full URL with https://',
     'Decimal e.g. 38.627003','Decimal e.g. -90.199402',
     'PRF | OPT | STD | NEW | VIP | MOB | UPB | DNC | BL | PEND | DEL',
@@ -1187,7 +974,7 @@ function downloadTemplate(){
     'MM-DD-YYYY','Who added this record','Leave blank for new records'
   ];
   const csvRow = arr => arr.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',');
-  const csv = [csvRow(headers), csvRow(notes), csvRow(example)].join('\r\n');
+  const csv = [csvRow(headers), csvRow(notes)].join('\r\n');
   const b = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
@@ -1197,24 +984,22 @@ function downloadTemplate(){
 }
 
 const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes'};
+
 function normDate(v){
   if(!v) return null;
-  const s = String(v).trim();
-  if(/^\d{2}-\d{2}-\d{4}$/.test(s)) return s;
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if(m) {
-    const yr = m[3].length===2 ? '20'+m[3] : m[3];
-    return `${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;
-  }
-  const mt = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);
-  if(mt) return `${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;
+  const s=String(v).trim();
+  if(/^\d{2}-\d{2}-\d{4}$/.test(s))return s;
+  const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){const yr=m[3].length===2?'20'+m[3]:m[3];return`${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;}
+  const mt=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);
+  if(mt)return`${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;
   if(/^\d{5}$/.test(s)){const d=new Date(Math.round((+s-25569)*86400*1000));return`${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}-${d.getUTCFullYear()}`;}
   try{const d=new Date(s);if(!isNaN(d)&&d.getFullYear()>1970&&d.getFullYear()<2100)return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;}catch(e){}
   return null;
 }
+
 function rowToRec(headers,row){const rec={};headers.forEach((h,i)=>{const key=COL_MAP[String(h).toLowerCase().trim()];if(!key)return;let val=row[i];if(val===undefined||val===null)val='';if(key==='ev_certified'||key==='accepts_shipped')val=val===true||String(val).toLowerCase()==='true'||String(val)==='1';else if(key==='added_on'||key==='edited_on')val=normDate(val);else if(['lat','lng','labor'].includes(key))val=val===''?null:(+val||null);else if(key==='numeric_id')val=val===''?null:(+val||null);else val=String(val).trim()||null;rec[key]=val;});return rec;}
 
-// Import summary overlay
 function showImportSummary(clean, flagged, total) {
   const msg = `
     <div style="text-align:center;padding:28px 24px">
@@ -1231,7 +1016,7 @@ function showImportSummary(clean, flagged, total) {
           <div style="font-size:12px;color:#7e22ce;margin-top:2px">⚠ Needs Review</div>
         </div>
       </div>
-      ${flagged > 0 ? `<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.<br>Notes on each record explain whether it was flagged for address issues or a possible duplicate.</p>` : '<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}
+      ${flagged > 0 ? `<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.</p>` : '<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}
       <button class="btn btn-save" onclick="document.getElementById('import-summary-ov').classList.remove('open')" style="margin-top:16px;padding:8px 24px">Done</button>
     </div>`;
   let ov = document.getElementById('import-summary-ov');
@@ -1242,395 +1027,126 @@ function showImportSummary(clean, flagged, total) {
     ov.style.zIndex = '7000';
     ov.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">${msg}</div>`;
     document.body.appendChild(ov);
-  } else {
-    ov.querySelector('div').innerHTML = msg;
-  }
+  } else { ov.querySelector('div').innerHTML = msg; }
   ov.classList.add('open');
 }
 
 async function geocodeForImport(rec) {
-  // Returns { status: 'ok'|'corrected'|'unverified', rec }
-  if (!rec.address || !rec.city || !rec.state || !rec.zip) return { status: 'unverified', rec };
+  if (!rec.address||!rec.city||!rec.state||!rec.zip) return { status:'unverified', rec };
   try {
     await loadGoogleMaps();
     const full = `${rec.address}, ${rec.city}, ${rec.state} ${rec.zip}, ${rec.country||'USA'}`;
     return new Promise((resolve) => {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address: full }, (results, status) => {
-        if (status !== 'OK' || !results?.length) {
-          resolve({ status: 'unverified', rec });
-          return;
-        }
+        if (status !== 'OK' || !results?.length) { resolve({ status:'unverified', rec }); return; }
         const result = results[0];
-        // Check confidence — partial match or low location type = unverified
-        const locationType  = result.geometry?.location_type;
-        const partialMatch  = result.partial_match === true;
-        const highConfidence = ['ROOFTOP', 'RANGE_INTERPOLATED'].includes(locationType);
-        if (partialMatch || !highConfidence) {
-          resolve({ status: 'unverified', rec });
-          return;
-        }
+        const locationType=result.geometry?.location_type,partialMatch=result.partial_match===true;
+        const highConfidence=['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);
+        if (partialMatch||!highConfidence) { resolve({ status:'unverified', rec }); return; }
         const parsed = parseGeoResult(result);
-        const addrMatch  = (rec.address||'').toLowerCase() === parsed.address.toLowerCase();
-        const cityMatch  = (rec.city||'').toLowerCase()    === parsed.city.toLowerCase();
-        const stateMatch = (rec.state||'').toUpperCase()   === parsed.state.toUpperCase();
-        const zipMatch   = (rec.zip||'')                   === parsed.zip;
-        const allMatch   = addrMatch && cityMatch && stateMatch && zipMatch;
+        const allMatch=(rec.address||'').toLowerCase()===parsed.address.toLowerCase()&&(rec.city||'').toLowerCase()===parsed.city.toLowerCase()&&(rec.state||'').toUpperCase()===parsed.state.toUpperCase()&&(rec.zip||'')===parsed.zip;
         if (allMatch) {
-          // Auto-fill lat/lng if missing
-          if (!rec.lat) rec.lat = String(parsed.lat);
-          if (!rec.lng) rec.lng = String(parsed.lng);
-          resolve({ status: 'ok', rec });
+          if(!rec.lat)rec.lat=String(parsed.lat);if(!rec.lng)rec.lng=String(parsed.lng);
+          resolve({ status:'ok', rec });
         } else {
-          // Store suggestion in notes, flag as NRV
-          const suggestion = `Google suggested: ${parsed.address}, ${parsed.city}, ${parsed.state} ${parsed.zip}`;
-          rec.notes = rec.notes ? `${rec.notes} | ${suggestion}` : suggestion;
-          rec.status = 'NRV';
-          rec.lat = rec.lat || String(parsed.lat);
-          rec.lng = rec.lng || String(parsed.lng);
-          resolve({ status: 'corrected', rec });
+          const suggestion=`Google suggested: ${parsed.address}, ${parsed.city}, ${parsed.state} ${parsed.zip}`;
+          rec.notes=rec.notes?`${rec.notes} | ${suggestion}`:suggestion;
+          rec.status='NRV';rec.lat=rec.lat||String(parsed.lat);rec.lng=rec.lng||String(parsed.lng);
+          resolve({ status:'corrected', rec });
         }
       });
     });
-  } catch(e) {
-    return { status: 'unverified', rec };
-  }
+  } catch(e) { return { status:'unverified', rec }; }
 }
 
 async function mergeAndUpload(rows) {
-  const valid = rows.filter(r => r.name);
-  const total = valid.length;
-  const BATCH = 200;
-  const GEO_THROTTLE = 50; // ms between geocode calls (~20/sec, well under limit)
-  let done = 0, clean = 0, flagged = 0;
-
-  // Step 1: Geocode all records with throttling
+  const valid=rows.filter(r=>r.name);
+  const total=valid.length;
+  const BATCH=200, GEO_THROTTLE=50;
+  let done=0, clean=0, flagged=0;
   showDbl(`Validating addresses… 0 / ${total.toLocaleString()}`);
-  await loadGoogleMaps().catch(() => {}); // pre-load Maps API
-
-  for (let i = 0; i < valid.length; i++) {
-    const rec = valid[i];
-    if (i % 10 === 0) showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);
-
-    // Address validation
-    const geoResult = await geocodeForImport(rec);
-    if (geoResult.status === 'ok') clean++;
-    else {
-      flagged++;
-      if (geoResult.status === 'unverified') {
-        rec.status = rec.status || 'NRV';
-        rec.notes = rec.notes ? rec.notes + ' | Address could not be verified by Google' : 'Address could not be verified by Google';
-      }
-    }
-    valid[i] = geoResult.rec;
-
-    // Duplicate check against existing DB + already-processed batch records
-    const dupMatches = await checkDupesForImport(valid[i], data, valid.slice(0, i));
-    if (dupMatches.length > 0) {
-      const best = dupMatches[0];
-      const dupNote = `Possible duplicate of: "${best.facility.name}" (ID: ${best.facility.numeric_id||best.facility.id}) — matched on ${best.reasons.join(' + ')}`;
-      valid[i].status = 'NRV';
-      valid[i].notes = valid[i].notes ? `${valid[i].notes} | ${dupNote}` : dupNote;
-      flagged++;
-    }
-
-    await new Promise(r => setTimeout(r, GEO_THROTTLE));
+  await loadGoogleMaps().catch(()=>{});
+  for (let i=0;i<valid.length;i++) {
+    const rec=valid[i];
+    if(i%10===0)showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);
+    const geoResult=await geocodeForImport(rec);
+    if(geoResult.status==='ok')clean++;
+    else { flagged++;if(geoResult.status==='unverified'){rec.status=rec.status||'NRV';rec.notes=rec.notes?rec.notes+' | Address could not be verified by Google':'Address could not be verified by Google';} }
+    valid[i]=geoResult.rec;
+    const dupMatches=await checkDupesForImport(valid[i],data,valid.slice(0,i));
+    if(dupMatches.length>0){const best=dupMatches[0];const dupNote=`Possible duplicate of: "${best.facility.name}" (ID: ${best.facility.numeric_id||best.facility.id}) — matched on ${best.reasons.join(' + ')}`;valid[i].status='NRV';valid[i].notes=valid[i].notes?`${valid[i].notes} | ${dupNote}`:dupNote;flagged++;}
+    await new Promise(r=>setTimeout(r,GEO_THROTTLE));
   }
-
-  // Step 2: Upload in batches
-  for (let i = 0; i < valid.length; i += BATCH) {
-    const batch = valid.slice(i, i + BATCH);
-    showDbl(`Uploading ${Math.min(done + BATCH, total).toLocaleString()} / ${total.toLocaleString()}…`);
-    await withAuthRetry(() => api.upsertBatch(batch));
-    done += batch.length;
+  for (let i=0;i<valid.length;i+=BATCH) {
+    const batch=valid.slice(i,i+BATCH);
+    showDbl(`Uploading ${Math.min(done+BATCH,total).toLocaleString()} / ${total.toLocaleString()}…`);
+    await withAuthRetry(()=>api.upsertBatch(batch));
+    done+=batch.length;
   }
-
-  await loadData();
-  hideDbl();
-  showImportSummary(clean, flagged, total);
+  await loadData();hideDbl();showImportSummary(clean,flagged,total);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// DUPLICATE DETECTION
-// ══════════════════════════════════════════════════════════════════════════════
+function normPhone(p){if(!p)return'';return String(p).replace(/\D/g,'').replace(/^1/,'');}
+const ADDR_ABBR={'street':'st','drive':'dr','avenue':'ave','boulevard':'blvd','road':'rd','lane':'ln','court':'ct','place':'pl','circle':'cir','trail':'trl','parkway':'pkwy','highway':'hwy','suite':'ste','building':'bldg','north':'n','south':'s','east':'e','west':'w','northeast':'ne','northwest':'nw','southeast':'se','southwest':'sw'};
+function normAddr(a){if(!a)return'';let s=String(a).toLowerCase().trim();s=s.replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();Object.entries(ADDR_ABBR).forEach(([long,short])=>{s=s.replace(new RegExp(`\\b${long}\\b`,'g'),short);});return s.replace(/\s+/g,' ').trim();}
+function normStreetName(a){if(!a)return'';return normAddr(a).replace(/^\d+\s*/,'').trim();}
+function similarity(a,b){if(!a||!b)return 0;if(a===b)return 1;const aNS=a.replace(/\s/g,''),bNS=b.replace(/\s/g,'');if(aNS===bNS)return 1;const la=a.length,lb=b.length,max=Math.max(la,lb);if(max===0)return 1;if(Math.abs(la-lb)/max>0.6)return 0;const dp=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=la;i++)for(let j=1;j<=lb;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);const levSim=1-dp[la][lb]/max;const laNS=aNS.length,lbNS=bNS.length,maxNS=Math.max(laNS,lbNS);if(maxNS===0)return levSim;const dp2=Array.from({length:laNS+1},(_,i)=>Array.from({length:lbNS+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=laNS;i++)for(let j=1;j<=lbNS;j++)dp2[i][j]=aNS[i-1]===bNS[j-1]?dp2[i-1][j-1]:1+Math.min(dp2[i-1][j],dp2[i][j-1],dp2[i-1][j-1]);return Math.max(levSim,1-dp2[laNS][lbNS]/maxNS);}
 
-// Normalize phone — strip everything except digits
-function normPhone(p) {
-  if (!p) return '';
-  return String(p).replace(/\D/g, '').replace(/^1/, ''); // strip leading 1
-}
-
-// Normalize address for fuzzy comparison
-const ADDR_ABBR = {
-  'street':'st','drive':'dr','avenue':'ave','boulevard':'blvd','road':'rd',
-  'lane':'ln','court':'ct','place':'pl','circle':'cir','trail':'trl',
-  'parkway':'pkwy','highway':'hwy','suite':'ste','building':'bldg',
-  'north':'n','south':'s','east':'e','west':'w',
-  'northeast':'ne','northwest':'nw','southeast':'se','southwest':'sw'
-};
-function normAddr(a) {
-  if (!a) return '';
-  let s = String(a).toLowerCase().trim();
-  // Remove punctuation and extra spaces first
-  s = s.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-  // Expand OR contract abbreviations (normalize to short form)
-  Object.entries(ADDR_ABBR).forEach(([long, short]) => {
-    s = s.replace(new RegExp(`\\b${long}\\b`, 'g'), short);
-  });
-  // Remove all spaces to handle "ClarksonWoods" vs "Clarkson Woods"
-  return s.replace(/\s+/g, ' ').trim();
-}
-
-// Normalize just the street name portion (no number) for fuzzy compare
-function normStreetName(a) {
-  if (!a) return '';
-  // Strip leading house number
-  return normAddr(a).replace(/^\d+\s*/, '').trim();
-}
-
-// Simple Levenshtein similarity ratio 0–1
-function similarity(a, b) {
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  // Also try comparing with spaces removed (catches "ClarksonWoods" vs "Clarkson Woods")
-  const aNS = a.replace(/\s/g,''), bNS = b.replace(/\s/g,'');
-  if (aNS === bNS) return 1;
-  const la = a.length, lb = b.length;
-  const max = Math.max(la, lb);
-  if (max === 0) return 1;
-  if (Math.abs(la - lb) / max > 0.6) return 0;
-  const dp = Array.from({length: la + 1}, (_, i) => Array.from({length: lb + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
-  for (let i = 1; i <= la; i++)
-    for (let j = 1; j <= lb; j++)
-      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-  const levSim = 1 - dp[la][lb] / max;
-  // Return best of regular and no-space comparison
-  const laNS = aNS.length, lbNS = bNS.length, maxNS = Math.max(laNS, lbNS);
-  if (maxNS === 0) return levSim;
-  const dp2 = Array.from({length: laNS + 1}, (_, i) => Array.from({length: lbNS + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
-  for (let i = 1; i <= laNS; i++)
-    for (let j = 1; j <= lbNS; j++)
-      dp2[i][j] = aNS[i-1] === bNS[j-1] ? dp2[i-1][j-1] : 1 + Math.min(dp2[i-1][j], dp2[i][j-1], dp2[i-1][j-1]);
-  return Math.max(levSim, 1 - dp2[laNS][lbNS] / maxNS);
-}
-
-// Check one record against a list — returns array of matches
-function findDupesFor(rec, candidates, excludeId = null) {
-  const recPhone = normPhone(rec.phone);
-  const recAddr  = normAddr(rec.address);
-  const recStreet = normStreetName(rec.address);
-  const recName  = (rec.name || '').toLowerCase().trim();
-  const recZip   = (rec.zip || '').trim();
-  const matches  = [];
-
-  for (const c of candidates) {
-    if (c.id && c.id === excludeId) continue;
-    if (c === rec) continue;
-
-    const reasons = [];
-    let confidence = 0;
-
-    // Phone match (exact after normalization)
-    const cPhone = normPhone(c.phone);
-    if (recPhone && cPhone && recPhone === cPhone && recPhone.length >= 7) {
-      reasons.push('phone match');
-      confidence += 60;
-    }
-
-    // Address match — same state, fuzzy street name, or same zip + similar street
-    const cAddr   = normAddr(c.address);
-    const cStreet = normStreetName(c.address);
-    const cZip    = (c.zip || '').trim();
-    const sameState = rec.state === c.state;
-    const sameZip   = recZip && cZip && recZip === cZip;
-
-    if (recAddr && cAddr && sameState) {
-      const addrSim   = similarity(recAddr, cAddr);
-      const streetSim = similarity(recStreet, cStreet);
-      const bestSim   = Math.max(addrSim, streetSim);
-
-      if (bestSim >= 0.80) {
-        reasons.push(`address match (${Math.round(bestSim * 100)}%)`);
-        confidence += 50;
-      } else if (sameZip && streetSim >= 0.70) {
-        // Same zip + fairly similar street = good enough
-        reasons.push(`address match (zip+street ${Math.round(streetSim * 100)}%)`);
-        confidence += 45;
-      }
-    }
-
-    // Same zip + very similar name = flag even without address/phone
-    if (sameZip) {
-      const cName = (c.name || '').toLowerCase().trim();
-      const nameSim = similarity(recName, cName);
-      if (nameSim >= 0.70 && confidence === 0) {
-        reasons.push(`name match (${Math.round(nameSim * 100)}%)`);
-        confidence += 40;
-      } else if (nameSim >= 0.65) {
-        confidence += 15; // bonus on top of existing match
-      }
-    }
-
-    // Name similarity bonus (any state match)
-    if (confidence > 0) {
-      const cName = (c.name || '').toLowerCase().trim();
-      const nameSim = similarity(recName, cName);
-      if (nameSim >= 0.65) confidence += 15;
-    }
-
-    if (reasons.length > 0 && confidence >= 45) {
-      matches.push({ facility: c, reasons, confidence });
-    }
+function findDupesFor(rec,candidates,excludeId=null){
+  const recPhone=normPhone(rec.phone),recAddr=normAddr(rec.address),recStreet=normStreetName(rec.address);
+  const recName=(rec.name||'').toLowerCase().trim(),recZip=(rec.zip||'').trim(),matches=[];
+  for(const c of candidates){
+    if(c.id&&c.id===excludeId)continue;if(c===rec)continue;
+    const reasons=[],cPhone=normPhone(c.phone);let confidence=0;
+    if(recPhone&&cPhone&&recPhone===cPhone&&recPhone.length>=7){reasons.push('phone match');confidence+=60;}
+    const cAddr=normAddr(c.address),cStreet=normStreetName(c.address),cZip=(c.zip||'').trim();
+    const sameState=rec.state===c.state,sameZip=recZip&&cZip&&recZip===cZip;
+    if(recAddr&&cAddr&&sameState){const addrSim=similarity(recAddr,cAddr),streetSim=similarity(recStreet,cStreet),bestSim=Math.max(addrSim,streetSim);if(bestSim>=0.80){reasons.push(`address match (${Math.round(bestSim*100)}%)`);confidence+=50;}else if(sameZip&&streetSim>=0.70){reasons.push(`address match (zip+street ${Math.round(streetSim*100)}%)`);confidence+=45;}}
+    if(sameZip){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.70&&confidence===0){reasons.push(`name match (${Math.round(nameSim*100)}%)`);confidence+=40;}else if(nameSim>=0.65)confidence+=15;}
+    if(confidence>0){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.65)confidence+=15;}
+    if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});
   }
-
-  // Sort by confidence descending
-  return matches.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+  return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);
 }
 
-// Pending dup save context
 let dupPending = null;
 
-// Called from saveFac flow — check for dupes before saving
-async function checkDupesAndSave(rec, existing) {
-  const excludeId = rec.id || null;
-  const sameState = data.filter(f => f.state === rec.state);
-  const matches = findDupesFor(rec, sameState, excludeId);
-
-  if (matches.length === 0) {
-    await validateAndSave(rec, existing);
-    return;
-  }
-
-  // Show dup warning dialog
-  dupPending = { rec, existing };
-  const container = document.getElementById('dup-matches');
-  container.innerHTML = matches.map(m => {
-    const f = m.facility;
-    return `<div class="dup-match">
-      <div class="dup-match-head">
-        <span class="dup-match-name">${esc(f.name)}</span>
-        <span class="dup-match-reason">${m.reasons.join(' + ')}</span>
-      </div>
-      <div class="dup-match-detail">
-        ${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>
-        ${f.phone?'📞 '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;·&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>
-        Status: <strong>${esc(f.status||'—')}</strong>
-        <br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a>
-      </div>
-    </div>`;
-  }).join('');
-
+async function checkDupesAndSave(rec,existing){
+  const excludeId=rec.id||null,sameState=data.filter(f=>f.state===rec.state),matches=findDupesFor(rec,sameState,excludeId);
+  if(matches.length===0){await validateAndSave(rec,existing);return;}
+  dupPending={rec,existing};
+  const container=document.getElementById('dup-matches');
+  container.innerHTML=matches.map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'📞 '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;·&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');
   document.getElementById('dup-ov').classList.add('open');
 }
 
-function dupGoBack() {
-  document.getElementById('dup-ov').classList.remove('open');
-  dupPending = null;
-}
+function dupGoBack(){document.getElementById('dup-ov').classList.remove('open');dupPending=null;}
+function dupSaveAnyway(){if(!dupPending)return;const{rec,existing}=dupPending;document.getElementById('dup-ov').classList.remove('open');dupPending=null;validateAndSave(rec,existing);}
+function dupFlagAndSave(){if(!dupPending)return;const{rec,existing}=dupPending;rec.status='NRV';const dupNote='Flagged as possible duplicate — review before approving.';rec.notes=rec.notes?`${rec.notes} | ${dupNote}`:dupNote;document.getElementById('dup-ov').classList.remove('open');dupPending=null;validateAndSave(rec,existing);}
+function closeAllOverlays(){['dup-ov','dup-report-ov','addr-ov'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
 
-function dupSaveAnyway() {
-  if (!dupPending) return;
-  const { rec, existing } = dupPending;
-  document.getElementById('dup-ov').classList.remove('open');
-  dupPending = null;
-  validateAndSave(rec, existing);
-}
-
-function dupFlagAndSave() {
-  if (!dupPending) return;
-  const { rec, existing } = dupPending;
-  rec.status = 'NRV';
-  const dupNote = 'Flagged as possible duplicate — review before approving.';
-  rec.notes = rec.notes ? `${rec.notes} | ${dupNote}` : dupNote;
-  document.getElementById('dup-ov').classList.remove('open');
-  dupPending = null;
-  validateAndSave(rec, existing);
-}
-
-function closeAllOverlays() {
-  ['dup-ov','dup-report-ov','addr-ov'].forEach(id => document.getElementById(id)?.classList.remove('open'));
-}
-
-// ── Full database duplicate scan ──────────────────────────────────────────────
-async function findDuplicates() {
+async function findDuplicates(){
   showDbl('Scanning for duplicates…');
-
-  // Group by state for performance
-  const byState = {};
-  data.forEach(f => {
-    const st = f.state || '__';
-    if (!byState[st]) byState[st] = [];
-    byState[st].push(f);
-  });
-
-  const pairs = [];
-  const seen  = new Set();
-
-  const states = Object.keys(byState);
-  for (let si = 0; si < states.length; si++) {
-    const group = byState[states[si]];
+  const byState={};
+  data.forEach(f=>{const st=f.state||'__';if(!byState[st])byState[st]=[];byState[st].push(f);});
+  const pairs=[],seen=new Set(),states=Object.keys(byState);
+  for(let si=0;si<states.length;si++){
+    const group=byState[states[si]];
     showDbl(`Scanning ${states[si]}… (${si+1}/${states.length} states)`);
-    // Yield to UI every state
-    await new Promise(r => setTimeout(r, 0));
-
-    for (let i = 0; i < group.length; i++) {
-      const rec = group[i];
-      const candidates = group.slice(i + 1);
-      const matches = findDupesFor(rec, candidates);
-      for (const m of matches) {
-        const key = [rec.id, m.facility.id].sort().join('|');
-        if (!seen.has(key)) {
-          seen.add(key);
-          pairs.push({ a: rec, b: m.facility, reasons: m.reasons, confidence: m.confidence });
-        }
-      }
-    }
+    await new Promise(r=>setTimeout(r,0));
+    for(let i=0;i<group.length;i++){const rec=group[i],candidates=group.slice(i+1),matches=findDupesFor(rec,candidates);for(const m of matches){const key=[rec.id,m.facility.id].sort().join('|');if(!seen.has(key)){seen.add(key);pairs.push({a:rec,b:m.facility,reasons:m.reasons,confidence:m.confidence});}}}
   }
-
   hideDbl();
-
-  const body = document.getElementById('dup-report-body');
-  const summary = document.getElementById('dup-report-summary');
-
-  if (pairs.length === 0) {
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';
-    summary.textContent = 'No duplicates found';
-  } else {
-    pairs.sort((a, b) => b.confidence - a.confidence);
-    body.innerHTML = pairs.map(p => `
-      <div class="dup-pair">
-        <div class="dup-pair-head">
-          <span class="dup-pair-label">${p.reasons.join(' + ')}</span>
-          <span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span>
-        </div>
-        <div class="dup-pair-body">
-          <div class="dup-pair-rec">
-            <strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>
-            ${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>
-            ${p.a.phone?'📞 '+esc(p.a.phone)+'<br>':''}
-            ID: ${p.a.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span>
-          </div>
-          <div class="dup-pair-rec">
-            <strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>
-            ${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>
-            ${p.b.phone?'📞 '+esc(p.b.phone)+'<br>':''}
-            ID: ${p.b.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span>
-          </div>
-        </div>
-      </div>`).join('');
-    summary.textContent = `${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;
-  }
-
+  const body=document.getElementById('dup-report-body'),summary=document.getElementById('dup-report-summary');
+  if(pairs.length===0){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';summary.textContent='No duplicates found';}
+  else{pairs.sort((a,b)=>b.confidence-a.confidence);body.innerHTML=pairs.map(p=>`<div class="dup-pair"><div class="dup-pair-head"><span class="dup-pair-label">${p.reasons.join(' + ')}</span><span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span></div><div class="dup-pair-body"><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>${p.a.phone?'📞 '+esc(p.a.phone)+'<br>':''}ID: ${p.a.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span></div><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>${p.b.phone?'📞 '+esc(p.b.phone)+'<br>':''}ID: ${p.b.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span></div></div></div>`).join('');summary.textContent=`${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;}
   document.getElementById('dup-report-ov').classList.add('open');
 }
 
-// ── Hook dup check into import ────────────────────────────────────────────────
-async function checkDupesForImport(rec, existingData, batchSoFar) {
-  const candidates = [
-    ...existingData.filter(f => f.state === rec.state),
-    ...batchSoFar.filter(f => f.state === rec.state)
-  ];
-  return findDupesFor(rec, candidates);
+async function checkDupesForImport(rec,existingData,batchSoFar){
+  const candidates=[...existingData.filter(f=>f.state===rec.state),...batchSoFar.filter(f=>f.state===rec.state)];
+  return findDupesFor(rec,candidates);
 }
 
 function importFile(e){
