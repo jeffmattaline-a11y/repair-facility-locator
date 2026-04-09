@@ -17,7 +17,7 @@ const {
 // ---------------------------------------------------------------------------
 async function fetchNewFacilities() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/facilities?created_at=gte.${since}&select=id,name,address,city,state,zip,phone,status,created_at&order=created_at.desc`;
+  const url = `${SUPABASE_URL}/rest/v1/facilities?added_on=gte.${since}&select=id,name,address,city,state,zip,phone,status,added_on&order=added_on.desc`;
 
   const res = await fetch(url, {
     headers: {
@@ -54,13 +54,13 @@ function buildEmailHtml(facilities) {
   }
 
   const statusColors = {
-    'Preferred':     '#1a7a3e',
-    'Under Review':  '#b45309',
-    'Inactive':      '#6b7280',
-    'Suspended':     '#c0392b',
-    'PRF':           '#1a7a3e',
-    'NRV':           '#7c3aed',
-    'Unknown':       '#374151',
+    'Preferred':    '#1a7a3e',
+    'Under Review': '#b45309',
+    'Inactive':     '#6b7280',
+    'Suspended':    '#c0392b',
+    'PRF':          '#1a7a3e',
+    'NRV':          '#7c3aed',
+    'Unknown':      '#374151',
   };
 
   // Status summary rows
@@ -83,12 +83,7 @@ function buildEmailHtml(facilities) {
   } else {
     for (const f of facilities) {
       const color = statusColors[f.status] || '#374151';
-      const addedTime = f.created_at
-        ? new Date(f.created_at).toLocaleString('en-US', {
-            month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-            timeZone: 'America/Chicago',
-          })
-        : 'N/A';
+      const addedTime = f.added_on ? f.added_on : 'N/A';
       const location = [f.city, f.state, f.zip].filter(Boolean).join(', ');
       facilityRows += `
         <tr>
@@ -98,7 +93,7 @@ function buildEmailHtml(facilities) {
           <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;">
             <span style="background:${color};color:#fff;border-radius:4px;padding:2px 10px;font-size:12px;font-weight:600;">${f.status || '—'}</span>
           </td>
-          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:13px;">${addedTime} CT</td>
+          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:13px;">${addedTime}</td>
         </tr>`;
     }
   }
