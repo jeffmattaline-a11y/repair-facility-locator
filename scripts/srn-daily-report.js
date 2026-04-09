@@ -17,7 +17,7 @@ const {
 // ---------------------------------------------------------------------------
 async function fetchNewFacilities() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/facilities?created_at=gte.${since}&select=id,name,city,state,zip,phone,status,created_at&order=created_at.desc`;
+  const url = `${SUPABASE_URL}/rest/v1/facilities?created_at=gte.${since}&select=id,name,address,city,state,zip,phone,status,created_at&order=created_at.desc`;
 
   const res = await fetch(url, {
     headers: {
@@ -58,6 +58,8 @@ function buildEmailHtml(facilities) {
     'Under Review':  '#b45309',
     'Inactive':      '#6b7280',
     'Suspended':     '#c0392b',
+    'PRF':           '#1a7a3e',
+    'NRV':           '#7c3aed',
     'Unknown':       '#374151',
   };
 
@@ -87,10 +89,11 @@ function buildEmailHtml(facilities) {
             timeZone: 'America/Chicago',
           })
         : 'N/A';
+      const location = [f.city, f.state, f.zip].filter(Boolean).join(', ');
       facilityRows += `
         <tr>
-          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#233348;">${f.facility_name || '—'}</td>
-          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;color:#374151;">${f.city || '—'}, ${f.state || '—'} ${f.zip || ''}</td>
+          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#233348;">${f.name || '—'}</td>
+          <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;color:#374151;">${location || f.address || '—'}</td>
           <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;color:#374151;">${f.phone || '—'}</td>
           <td style="padding:10px 16px;border-bottom:1px solid #e5e7eb;">
             <span style="background:${color};color:#fff;border-radius:4px;padding:2px 10px;font-size:12px;font-weight:600;">${f.status || '—'}</span>
@@ -202,7 +205,7 @@ async function sendEmail(subject, html) {
     html,
   });
 
-  console.log(`✅ Email sent: ${info.messageId}`);
+  console.log(`Email sent: ${info.messageId}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -210,7 +213,7 @@ async function sendEmail(subject, html) {
 // ---------------------------------------------------------------------------
 (async () => {
   try {
-    console.log('📡 Querying Supabase for new facilities...');
+    console.log('Querying Supabase for new facilities...');
     const facilities = await fetchNewFacilities();
     console.log(`Found ${facilities.length} new facility/facilities in the last 24 hours.`);
 
@@ -225,11 +228,11 @@ async function sendEmail(subject, html) {
 
     const html = buildEmailHtml(facilities);
 
-    console.log('📧 Sending email...');
+    console.log('Sending email...');
     await sendEmail(subject, html);
-    console.log('✅ Done.');
+    console.log('Done.');
   } catch (err) {
-    console.error('❌ Error:', err.message);
+    console.error('Error:', err.message);
     process.exit(1);
   }
 })();
