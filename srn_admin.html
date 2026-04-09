@@ -176,7 +176,6 @@ td.nm:hover{text-decoration:underline}
 .session-expired-box .lf{text-align:left}
 .session-expired-box .lbtn{margin-top:8px}
 .session-expired-box .lerr{text-align:center}
-
 /* ── Messages Tab ── */
 .msg-list{display:flex;flex-direction:column;gap:0}
 .msg-card{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff;transition:box-shadow .15s}
@@ -299,7 +298,7 @@ td.nm:hover{text-decoration:underline}
 </nav>
 
 <div class="toolbar">
-  <input id="search" placeholder="Search name, city, phone…" oninput="go()">
+  <input id="search" placeholder="Search name, city, phone, email…" oninput="go()">
   <label>State</label><select id="f-state" onchange="go()"><option value="">All</option></select>
   <label>Status</label><select id="f-status" onchange="go()"><option value="">All</option></select>
   <label>Type</label><select id="f-type" onchange="go()"><option value="">All</option></select>
@@ -448,7 +447,7 @@ const PG = 25;
 let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
 let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
 let refreshTimer = null;
-let msgCounts = {}; // facilityId -> open message count
+let msgCounts = {};
 
 function isAuthError(errMsg) {
   if (!errMsg) return false;
@@ -545,7 +544,6 @@ async function signOut(){
 async function loadData(){
   showDbl('Loading facilities…');
   try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}
-  // Load message counts in background
   try{
     const rows=await api.getOpenMsgCounts();
     msgCounts={};
@@ -568,7 +566,7 @@ function rebuild(){
 
 function go(){
   const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fm=document.getElementById('f-has-msgs').checked;
-  filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip}`.toLowerCase().includes(q))return false;return true;});
+  filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;return true;});
   filtered.sort((a,b)=>sortKey==='numeric_id'?sortDir*((+a.numeric_id||0)-(+b.numeric_id||0)):sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase()));
   document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;
   document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;
@@ -630,12 +628,10 @@ function openEdit(id){
   document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;
   const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}
   document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';
-  // Reset messages tab
   document.getElementById('msgs-tab-count').style.display='none';
   document.getElementById('msgs-list').style.display='none';
   document.getElementById('msgs-loading').style.display='block';
   document.getElementById('msgs-loading').textContent='Loading messages…';
-  // Pre-load message badge count
   const openCount=msgCounts[id]||0;
   if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}
   switchTab('details');document.getElementById('ov').classList.add('open');
@@ -664,7 +660,6 @@ async function loadHistory(facilityId){
   }catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
 }
 
-// ── Messages Tab ────────────────────────────────────────────
 async function loadFacilityMessages(facilityId){
   document.getElementById('msgs-loading').style.display='block';
   document.getElementById('msgs-loading').textContent='Loading messages…';
@@ -697,19 +692,15 @@ async function markMsgAddressed(msgId){
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
     await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));
-    // Update card in place
     const card=document.getElementById('msg-'+msgId);
     card.classList.add('addressed');
     const footer=card.querySelector('.msg-footer');
     const oldBtn=footer.querySelector('.btn-address');
     if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;
-    // Update tab counter and global count
     const tabCount=document.getElementById('msgs-tab-count');
     const cur=parseInt(tabCount.textContent||'0',10);
     if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;
-    // Update row badge
     if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}
-    // Update summary
     const list=document.getElementById('msgs-list');
     const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;
     const totalNow=list.querySelectorAll('.msg-card').length;
