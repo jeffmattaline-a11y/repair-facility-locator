@@ -176,6 +176,31 @@ td.nm:hover{text-decoration:underline}
 .session-expired-box .lf{text-align:left}
 .session-expired-box .lbtn{margin-top:8px}
 .session-expired-box .lerr{text-align:center}
+
+/* ── Messages Tab ── */
+.msg-list{display:flex;flex-direction:column;gap:0}
+.msg-card{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff;transition:box-shadow .15s}
+.msg-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.msg-card.addressed{opacity:.6}
+.msg-card-head{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px 8px;gap:10px}
+.msg-meta{flex:1;min-width:0}
+.msg-from{font-size:13px;font-weight:600;color:#233348}
+.msg-sub{font-size:12px;color:#3782A4;margin-top:1px}
+.msg-time{font-size:11px;color:#8a93a2;white-space:nowrap}
+.msg-body{font-size:13px;color:#374151;padding:0 10px 10px;line-height:1.5;border-left:3px solid #3782A4;margin:0 14px 10px;background:#f9fafb;border-radius:0 4px 4px 0}
+.msg-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#f4f6f9;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap}
+.msg-match-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.msg-match-email{background:#dbeafe;color:#1e40af}
+.msg-match-name{background:#fef3c7;color:#92400e}
+.msg-match-unknown{background:#fee2e2;color:#b91c1c}
+.msg-addressed-tag{font-size:11px;color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:10px;font-weight:600}
+.btn-address{background:#1DB0D1;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-address:hover{background:#1890aa}
+.btn-address:disabled{opacity:.6;cursor:not-allowed}
+.msg-empty{text-align:center;padding:40px 20px;color:#8a93a2;font-size:14px}
+.msg-empty-icon{font-size:32px;margin-bottom:8px}
+.msg-badge{display:inline-flex;align-items:center;justify-content:center;background:#CA383B;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;padding:0 4px;margin-left:5px;vertical-align:middle}
+.tab-msg-count{background:#CA383B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:5px}
 </style>
 </head>
 <body>
@@ -278,6 +303,7 @@ td.nm:hover{text-decoration:underline}
   <label>State</label><select id="f-state" onchange="go()"><option value="">All</option></select>
   <label>Status</label><select id="f-status" onchange="go()"><option value="">All</option></select>
   <label>Type</label><select id="f-type" onchange="go()"><option value="">All</option></select>
+  <label><input type="checkbox" id="f-has-msgs" onchange="go()" style="margin-right:4px">Has Messages</label>
   <div class="sp"></div><span class="tstat" id="tstat">— of —</span>
 </div>
 
@@ -302,8 +328,9 @@ td.nm:hover{text-decoration:underline}
   <div class="ph"><h2 id="ptitle">Add Facility</h2><span class="idb" id="pbadge" style="display:none"></span><button class="pclose" onclick="closePanel()">✕</button></div>
   <div class="pbody">
     <div class="ptabs" id="ptabs" style="display:none">
-      <button class="ptab on" onclick="switchTab('details')">Details</button>
-      <button class="ptab" onclick="switchTab('history')">Change History</button>
+      <button class="ptab on" id="tab-btn-details" onclick="switchTab('details')">Details</button>
+      <button class="ptab" id="tab-btn-history" onclick="switchTab('history')">Change History</button>
+      <button class="ptab" id="tab-btn-messages" onclick="switchTab('messages')">Messages <span class="tab-msg-count" id="msgs-tab-count" style="display:none"></span></button>
     </div>
     <div id="tab-details">
     <div class="grid">
@@ -387,6 +414,14 @@ td.nm:hover{text-decoration:underline}
     <div id="tab-history" style="display:none">
       <div id="hist-body"><div class="hist-loading">Loading history…</div></div>
     </div>
+    <div id="tab-messages" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:14px;font-weight:700;color:#233348;margin:0">Facility Messages</h3>
+        <span id="msgs-summary" style="font-size:12px;color:#8a93a2"></span>
+      </div>
+      <div id="msgs-loading" style="text-align:center;padding:30px;color:#8a93a2;font-size:13px">Loading messages…</div>
+      <div id="msgs-list" class="msg-list" style="display:none"></div>
+    </div>
   </div>
   <div class="pfoot">
     <button class="btn btn-del" id="del-btn" onclick="confirmDel()" style="display:none">Delete</button>
@@ -413,6 +448,7 @@ const PG = 25;
 let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
 let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
 let refreshTimer = null;
+let msgCounts = {}; // facilityId -> open message count
 
 function isAuthError(errMsg) {
   if (!errMsg) return false;
@@ -469,7 +505,10 @@ const api = {
   async upsertBatch(recs){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdrs({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(recs)});if(!r.ok)throw new Error(await r.text());},
   async del(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'DELETE',headers:hdrs()});if(!r.ok)throw new Error(await r.text());},
   async logHistory(entry){await fetch(`${SUPABASE_URL}/rest/v1/facility_history`,{method:'POST',headers:hdrs({'Prefer':'return=minimal'}),body:JSON.stringify(entry)});},
-  async getHistory(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();}
+  async getHistory(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async getMessages(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?facility_id=eq.${facilityId}&order=received_at.desc&limit=100`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async getOpenMsgCounts(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=facility_id`,{headers:hdrs()});if(!r.ok)return[];return r.json();},
+  async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();}
 };
 
 (function checkInviteToken(){
@@ -499,11 +538,21 @@ async function signIn(){
 }
 
 async function signOut(){
-  if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];
+  if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};
   document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';
 }
 
-async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}hideDbl();rebuild();go();}
+async function loadData(){
+  showDbl('Loading facilities…');
+  try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}
+  // Load message counts in background
+  try{
+    const rows=await api.getOpenMsgCounts();
+    msgCounts={};
+    rows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});
+  }catch(e){msgCounts={};}
+  hideDbl();rebuild();go();
+}
 
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
@@ -518,8 +567,8 @@ function rebuild(){
 }
 
 function go(){
-  const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value;
-  filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip}`.toLowerCase().includes(q))return false;return true;});
+  const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fm=document.getElementById('f-has-msgs').checked;
+  filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip}`.toLowerCase().includes(q))return false;return true;});
   filtered.sort((a,b)=>sortKey==='numeric_id'?sortDir*((+a.numeric_id||0)-(+b.numeric_id||0)):sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase()));
   document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;
   document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;
@@ -532,7 +581,11 @@ function render(){
   const rows=filtered.slice((page-1)*PG,page*PG),tb=document.getElementById('tbody'),em=document.getElementById('empty');
   if(!filtered.length){tb.innerHTML='';em.style.display='';return;}
   em.style.display='none';
-  tb.innerHTML=rows.map(f=>`<tr><td class="mono">${f.numeric_id||'—'}</td><td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}</td><td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td><td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td><td>${esc(f.phone||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td>${esc(f.shop_type||'—')}</td><td>${esc(f.added_on||'')}</td><td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td></tr>`).join('');
+  tb.innerHTML=rows.map(f=>{
+    const mc=msgCounts[f.id];
+    const msgBadge=mc?`<span class="msg-badge">${mc}</span>`:'';
+    return`<tr><td class="mono">${f.numeric_id||'—'}</td><td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}${msgBadge}</td><td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td><td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td><td>${esc(f.phone||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td>${esc(f.shop_type||'—')}</td><td>${esc(f.added_on||'')}</td><td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td></tr>`;
+  }).join('');
 }
 
 function pgRender(){
@@ -577,18 +630,29 @@ function openEdit(id){
   document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;
   const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}
   document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';
+  // Reset messages tab
+  document.getElementById('msgs-tab-count').style.display='none';
+  document.getElementById('msgs-list').style.display='none';
+  document.getElementById('msgs-loading').style.display='block';
+  document.getElementById('msgs-loading').textContent='Loading messages…';
+  // Pre-load message badge count
+  const openCount=msgCounts[id]||0;
+  if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}
   switchTab('details');document.getElementById('ov').classList.add('open');
 }
 
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
 
 function switchTab(tab){
-  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.ptab').forEach(t=>{if(t.textContent.toLowerCase().includes(tab==='details'?'detail':'history'))t.classList.add('on');});
-  document.getElementById('tab-details').style.display=tab==='details'?'':'none';
-  document.getElementById('tab-history').style.display=tab==='history'?'':'none';
+  ['details','history','messages'].forEach(t=>{
+    document.getElementById('tab-btn-'+t)?.classList.remove('on');
+    document.getElementById('tab-'+t).style.display='none';
+  });
+  document.getElementById('tab-btn-'+tab)?.classList.add('on');
+  document.getElementById('tab-'+tab).style.display='';
   document.getElementById('save-btn').style.display=tab==='details'?'':'none';
   if(tab==='history'&&editId)loadHistory(editId);
+  if(tab==='messages'&&editId)loadFacilityMessages(editId);
 }
 
 async function loadHistory(facilityId){
@@ -598,6 +662,63 @@ async function loadHistory(facilityId){
     const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL'};
     el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');
   }catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
+}
+
+// ── Messages Tab ────────────────────────────────────────────
+async function loadFacilityMessages(facilityId){
+  document.getElementById('msgs-loading').style.display='block';
+  document.getElementById('msgs-loading').textContent='Loading messages…';
+  document.getElementById('msgs-list').style.display='none';
+  try{
+    const messages=await api.getMessages(facilityId);
+    document.getElementById('msgs-loading').style.display='none';
+    const list=document.getElementById('msgs-list');list.style.display='block';
+    const open=messages.filter(m=>!m.is_addressed).length;
+    const total=messages.length;
+    const tabCount=document.getElementById('msgs-tab-count');
+    if(open>0){tabCount.textContent=open;tabCount.style.display='inline';}else{tabCount.style.display='none';}
+    document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open`:'';
+    if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">💬</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}
+    list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');
+  }catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}
+}
+
+function renderMsgCard(m){
+  const matchBadge={email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';
+  const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';
+  const addressedSection=m.is_addressed
+    ?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`
+    :`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;
+  return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}"><div class="msg-card-head"><div class="msg-meta"><div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div><div class="msg-sub">${esc(m.subject||'')}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;
+}
+
+async function markMsgAddressed(msgId){
+  const btn=document.getElementById('addr-btn-'+msgId);
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));
+    // Update card in place
+    const card=document.getElementById('msg-'+msgId);
+    card.classList.add('addressed');
+    const footer=card.querySelector('.msg-footer');
+    const oldBtn=footer.querySelector('.btn-address');
+    if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;
+    // Update tab counter and global count
+    const tabCount=document.getElementById('msgs-tab-count');
+    const cur=parseInt(tabCount.textContent||'0',10);
+    if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;
+    // Update row badge
+    if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}
+    // Update summary
+    const list=document.getElementById('msgs-list');
+    const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;
+    const totalNow=list.querySelectorAll('.msg-card').length;
+    document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';
+    toast('Message marked as addressed.','ok');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}
+    toast('Error: '+e.message,'err');
+  }
 }
 
 const GOOGLE_API_KEY='AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0';
