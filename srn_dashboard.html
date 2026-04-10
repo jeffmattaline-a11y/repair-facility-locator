@@ -491,7 +491,13 @@ const SUPABASE_URL = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MzA3MDksImV4cCI6MjA2MDQwNjcwOX0.GXrdKZElgIRlnDMYkbIwj2N_MkqFdQp9EVMM5j1rVT4';
 
 const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
 
 // ── CHART DEFAULTS ───────────────────────────────────────────────────────────
 Chart.defaults.color = '#8aa4bc';
@@ -534,7 +540,7 @@ async function checkAuth() {
 document.getElementById('login-btn').addEventListener('click', async () => {
   await sb.auth.signInWithOAuth({
     provider: 'github',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: window.location.origin + window.location.pathname }
   });
 });
 
@@ -743,22 +749,21 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  // Handle OAuth redirect
-  const fullHref = window.location.href;
-  if (fullHref.includes('access_token')) {
-    const atMatch = [...fullHref.matchAll(/access_token=([^&]+)/g)];
-    const rtMatch = [...fullHref.matchAll(/refresh_token=([^&#]+)/g)];
-    const access_token  = atMatch.length ? atMatch[atMatch.length - 1][1] : null;
-    const refresh_token = rtMatch.length ? rtMatch[rtMatch.length - 1][1] : null;
-    if (access_token && refresh_token) {
-      await sb.auth.setSession({ access_token, refresh_token });
-      // Reload to clean URL — session is now stored in localStorage
-      window.location.replace(window.location.pathname);
-      return;
+  // Listen for auth state changes (handles token in URL automatically)
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+      document.getElementById('auth-overlay').classList.add('hidden');
+      const name = session.user.user_metadata?.user_name || session.user.email || 'Admin';
+      document.getElementById('user-info').textContent = name;
+      // Clean URL if tokens are present
+      if (window.location.hash.includes('access_token')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      loadDashboard();
+    } else {
+      document.getElementById('auth-overlay').classList.remove('hidden');
     }
-  }
-  const authed = await checkAuth();
-  if (authed) loadDashboard();
+  });
 })();
 </script>
 </body>
