@@ -743,19 +743,18 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  // Handle OAuth redirect — the URL may contain multiple #fragments, grab the last access_token
-  const fullHash = window.location.href;
-  if (fullHash.includes('access_token')) {
-    // Extract the last occurrence of access_token and refresh_token via regex
-    const atMatch = [...fullHash.matchAll(/access_token=([^&]+)/g)];
-    const rtMatch = [...fullHash.matchAll(/refresh_token=([^&#]+)/g)];
-    const access_token  = atMatch.length  ? atMatch[atMatch.length - 1][1]   : null;
-    const refresh_token = rtMatch.length  ? rtMatch[rtMatch.length - 1][1]   : null;
+  // Handle OAuth redirect
+  const fullHref = window.location.href;
+  if (fullHref.includes('access_token')) {
+    const atMatch = [...fullHref.matchAll(/access_token=([^&]+)/g)];
+    const rtMatch = [...fullHref.matchAll(/refresh_token=([^&#]+)/g)];
+    const access_token  = atMatch.length ? atMatch[atMatch.length - 1][1] : null;
+    const refresh_token = rtMatch.length ? rtMatch[rtMatch.length - 1][1] : null;
     if (access_token && refresh_token) {
-      const { error } = await sb.auth.setSession({ access_token, refresh_token });
-      if (!error) {
-        history.replaceState(null, '', window.location.pathname);
-      }
+      await sb.auth.setSession({ access_token, refresh_token });
+      // Reload to clean URL — session is now stored in localStorage
+      window.location.replace(window.location.pathname);
+      return;
     }
   }
   const authed = await checkAuth();
