@@ -354,32 +354,20 @@ async function loadDashboard() {
 
 document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
-// ── INIT v6 ──────────────────────────────────────────────────────────────────
-(async () => {
-  const href = window.location.href;
-  if (href.includes('access_token')) {
-    // Parse tokens from URL and set session manually
-    const at = (href.match(/access_token=([^&]+)/) || [])[1];
-    const rt = (href.match(/refresh_token=([^&]+)/) || [])[1];
-    if (at && rt) {
-      const { data, error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
-      if (!error && data.session) {
-        history.replaceState(null, '', window.location.pathname);
-        showDashboard(data.session.user.user_metadata?.user_name || data.session.user.email);
-        loadDashboard();
-        return;
-      }
-    }
-  }
-  // Check for existing persisted session
-  const { data: { session } } = await sb.auth.getSession();
+// ── INIT v7 ──────────────────────────────────────────────────────────────────
+// Supabase with detectSessionInUrl:true automatically exchanges the token from
+// the URL hash. We just listen for the auth state change event.
+sb.auth.onAuthStateChange((event, session) => {
   if (session) {
+    if (window.location.hash.includes('access_token')) {
+      history.replaceState(null, '', window.location.pathname);
+    }
     showDashboard(session.user.user_metadata?.user_name || session.user.email);
     loadDashboard();
   } else {
     document.getElementById('auth-overlay').classList.remove('hidden');
   }
-})();
+});
 </script>
 </body>
 </html>
