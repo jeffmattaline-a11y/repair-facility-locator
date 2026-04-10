@@ -743,10 +743,13 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  // If Supabase redirected back with tokens in the URL hash, exchange them first
+  // Handle OAuth redirect — extract tokens from URL hash and establish session
   if (window.location.hash.includes('access_token')) {
-    const { data, error } = await sb.auth.getSessionFromUrl({ reloadSession: true });
-    if (!error && data.session) {
+    const params = new URLSearchParams(window.location.hash.replace('#', ''));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (access_token && refresh_token) {
+      await sb.auth.setSession({ access_token, refresh_token });
       history.replaceState(null, '', window.location.pathname);
     }
   }
