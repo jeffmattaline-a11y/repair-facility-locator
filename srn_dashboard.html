@@ -749,29 +749,38 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  const hasToken = window.location.href.includes('access_token');
-  alert('Page loaded. Has token in URL: ' + hasToken);
-
-  sb.auth.onAuthStateChange(async (event, session) => {
-    alert('Auth event: ' + event + ' | session: ' + (session ? 'YES' : 'NO'));
-    if (session) {
-      document.getElementById('auth-overlay').classList.add('hidden');
-      const name = session.user.user_metadata?.user_name || session.user.email || 'Admin';
-      document.getElementById('user-info').textContent = name;
-      if (window.location.hash.includes('access_token')) {
+  // If token is in URL, manually call setSession before anything else
+  const href = window.location.href;
+  if (href.includes('access_token')) {
+    const atMatch = href.match(/access_token=([^&]+)/);
+    const rtMatch = href.match(/refresh_token=([^&]+)/);
+    const access_token  = atMatch ? atMatch[1] : null;
+    const refresh_token = rtMatch ? rtMatch[1] : null;
+    alert('Tokens found. AT starts with: ' + (access_token ? access_token.substring(0,20) : 'null'));
+    if (access_token && refresh_token) {
+      const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
+      alert('setSession result: ' + (error ? 'ERROR: ' + error.message : 'OK, user: ' + data?.session?.user?.email));
+      if (!error && data?.session) {
         history.replaceState(null, '', window.location.pathname);
+        document.getElementById('auth-overlay').classList.add('hidden');
+        document.getElementById('user-info').textContent =
+          data.session.user.user_metadata?.user_name || data.session.user.email || 'Admin';
+        loadDashboard();
+        return;
       }
-      loadDashboard();
-    } else {
-      document.getElementById('auth-overlay').classList.remove('hidden');
     }
-  });
+  }
 
-  // Also try manual session check after a short delay
-  setTimeout(async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    alert('Manual getSession after 2s: ' + (session ? 'FOUND session for ' + session.user.email : 'NO session'));
-  }, 2000);
+  // No token in URL — check for existing session
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('auth-overlay').classList.add('hidden');
+    document.getElementById('user-info').textContent =
+      session.user.user_metadata?.user_name || session.user.email || 'Admin';
+    loadDashboard();
+  } else {
+    document.getElementById('auth-overlay').classList.remove('hidden');
+  }
 })();
 </script>
 </body>
