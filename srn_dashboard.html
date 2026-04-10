@@ -743,14 +743,19 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  // Handle OAuth redirect — extract tokens from URL hash and establish session
-  if (window.location.hash.includes('access_token')) {
-    const params = new URLSearchParams(window.location.hash.replace('#', ''));
-    const access_token = params.get('access_token');
-    const refresh_token = params.get('refresh_token');
+  // Handle OAuth redirect — the URL may contain multiple #fragments, grab the last access_token
+  const fullHash = window.location.href;
+  if (fullHash.includes('access_token')) {
+    // Extract the last occurrence of access_token and refresh_token via regex
+    const atMatch = [...fullHash.matchAll(/access_token=([^&]+)/g)];
+    const rtMatch = [...fullHash.matchAll(/refresh_token=([^&#]+)/g)];
+    const access_token  = atMatch.length  ? atMatch[atMatch.length - 1][1]   : null;
+    const refresh_token = rtMatch.length  ? rtMatch[rtMatch.length - 1][1]   : null;
     if (access_token && refresh_token) {
-      await sb.auth.setSession({ access_token, refresh_token });
-      history.replaceState(null, '', window.location.pathname);
+      const { error } = await sb.auth.setSession({ access_token, refresh_token });
+      if (!error) {
+        history.replaceState(null, '', window.location.pathname);
+      }
     }
   }
   const authed = await checkAuth();
