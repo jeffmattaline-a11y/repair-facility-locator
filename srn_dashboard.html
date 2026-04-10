@@ -743,6 +743,13 @@ document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
+  // If Supabase redirected back with tokens in the URL hash, exchange them first
+  if (window.location.hash.includes('access_token')) {
+    const { data, error } = await sb.auth.getSessionFromUrl({ reloadSession: true });
+    if (!error && data.session) {
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }
   const authed = await checkAuth();
   if (authed) loadDashboard();
 })();
