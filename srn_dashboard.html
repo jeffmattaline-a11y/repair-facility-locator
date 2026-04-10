@@ -251,7 +251,12 @@ const SUPABASE_URL = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MzA3MDksImV4cCI6MjA2MDQwNjcwOX0.GXrdKZElgIRlnDMYkbIwj2N_MkqFdQp9EVMM5j1rVT4';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+    flowType: 'pkce'
+  }
 });
 
 Chart.defaults.color = '#8aa4bc';
@@ -270,7 +275,10 @@ function showDashboard(email) {
 document.getElementById('login-btn').addEventListener('click', () => {
   sb.auth.signInWithOAuth({
     provider: 'github',
-    options: { redirectTo: window.location.origin + window.location.pathname }
+    options: {
+      redirectTo: window.location.origin + window.location.pathname,
+      skipBrowserRedirect: false
+    }
   });
 });
 
@@ -354,18 +362,20 @@ async function loadDashboard() {
 
 document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
-// ── INIT v7 ──────────────────────────────────────────────────────────────────
-// Supabase with detectSessionInUrl:true automatically exchanges the token from
-// the URL hash. We just listen for the auth state change event.
+// ── INIT v8 ──────────────────────────────────────────────────────────────────
 sb.auth.onAuthStateChange((event, session) => {
-  if (session) {
-    if (window.location.hash.includes('access_token')) {
-      history.replaceState(null, '', window.location.pathname);
-    }
+  if (event === 'SIGNED_IN' && session) {
+    // Clean URL
+    history.replaceState(null, '', window.location.pathname);
     showDashboard(session.user.user_metadata?.user_name || session.user.email);
     loadDashboard();
-  } else {
-    document.getElementById('auth-overlay').classList.remove('hidden');
+  } else if (event === 'INITIAL_SESSION') {
+    if (session) {
+      showDashboard(session.user.user_metadata?.user_name || session.user.email);
+      loadDashboard();
+    } else {
+      document.getElementById('auth-overlay').classList.remove('hidden');
+    }
   }
 });
 </script>
