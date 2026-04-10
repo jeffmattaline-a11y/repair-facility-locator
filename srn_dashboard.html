@@ -286,7 +286,7 @@ async function fetchAll() {
   const PAGE = 1000;
   let all = [], from = 0;
   while (true) {
-    const { data, error } = await sb.from('facilities').select('status, state').range(from, from + PAGE - 1);
+    const { data, error } = await sb.from('facilities').select('status, state, added_on').range(from, from + PAGE - 1);
     if (error) throw error;
     all = all.concat(data);
     if (data.length < PAGE) break;
@@ -311,10 +311,16 @@ function buildDonut(counts, total) {
 }
 
 function buildEnroll(rows) {
-  // created_at not available — show placeholder message
-  const ctx = document.getElementById('enrollChart');
-  ctx.style.display = 'none';
-  ctx.parentElement.innerHTML = '<div class="loading-placeholder" style="height:200px;color:var(--text-muted);font-size:13px;">Enrollment trend requires<br>created_at column in facilities table</div>';
+  const now = new Date();
+  const months = Array.from({length:12}, (_,i) => { const d = new Date(now.getFullYear(), now.getMonth()-11+i, 1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
+  const counts = Object.fromEntries(months.map(m => [m, 0]));
+  rows.forEach(r => { if (r.added_on) { const k = r.added_on.slice(0,7); if (k in counts) counts[k]++; } });
+  const labels = months.map(m => { const [y,mo] = m.split('-'); return new Date(+y,+mo-1,1).toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  if (enrollInst) enrollInst.destroy();
+  const ctx = document.getElementById('enrollChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,260);
+  grad.addColorStop(0,'rgba(29,176,209,0.35)'); grad.addColorStop(1,'rgba(29,176,209,0.02)');
+  enrollInst = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: months.map(m=>counts[m]), borderColor: CYAN, backgroundColor: grad, borderWidth: 2, pointBackgroundColor: CYAN, pointRadius: 4, fill: true, tension: 0.35 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(82,175,205,0.08)' } }, y: { grid: { color: 'rgba(82,175,205,0.08)' }, beginAtZero: true, ticks: { precision: 0 } } } } });
 }
 
 function buildState(rows) {
