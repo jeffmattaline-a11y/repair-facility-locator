@@ -248,15 +248,10 @@
 
 <script>
 const SUPABASE_URL = 'https://amfawopeshfzuxusruyq.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MzA3MDksImV4cCI6MjA2MDQwNjcwOX0.GXrdKZElgIRlnDMYkbIwj2N_MkqFdQp9EVMM5j1rVT4';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    detectSessionInUrl: true,
-    persistSession: true,
-    autoRefreshToken: true,
-    flowType: 'pkce'
-  }
+  auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true, flowType: 'implicit' }
 });
 
 Chart.defaults.color = '#8aa4bc';
