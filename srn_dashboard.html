@@ -23,9 +23,7 @@
     --card-bg: rgba(34,89,129,0.22);
     --card-border: rgba(82,175,205,0.25);
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Barlow', sans-serif;
     background: var(--navy-dark);
@@ -33,328 +31,149 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
-
-  /* Subtle grid background */
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background-image:
       linear-gradient(rgba(82,175,205,0.04) 1px, transparent 1px),
       linear-gradient(90deg, rgba(82,175,205,0.04) 1px, transparent 1px);
     background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
-
-  /* ── AUTH OVERLAY ── */
   #auth-overlay {
     position: fixed; inset: 0;
     background: var(--navy-dark);
     display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
-    flex-direction: column;
-    gap: 24px;
+    z-index: 1000; flex-direction: column; gap: 24px;
   }
   #auth-overlay.hidden { display: none; }
-
   .auth-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     padding: 48px 56px;
     clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
-    text-align: center;
-    max-width: 420px;
-    width: 90%;
+    text-align: center; max-width: 420px; width: 90%;
   }
   .auth-logo {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--sky);
-    text-transform: uppercase;
-    margin-bottom: 8px;
+    font-size: 13px; font-weight: 700; letter-spacing: 3px;
+    color: var(--sky); text-transform: uppercase; margin-bottom: 8px;
   }
   .auth-title {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 6px;
+    font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px;
   }
-  .auth-sub {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 32px;
-    line-height: 1.5;
-  }
+  .auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.5; }
   .btn-login {
     display: inline-flex; align-items: center; gap: 10px;
-    background: var(--cyan);
-    color: var(--navy-dark);
+    background: var(--cyan); color: var(--navy-dark);
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 13px 32px;
-    border: none; cursor: pointer;
+    font-weight: 700; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 13px 32px; border: none; cursor: pointer;
     clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
     transition: background 0.2s, transform 0.15s;
   }
   .btn-login:hover { background: var(--sky); transform: translateY(-1px); }
   .btn-login svg { width: 18px; height: 18px; }
-
-  /* ── HEADER ── */
   header {
     position: relative; z-index: 10;
     background: linear-gradient(90deg, var(--navy-dark) 0%, var(--navy) 60%, var(--blue) 100%);
     border-bottom: 2px solid var(--cyan);
-    padding: 0 32px;
-    display: flex; align-items: stretch;
-    height: 64px;
+    padding: 0 32px; display: flex; align-items: stretch; height: 64px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.4);
   }
   .header-brand {
     display: flex; align-items: center; gap: 14px;
-    padding-right: 32px;
-    border-right: 1px solid var(--border);
-    margin-right: 24px;
+    padding-right: 32px; border-right: 1px solid var(--border); margin-right: 24px;
   }
   .brand-badge {
-    width: 36px; height: 36px;
-    background: var(--cyan);
+    width: 36px; height: 36px; background: var(--cyan);
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: 13px; color: var(--navy-dark);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 13px; color: var(--navy-dark);
   }
-  .brand-text {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800; font-size: 18px; letter-spacing: 1px;
-    color: var(--text);
-    line-height: 1.1;
-  }
+  .brand-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: 1px; color: var(--text); line-height: 1.1; }
   .brand-text span { display: block; font-size: 11px; font-weight: 500; color: var(--sky); letter-spacing: 2px; text-transform: uppercase; }
   .header-nav { display: flex; align-items: center; gap: 4px; }
   .nav-link {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--text-muted);
-    text-decoration: none; padding: 6px 14px;
-    transition: color 0.2s;
-    border-bottom: 2px solid transparent;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted);
+    text-decoration: none; padding: 6px 14px; transition: color 0.2s; border-bottom: 2px solid transparent;
   }
   .nav-link:hover { color: var(--sky); }
   .nav-link.active { color: var(--cyan); border-bottom-color: var(--cyan); }
-  .header-right {
-    margin-left: auto;
-    display: flex; align-items: center; gap: 16px;
-  }
-  .last-updated {
-    font-size: 12px; color: var(--text-muted);
-    font-family: 'Barlow Condensed', sans-serif;
-    letter-spacing: 0.5px;
-  }
-  #user-info {
-    font-size: 13px; color: var(--sky);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 600;
-  }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .last-updated { font-size: 12px; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; }
+  #user-info { font-size: 13px; color: var(--sky); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; }
   .btn-logout {
-    background: transparent; border: 1px solid var(--border);
-    color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
-    text-transform: uppercase; padding: 5px 12px;
-    cursor: pointer; transition: all 0.2s;
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; cursor: pointer; transition: all 0.2s;
   }
   .btn-logout:hover { border-color: var(--red); color: var(--red); }
-
-  /* ── MAIN ── */
-  main {
-    position: relative; z-index: 1;
-    padding: 32px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  /* ── PAGE TITLE ── */
+  main { position: relative; z-index: 1; padding: 32px; max-width: 1400px; margin: 0 auto; }
   .page-header {
     display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 32px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
   }
-  .page-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 36px; font-weight: 800;
-    letter-spacing: 1px;
-    line-height: 1;
-  }
-  .page-title span {
-    display: block; font-size: 13px; font-weight: 500;
-    color: var(--sky); letter-spacing: 3px;
-    text-transform: uppercase; margin-bottom: 6px;
-  }
+  .page-title { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
+  .page-title span { display: block; font-size: 13px; font-weight: 500; color: var(--sky); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
   .refresh-btn {
     display: inline-flex; align-items: center; gap: 8px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--sky);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px; font-weight: 600; letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 8px 18px; cursor: pointer;
+    background: transparent; border: 1px solid var(--border); color: var(--sky);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px; cursor: pointer;
     clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
     transition: all 0.2s;
   }
   .refresh-btn:hover { background: rgba(29,176,209,0.1); border-color: var(--cyan); color: var(--cyan); }
   .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── KPI STRIP ── */
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
-  }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
   .kpi-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--card-bg); border: 1px solid var(--card-border);
     padding: 20px 24px;
     clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
+    position: relative; overflow: hidden; transition: border-color 0.2s;
   }
   .kpi-card:hover { border-color: rgba(82,175,205,0.5); }
-  .kpi-card::after {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  }
+  .kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
   .kpi-card.total::after  { background: var(--cyan); }
   .kpi-card.preferred::after { background: #3bca8a; }
   .kpi-card.review::after { background: var(--sky); }
   .kpi-card.other::after  { background: var(--text-muted); }
-
-  .kpi-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 2.5px; text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-  }
-  .kpi-value {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 42px; font-weight: 800;
-    line-height: 1; color: var(--text);
-  }
+  .kpi-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .kpi-value { font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 800; line-height: 1; color: var(--text); }
   .kpi-card.preferred .kpi-value { color: #3bca8a; }
-  .kpi-card.review .kpi-value    { color: var(--sky); }
-  .kpi-sub {
-    font-size: 12px; color: var(--text-muted);
-    margin-top: 6px;
-  }
-  .kpi-icon {
-    position: absolute; right: 20px; top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.08;
-    font-size: 52px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    line-height: 1;
-  }
-
-  /* ── CHART GRID ── */
-  .chart-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 20px;
-  }
-
+  .kpi-card.review .kpi-value { color: var(--sky); }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .kpi-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); opacity: 0.08; font-size: 52px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; line-height: 1; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .chart-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    padding: 24px;
+    background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px;
     clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   }
   .chart-card.wide { grid-column: 1 / -1; }
-
-  .chart-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  .chart-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase;
-    color: var(--text);
-  }
-  .chart-title span {
-    display: block; font-size: 11px; font-weight: 500;
-    color: var(--text-muted); letter-spacing: 1px; margin-top: 2px;
-  }
-  .chart-badge {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase;
-    background: rgba(29,176,209,0.15);
-    color: var(--cyan);
-    border: 1px solid rgba(29,176,209,0.3);
-    padding: 3px 10px;
-  }
-
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .chart-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text); }
+  .chart-title span { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
+  .chart-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; background: rgba(29,176,209,0.15); color: var(--cyan); border: 1px solid rgba(29,176,209,0.3); padding: 3px 10px; }
   .chart-wrap { position: relative; }
   .chart-wrap canvas { max-height: 280px; }
   .chart-wrap.donut-wrap { max-height: 260px; display: flex; align-items: center; justify-content: center; }
   .chart-wrap.donut-wrap canvas { max-height: 240px; max-width: 240px; }
-
   .donut-layout { display: flex; align-items: center; gap: 32px; }
   .donut-legend { flex: 1; }
-  .legend-item {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 10px;
-    font-family: 'Barlow', sans-serif;
-    font-size: 13px;
-  }
-  .legend-dot {
-    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
-  }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-family: 'Barlow', sans-serif; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
   .legend-label { color: var(--text-muted); flex: 1; }
   .legend-count { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
   .legend-pct { color: var(--text-muted); font-size: 11px; margin-left: 4px; }
-
-  /* ── LOADING SKELETON ── */
-  .skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 2px;
-  }
-  @keyframes shimmer { to { background-position: -200% 0; } }
-
-  .loading-placeholder {
-    display: flex; align-items: center; justify-content: center;
-    height: 220px; color: var(--text-muted);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px; letter-spacing: 2px;
-    text-transform: uppercase;
-    flex-direction: column; gap: 12px;
-  }
-  .loading-dots span {
-    display: inline-block; width: 6px; height: 6px;
-    background: var(--sky); border-radius: 50%;
-    margin: 0 3px;
-    animation: dot-bounce 1.2s infinite;
-  }
+  .loading-placeholder { display: flex; align-items: center; justify-content: center; height: 220px; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; flex-direction: column; gap: 12px; }
+  .loading-dots span { display: inline-block; width: 6px; height: 6px; background: var(--sky); border-radius: 50%; margin: 0 3px; animation: dot-bounce 1.2s infinite; }
   .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
   .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes dot-bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
-
-  /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     .kpi-row { grid-template-columns: repeat(2, 1fr); }
     .chart-grid { grid-template-columns: 1fr; }
@@ -365,7 +184,6 @@
 </head>
 <body>
 
-<!-- AUTH OVERLAY -->
 <div id="auth-overlay">
   <div class="auth-card">
     <div class="auth-logo">CarShield</div>
@@ -378,14 +196,10 @@
   </div>
 </div>
 
-<!-- HEADER -->
 <header>
   <div class="header-brand">
     <div class="brand-badge">SRN</div>
-    <div class="brand-text">
-      CarShield
-      <span>Shield Repair Network</span>
-    </div>
+    <div class="brand-text">CarShield <span>Shield Repair Network</span></div>
   </div>
   <nav class="header-nav">
     <a href="srn_dashboard.html" class="nav-link active">Dashboard</a>
@@ -401,144 +215,60 @@
 
 <main>
   <div class="page-header">
-    <div class="page-title">
-      <span>Network Overview</span>
-      Facility Analytics
-    </div>
+    <div class="page-title"><span>Network Overview</span>Facility Analytics</div>
     <button class="refresh-btn" id="refresh-btn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       Refresh Data
     </button>
   </div>
-
-  <!-- KPIs -->
   <div class="kpi-row">
-    <div class="kpi-card total">
-      <div class="kpi-label">Total Facilities</div>
-      <div class="kpi-value" id="kpi-total">—</div>
-      <div class="kpi-sub">across all statuses</div>
-      <div class="kpi-icon">#</div>
-    </div>
-    <div class="kpi-card preferred">
-      <div class="kpi-label">Preferred</div>
-      <div class="kpi-value" id="kpi-preferred">—</div>
-      <div class="kpi-sub">active network members</div>
-      <div class="kpi-icon">★</div>
-    </div>
-    <div class="kpi-card review">
-      <div class="kpi-label">Under Review</div>
-      <div class="kpi-value" id="kpi-review">—</div>
-      <div class="kpi-sub">pending approval</div>
-      <div class="kpi-icon">?</div>
-    </div>
-    <div class="kpi-card other">
-      <div class="kpi-label">States Covered</div>
-      <div class="kpi-value" id="kpi-states">—</div>
-      <div class="kpi-sub">geographic reach</div>
-      <div class="kpi-icon">◎</div>
-    </div>
+    <div class="kpi-card total"><div class="kpi-label">Total Facilities</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">across all statuses</div><div class="kpi-icon">#</div></div>
+    <div class="kpi-card preferred"><div class="kpi-label">Preferred</div><div class="kpi-value" id="kpi-preferred">—</div><div class="kpi-sub">active network members</div><div class="kpi-icon">★</div></div>
+    <div class="kpi-card review"><div class="kpi-label">Under Review</div><div class="kpi-value" id="kpi-review">—</div><div class="kpi-sub">pending approval</div><div class="kpi-icon">?</div></div>
+    <div class="kpi-card other"><div class="kpi-label">States Covered</div><div class="kpi-value" id="kpi-states">—</div><div class="kpi-sub">geographic reach</div><div class="kpi-icon">◎</div></div>
   </div>
-
-  <!-- CHARTS -->
   <div class="chart-grid">
-
-    <!-- Status Donut -->
     <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Status Breakdown<span>Facility distribution by status</span></div>
-        <div class="chart-badge">Live</div>
-      </div>
+      <div class="chart-header"><div class="chart-title">Status Breakdown<span>Facility distribution by status</span></div><div class="chart-badge">Live</div></div>
       <div class="donut-layout">
-        <div class="chart-wrap donut-wrap">
-          <canvas id="donutChart"></canvas>
-        </div>
-        <div class="donut-legend" id="donut-legend">
-          <div class="loading-placeholder" style="height:120px;">
-            <div class="loading-dots"><span></span><span></span><span></span></div>
-          </div>
-        </div>
+        <div class="chart-wrap donut-wrap"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend" id="donut-legend"><div class="loading-placeholder" style="height:120px;"><div class="loading-dots"><span></span><span></span><span></span></div></div></div>
       </div>
     </div>
-
-    <!-- Enrollments Over Time -->
     <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">New Enrollments<span>Monthly submissions (last 12 months)</span></div>
-        <div class="chart-badge">Trend</div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="enrollChart"></canvas>
-      </div>
+      <div class="chart-header"><div class="chart-title">New Enrollments<span>Monthly submissions (last 12 months)</span></div><div class="chart-badge">Trend</div></div>
+      <div class="chart-wrap"><canvas id="enrollChart"></canvas></div>
     </div>
-
-    <!-- State Distribution -->
     <div class="chart-card wide">
-      <div class="chart-header">
-        <div class="chart-title">Geographic Distribution<span>Preferred facilities by state — top 30</span></div>
-        <div class="chart-badge">Preferred Only</div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="stateChart"></canvas>
-      </div>
+      <div class="chart-header"><div class="chart-title">Geographic Distribution<span>Preferred facilities by state — top 30</span></div><div class="chart-badge">Preferred Only</div></div>
+      <div class="chart-wrap"><canvas id="stateChart"></canvas></div>
     </div>
-
   </div>
 </main>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MzA3MDksImV4cCI6MjA2MDQwNjcwOX0.GXrdKZElgIRlnDMYkbIwj2N_MkqFdQp9EVMM5j1rVT4';
-
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    detectSessionInUrl: true,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
+  auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
 });
 
-// ── CHART DEFAULTS ───────────────────────────────────────────────────────────
 Chart.defaults.color = '#8aa4bc';
 Chart.defaults.font.family = "'Barlow', sans-serif";
 Chart.defaults.font.size = 12;
 
-const PALETTE = {
-  preferred: '#3bca8a',
-  review:    '#52AFCD',
-  inactive:  '#8aa4bc',
-  suspended: '#CA383B',
-  other:     '#3782A4',
-  cyan:      '#1DB0D1',
-  mid:       '#3782A4',
-  navy:      '#233348',
-};
+const STATUS_COLORS = { 'Preferred': '#3bca8a', 'Under Review': '#52AFCD', 'Inactive': '#8aa4bc', 'Suspended': '#CA383B' };
+const CYAN = '#1DB0D1', MID = '#3782A4';
+let donutInst = null, enrollInst = null, stateInst = null;
 
-const STATUS_COLORS = {
-  'Preferred':    PALETTE.preferred,
-  'Under Review': PALETTE.review,
-  'Inactive':     PALETTE.inactive,
-  'Suspended':    PALETTE.suspended,
-};
-
-// ── AUTH ─────────────────────────────────────────────────────────────────────
-let donutChartInst = null, enrollChartInst = null, stateChartInst = null;
-
-async function checkAuth() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    document.getElementById('auth-overlay').classList.remove('hidden');
-    return false;
-  }
+function showDashboard(email) {
   document.getElementById('auth-overlay').classList.add('hidden');
-  const name = session.user.user_metadata?.user_name || session.user.email || 'Admin';
-  document.getElementById('user-info').textContent = name;
-  return true;
+  document.getElementById('user-info').textContent = email || 'Admin';
 }
 
-document.getElementById('login-btn').addEventListener('click', async () => {
-  await sb.auth.signInWithOAuth({
+document.getElementById('login-btn').addEventListener('click', () => {
+  sb.auth.signInWithOAuth({
     provider: 'github',
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
@@ -549,15 +279,11 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   location.reload();
 });
 
-// ── DATA LOADING (paginated, handles 60k+) ───────────────────────────────────
-async function fetchAllFacilities() {
+async function fetchAll() {
   const PAGE = 1000;
   let all = [], from = 0;
   while (true) {
-    const { data, error } = await sb
-      .from('facilities')
-      .select('status, state, created_at')
-      .range(from, from + PAGE - 1);
+    const { data, error } = await sb.from('facilities').select('status, state, created_at').range(from, from + PAGE - 1);
     if (error) throw error;
     all = all.concat(data);
     if (data.length < PAGE) break;
@@ -566,180 +292,61 @@ async function fetchAllFacilities() {
   return all;
 }
 
-// ── CHARTS ───────────────────────────────────────────────────────────────────
-function buildDonut(statusCounts, total) {
-  const labels = Object.keys(statusCounts);
-  const values = Object.values(statusCounts);
-  const colors = labels.map(l => STATUS_COLORS[l] || PALETTE.other);
-
-  if (donutChartInst) donutChartInst.destroy();
-
-  const ctx = document.getElementById('donutChart').getContext('2d');
-  donutChartInst = new Chart(ctx, {
+function buildDonut(counts, total) {
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+  const colors = labels.map(l => STATUS_COLORS[l] || MID);
+  if (donutInst) donutInst.destroy();
+  donutInst = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#182536', borderWidth: 3, hoverOffset: 6 }] },
-    options: {
-      cutout: '68%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${((ctx.parsed/total)*100).toFixed(1)}%)`
-          }
-        }
-      }
-    }
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#182536', borderWidth: 3 }] },
+    options: { cutout: '68%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed.toLocaleString()} (${((c.parsed/total)*100).toFixed(1)}%)` } } } }
   });
-
-  // Legend
-  const leg = document.getElementById('donut-legend');
-  leg.innerHTML = labels.map((l, i) => `
-    <div class="legend-item">
-      <div class="legend-dot" style="background:${colors[i]}"></div>
-      <span class="legend-label">${l}</span>
-      <span class="legend-count">${values[i].toLocaleString()}</span>
-      <span class="legend-pct">${((values[i]/total)*100).toFixed(1)}%</span>
-    </div>`).join('');
+  document.getElementById('donut-legend').innerHTML = labels.map((l, i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div><span class="legend-label">${l}</span><span class="legend-count">${values[i].toLocaleString()}</span><span class="legend-pct">${((values[i]/total)*100).toFixed(1)}%</span></div>`
+  ).join('');
 }
 
-function buildEnrollmentChart(rows) {
-  // Group by YYYY-MM for last 12 months
+function buildEnroll(rows) {
   const now = new Date();
-  const months = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
-  }
-
-  const counts = {};
-  months.forEach(m => counts[m] = 0);
-  rows.forEach(r => {
-    if (!r.created_at) return;
-    const key = r.created_at.slice(0,7);
-    if (counts[key] !== undefined) counts[key]++;
-  });
-
-  const labels = months.map(m => {
-    const [y, mo] = m.split('-');
-    return new Date(+y, +mo-1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-  });
-
-  if (enrollChartInst) enrollChartInst.destroy();
+  const months = Array.from({length:12}, (_,i) => { const d = new Date(now.getFullYear(), now.getMonth()-11+i, 1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
+  const counts = Object.fromEntries(months.map(m => [m, 0]));
+  rows.forEach(r => { if (r.created_at) { const k = r.created_at.slice(0,7); if (k in counts) counts[k]++; } });
+  const labels = months.map(m => { const [y,mo] = m.split('-'); return new Date(+y,+mo-1,1).toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  if (enrollInst) enrollInst.destroy();
   const ctx = document.getElementById('enrollChart').getContext('2d');
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, 260);
-  gradient.addColorStop(0, 'rgba(29,176,209,0.35)');
-  gradient.addColorStop(1, 'rgba(29,176,209,0.02)');
-
-  enrollChartInst = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Enrollments',
-        data: months.map(m => counts[m]),
-        borderColor: PALETTE.cyan,
-        backgroundColor: gradient,
-        borderWidth: 2,
-        pointBackgroundColor: PALETTE.cyan,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        fill: true,
-        tension: 0.35
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-      scales: {
-        x: { grid: { color: 'rgba(82,175,205,0.08)' }, ticks: { maxRotation: 0 } },
-        y: { grid: { color: 'rgba(82,175,205,0.08)' }, beginAtZero: true, ticks: { precision: 0 } }
-      }
-    }
-  });
+  const grad = ctx.createLinearGradient(0,0,0,260);
+  grad.addColorStop(0,'rgba(29,176,209,0.35)'); grad.addColorStop(1,'rgba(29,176,209,0.02)');
+  enrollInst = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: months.map(m=>counts[m]), borderColor: CYAN, backgroundColor: grad, borderWidth: 2, pointBackgroundColor: CYAN, pointRadius: 4, fill: true, tension: 0.35 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(82,175,205,0.08)' } }, y: { grid: { color: 'rgba(82,175,205,0.08)' }, beginAtZero: true, ticks: { precision: 0 } } } } });
 }
 
-function buildStateChart(rows) {
-  // Only Preferred facilities
-  const preferred = rows.filter(r => r.status === 'Preferred');
-  const stateCounts = {};
-  preferred.forEach(r => {
-    if (!r.state) return;
-    const s = r.state.trim().toUpperCase();
-    stateCounts[s] = (stateCounts[s] || 0) + 1;
-  });
-
-  const sorted = Object.entries(stateCounts).sort((a,b) => b[1]-a[1]).slice(0,30);
-  const labels = sorted.map(([s]) => s);
-  const values = sorted.map(([,c]) => c);
-
-  // Color bars: top 5 cyan, rest mid
-  const colors = values.map((_, i) => i < 5 ? PALETTE.cyan : PALETTE.mid);
-
-  if (stateChartInst) stateChartInst.destroy();
-  const ctx = document.getElementById('stateChart').getContext('2d');
-  stateChartInst = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Preferred Facilities',
-        data: values,
-        backgroundColor: colors,
-        borderColor: 'transparent',
-        borderRadius: 2,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} preferred facilities` } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: 'rgba(82,175,205,0.08)' }, beginAtZero: true, ticks: { precision: 0 } }
-      }
-    }
-  });
+function buildState(rows) {
+  const counts = {};
+  rows.filter(r => r.status === 'Preferred').forEach(r => { if (r.state) { const s = r.state.trim().toUpperCase(); counts[s] = (counts[s]||0)+1; } });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,30);
+  if (stateInst) stateInst.destroy();
+  stateInst = new Chart(document.getElementById('stateChart'), { type: 'bar', data: { labels: sorted.map(([s])=>s), datasets: [{ data: sorted.map(([,c])=>c), backgroundColor: sorted.map((_,i)=>i<5?CYAN:MID), borderRadius: 2 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(82,175,205,0.08)' }, beginAtZero: true, ticks: { precision: 0 } } } } });
 }
 
-// ── MAIN LOAD ────────────────────────────────────────────────────────────────
 async function loadDashboard() {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
-
   try {
-    const rows = await fetchAllFacilities();
-
-    // KPIs
-    const statusCounts = {};
-    const stateSet = new Set();
-    rows.forEach(r => {
-      const s = r.status || 'Unknown';
-      statusCounts[s] = (statusCounts[s] || 0) + 1;
-      if (r.state) stateSet.add(r.state.trim().toUpperCase());
-    });
-
+    const rows = await fetchAll();
+    const statusCounts = {}, stateSet = new Set();
+    rows.forEach(r => { const s = r.status||'Unknown'; statusCounts[s]=(statusCounts[s]||0)+1; if(r.state) stateSet.add(r.state.trim().toUpperCase()); });
     const total = rows.length;
-    document.getElementById('kpi-total').textContent     = total.toLocaleString();
-    document.getElementById('kpi-preferred').textContent = (statusCounts['Preferred'] || 0).toLocaleString();
-    document.getElementById('kpi-review').textContent    = (statusCounts['Under Review'] || 0).toLocaleString();
-    document.getElementById('kpi-states').textContent    = stateSet.size;
-
-    // Charts
+    document.getElementById('kpi-total').textContent = total.toLocaleString();
+    document.getElementById('kpi-preferred').textContent = (statusCounts['Preferred']||0).toLocaleString();
+    document.getElementById('kpi-review').textContent = (statusCounts['Under Review']||0).toLocaleString();
+    document.getElementById('kpi-states').textContent = stateSet.size;
     buildDonut(statusCounts, total);
-    buildEnrollmentChart(rows);
-    buildStateChart(rows);
-
-    // Timestamp
-    document.getElementById('last-updated-label').textContent =
-      'Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-  } catch (err) {
-    console.error('Dashboard load error:', err);
-    alert('Error loading data. Check console for details.');
+    buildEnroll(rows);
+    buildState(rows);
+    document.getElementById('last-updated-label').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  } catch(e) {
+    console.error(e);
+    alert('Error loading data: ' + e.message);
   } finally {
     btn.classList.remove('spinning');
   }
@@ -747,36 +354,27 @@ async function loadDashboard() {
 
 document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
+// ── INIT v6 ──────────────────────────────────────────────────────────────────
 (async () => {
-  // If token is in URL, manually call setSession before anything else
   const href = window.location.href;
   if (href.includes('access_token')) {
-    const atMatch = href.match(/access_token=([^&]+)/);
-    const rtMatch = href.match(/refresh_token=([^&]+)/);
-    const access_token  = atMatch ? atMatch[1] : null;
-    const refresh_token = rtMatch ? rtMatch[1] : null;
-    alert('Tokens found. AT starts with: ' + (access_token ? access_token.substring(0,20) : 'null'));
-    if (access_token && refresh_token) {
-      const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
-      alert('setSession result: ' + (error ? 'ERROR: ' + error.message : 'OK, user: ' + data?.session?.user?.email));
-      if (!error && data?.session) {
+    // Parse tokens from URL and set session manually
+    const at = (href.match(/access_token=([^&]+)/) || [])[1];
+    const rt = (href.match(/refresh_token=([^&]+)/) || [])[1];
+    if (at && rt) {
+      const { data, error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+      if (!error && data.session) {
         history.replaceState(null, '', window.location.pathname);
-        document.getElementById('auth-overlay').classList.add('hidden');
-        document.getElementById('user-info').textContent =
-          data.session.user.user_metadata?.user_name || data.session.user.email || 'Admin';
+        showDashboard(data.session.user.user_metadata?.user_name || data.session.user.email);
         loadDashboard();
         return;
       }
     }
   }
-
-  // No token in URL — check for existing session
+  // Check for existing persisted session
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    document.getElementById('auth-overlay').classList.add('hidden');
-    document.getElementById('user-info').textContent =
-      session.user.user_metadata?.user_name || session.user.email || 'Admin';
+    showDashboard(session.user.user_metadata?.user_name || session.user.email);
     loadDashboard();
   } else {
     document.getElementById('auth-overlay').classList.remove('hidden');
