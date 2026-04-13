@@ -39,6 +39,10 @@ nav{flex-shrink:0;height:52px;background:var(--navy);display:flex;align-items:ce
 .toolbar label{font-size:12px;color:var(--text3)}
 .tstat{font-size:11px;color:var(--text3);font-family:monospace}
 .tstat strong{color:var(--blue)}
+.msgs-toggle{display:flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--border2);color:var(--text2);border-radius:7px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;flex-shrink:0}
+.msgs-toggle:hover{border-color:#a0aec0;background:#edf0f4}
+.msgs-toggle.active{background:#1DB0D1;border-color:#1890aa;color:#fff}
+.msgs-toggle.active:hover{background:#1890aa}
 .tbl-wrap{flex:1;overflow:auto;background:var(--surface)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#1a3a6b;color:#c8d8f0;padding:8px 11px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.03em;white-space:nowrap;position:sticky;top:0;z-index:9;cursor:pointer;user-select:none;border-right:1px solid rgba(255,255,255,.08)}
@@ -176,7 +180,6 @@ td.nm:hover{text-decoration:underline}
 .session-expired-box .lf{text-align:left}
 .session-expired-box .lbtn{margin-top:8px}
 .session-expired-box .lerr{text-align:center}
-/* ── Messages Tab ── */
 .msg-list{display:flex;flex-direction:column;gap:0}
 .msg-card{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff;transition:box-shadow .15s}
 .msg-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
@@ -209,7 +212,7 @@ td.nm:hover{text-decoration:underline}
     <h1>SRN Facility Manager</h1>
     <p>Sign in to manage repair facilities</p>
     <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signIn()"></div>
-    <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
+    <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')signIn()"></div>
     <button class="lbtn" onclick="signIn()">Sign In</button>
     <div class="lerr" id="l-err"></div>
   </div>
@@ -221,17 +224,17 @@ td.nm:hover{text-decoration:underline}
     <p id="set-pass-msg">You've been invited. Please set a password to activate your account.</p>
     <div class="lf"><label>New Password</label><input type="password" id="sp-pass" placeholder="Choose a password" onkeydown="if(event.key==='Enter')setPassword()"></div>
     <div class="lf"><label>Confirm Password</label><input type="password" id="sp-pass2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')setPassword()"></div>
-    <button class="lbtn" onclick="setPassword()">Set Password & Sign In</button>
+    <button class="lbtn" onclick="setPassword()">Set Password &amp; Sign In</button>
     <div class="lerr" id="sp-err"></div>
   </div>
 </div>
 
 <div class="session-expired-ov" id="session-expired-ov">
   <div class="session-expired-box">
-    <h3>🔒 Session Expired</h3>
-    <p>Your session has timed out. Please enter your password to continue — your unsaved work is still open.</p>
+    <h3>&#x1F512; Session Expired</h3>
+    <p>Your session has timed out. Please enter your password to continue &mdash; your unsaved work is still open.</p>
     <div class="lf"><label>Email</label><input type="email" id="re-email" readonly style="background:#f4f6f9;color:#4a5568"></div>
-    <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')reAuth()"></div>
+    <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')reAuth()"></div>
     <button class="lbtn" onclick="reAuth()">Sign Back In</button>
     <div class="lerr" id="re-err"></div>
   </div>
@@ -239,37 +242,37 @@ td.nm:hover{text-decoration:underline}
 
 <div class="addr-ov" id="addr-ov">
   <div class="addr-box">
-    <div class="addr-box-head"><span class="addr-box-icon">📍</span><h3 id="addr-ov-title">Address Suggestion</h3></div>
+    <div class="addr-box-head"><span class="addr-box-icon">&#x1F4CD;</span><h3 id="addr-ov-title">Address Suggestion</h3></div>
     <div class="addr-box-body">
-      <div id="addr-warn" class="addr-warn" style="display:none"><span class="addr-warn-icon">⚠️</span><span id="addr-warn-msg"></span></div>
+      <div id="addr-warn" class="addr-warn" style="display:none"><span class="addr-warn-icon">&#x26A0;&#xFE0F;</span><span id="addr-warn-msg"></span></div>
       <p id="addr-ov-msg"></p>
       <div class="addr-compare" id="addr-compare">
         <div class="addr-col"><label>You entered</label><div class="addr-line" id="addr-entered"></div></div>
-        <div class="addr-col suggested"><label>✓ Google suggests</label><div class="addr-line" id="addr-suggested"></div></div>
+        <div class="addr-col suggested"><label>&#x2713; Google suggests</label><div class="addr-line" id="addr-suggested"></div></div>
       </div>
     </div>
     <div class="addr-box-foot">
       <button class="btn btn-ghost" onclick="addrKeepOriginal()">Keep Original</button>
       <div class="sp"></div>
-      <button class="btn btn-ghost" onclick="addrGoBack()">✎ Edit Address</button>
-      <button class="btn btn-accept btn-save" id="addr-accept-btn" onclick="addrAcceptSuggestion()">✓ Use Suggested</button>
+      <button class="btn btn-ghost" onclick="addrGoBack()">&#x270E; Edit Address</button>
+      <button class="btn btn-accept btn-save" id="addr-accept-btn" onclick="addrAcceptSuggestion()">&#x2713; Use Suggested</button>
     </div>
   </div>
 </div>
 
-<div class="dbl" id="dbl" style="display:none"><div class="spin"></div><span id="dbl-msg">Loading…</span></div>
+<div class="dbl" id="dbl" style="display:none"><div class="spin"></div><span id="dbl-msg">Loading&hellip;</span></div>
 
 <div class="dup-ov" id="dup-ov">
   <div class="dup-box">
-    <div class="dup-head"><span style="font-size:18px">⚠️</span><h3>Possible Duplicate Detected</h3></div>
+    <div class="dup-head"><span style="font-size:18px">&#x26A0;&#xFE0F;</span><h3>Possible Duplicate Detected</h3></div>
     <div class="dup-body">
       <p id="dup-ov-msg">This facility may already exist in the database. Review the potential match below before saving.</p>
       <div id="dup-matches"></div>
     </div>
     <div class="dup-foot">
-      <button class="btn btn-ghost" onclick="dupGoBack()">✎ Edit Record</button>
+      <button class="btn btn-ghost" onclick="dupGoBack()">&#x270E; Edit Record</button>
       <div class="sp"></div>
-      <button class="btn btn-ghost" onclick="dupFlagAndSave()">⚑ Flag as NRV &amp; Save</button>
+      <button class="btn btn-ghost" onclick="dupFlagAndSave()">&#x2691; Flag as NRV &amp; Save</button>
       <button class="btn btn-save" onclick="dupSaveAnyway()">Save Anyway</button>
     </div>
   </div>
@@ -277,7 +280,7 @@ td.nm:hover{text-decoration:underline}
 
 <div class="dup-report-ov" id="dup-report-ov">
   <div class="dup-report-box">
-    <div class="dup-report-head"><span style="font-size:18px">🔍</span><h3>Duplicate Scan Report</h3><button class="pclose" onclick="document.getElementById('dup-report-ov').classList.remove('open')">✕</button></div>
+    <div class="dup-report-head"><span style="font-size:18px">&#x1F50D;</span><h3>Duplicate Scan Report</h3><button class="pclose" onclick="document.getElementById('dup-report-ov').classList.remove('open')">&#x2715;</button></div>
     <div class="dup-report-body" id="dup-report-body"></div>
     <div class="dup-report-foot"><span id="dup-report-summary" style="font-size:12px;color:var(--text3)"></span><div class="sp"></div><button class="btn btn-ghost" onclick="document.getElementById('dup-report-ov').classList.remove('open')">Close</button></div>
   </div>
@@ -287,23 +290,27 @@ td.nm:hover{text-decoration:underline}
   <div class="brand">SRN <span>Facility</span> Manager</div>
   <div class="sp"></div>
   <span class="pill" id="nav-count">0 Facilities</span>
-  <button class="nb" onclick="downloadTemplate()" title="Download CSV import template">⬇ Template</button>
+  <button class="nb" onclick="downloadTemplate()" title="Download CSV import template">&#x2B07; Template</button>
   <button class="nb" onclick="exportJSON()">Export JSON</button>
-  <button class="nb" onclick="document.getElementById('imp-file').click()">⬆ Import</button>
+  <button class="nb" onclick="document.getElementById('imp-file').click()">&#x2B06; Import</button>
   <input type="file" id="imp-file" accept=".json,.xlsx,.xls,.csv" style="display:none" onchange="importFile(event)">
-  <button class="nb" onclick="openMap()" title="Open public locator map">🗺 View Map</button>
-  <button class="nb" onclick="findDuplicates()" title="Scan for duplicate facilities">🔍 Find Dupes</button>
+  <button class="nb" onclick="openMap()" title="Open public locator map">&#x1F5FA; View Map</button>
+  <button class="nb" onclick="findDuplicates()" title="Scan for duplicate facilities">&#x1F50D; Find Dupes</button>
   <button class="nb primary" onclick="openAdd()">+ Add Facility</button>
   <div class="ubadge"><span id="u-email"></span><button class="sout" onclick="signOut()">Sign out</button></div>
 </nav>
 
 <div class="toolbar">
-  <input id="search" placeholder="Search name, city, phone, email…" oninput="go()">
+  <input id="search" placeholder="Search name, city, phone, email&hellip;" oninput="go()">
   <label>State</label><select id="f-state" onchange="go()"><option value="">All</option></select>
   <label>Status</label><select id="f-status" onchange="go()"><option value="">All</option></select>
   <label>Type</label><select id="f-type" onchange="go()"><option value="">All</option></select>
-  <label><input type="checkbox" id="f-has-msgs" onchange="go()" style="margin-right:4px">Has Messages</label>
-  <div class="sp"></div><span class="tstat" id="tstat">— of —</span>
+  <button id="msgs-toggle-btn" class="msgs-toggle" onclick="toggleMsgsFilter()" title="Show only facilities with open messages">
+    &#x1F4AC; Has Messages
+  </button>
+  <input type="checkbox" id="f-has-msgs" onchange="go()" style="display:none">
+  <div class="sp"></div>
+  <span class="tstat" id="tstat">&mdash; of &mdash;</span>
 </div>
 
 <div class="tbl-wrap">
@@ -324,7 +331,7 @@ td.nm:hover{text-decoration:underline}
 
 <div class="ov" id="ov">
 <div class="panel">
-  <div class="ph"><h2 id="ptitle">Add Facility</h2><span class="idb" id="pbadge" style="display:none"></span><button class="pclose" onclick="closePanel()">✕</button></div>
+  <div class="ph"><h2 id="ptitle">Add Facility</h2><span class="idb" id="pbadge" style="display:none"></span><button class="pclose" onclick="closePanel()">&#x2715;</button></div>
   <div class="pbody">
     <div class="ptabs" id="ptabs" style="display:none">
       <button class="ptab on" id="tab-btn-details" onclick="switchTab('details')">Details</button>
@@ -343,12 +350,12 @@ td.nm:hover{text-decoration:underline}
       <div class="field"><label>City <span class="r">*</span></label><input id="f-city"></div>
       <div class="field"><label>State <span class="r">*</span></label>
         <select id="f-state-i">
-          <option value="">— Select —</option>
-          <optgroup label="── United States ──">
-            <option value="AL">AL — Alabama</option><option value="AK">AK — Alaska</option><option value="AZ">AZ — Arizona</option><option value="AR">AR — Arkansas</option><option value="CA">CA — California</option><option value="CO">CO — Colorado</option><option value="CT">CT — Connecticut</option><option value="DE">DE — Delaware</option><option value="FL">FL — Florida</option><option value="GA">GA — Georgia</option><option value="HI">HI — Hawaii</option><option value="ID">ID — Idaho</option><option value="IL">IL — Illinois</option><option value="IN">IN — Indiana</option><option value="IA">IA — Iowa</option><option value="KS">KS — Kansas</option><option value="KY">KY — Kentucky</option><option value="LA">LA — Louisiana</option><option value="ME">ME — Maine</option><option value="MD">MD — Maryland</option><option value="MA">MA — Massachusetts</option><option value="MI">MI — Michigan</option><option value="MN">MN — Minnesota</option><option value="MS">MS — Mississippi</option><option value="MO">MO — Missouri</option><option value="MT">MT — Montana</option><option value="NE">NE — Nebraska</option><option value="NV">NV — Nevada</option><option value="NH">NH — New Hampshire</option><option value="NJ">NJ — New Jersey</option><option value="NM">NM — New Mexico</option><option value="NY">NY — New York</option><option value="NC">NC — North Carolina</option><option value="ND">ND — North Dakota</option><option value="OH">OH — Ohio</option><option value="OK">OK — Oklahoma</option><option value="OR">OR — Oregon</option><option value="PA">PA — Pennsylvania</option><option value="RI">RI — Rhode Island</option><option value="SC">SC — South Carolina</option><option value="SD">SD — South Dakota</option><option value="TN">TN — Tennessee</option><option value="TX">TX — Texas</option><option value="UT">UT — Utah</option><option value="VT">VT — Vermont</option><option value="VA">VA — Virginia</option><option value="WA">WA — Washington</option><option value="WV">WV — West Virginia</option><option value="WI">WI — Wisconsin</option><option value="WY">WY — Wyoming</option><option value="DC">DC — Washington D.C.</option>
+          <option value="">&mdash; Select &mdash;</option>
+          <optgroup label="&mdash;&mdash; United States &mdash;&mdash;">
+            <option value="AL">AL &mdash; Alabama</option><option value="AK">AK &mdash; Alaska</option><option value="AZ">AZ &mdash; Arizona</option><option value="AR">AR &mdash; Arkansas</option><option value="CA">CA &mdash; California</option><option value="CO">CO &mdash; Colorado</option><option value="CT">CT &mdash; Connecticut</option><option value="DE">DE &mdash; Delaware</option><option value="FL">FL &mdash; Florida</option><option value="GA">GA &mdash; Georgia</option><option value="HI">HI &mdash; Hawaii</option><option value="ID">ID &mdash; Idaho</option><option value="IL">IL &mdash; Illinois</option><option value="IN">IN &mdash; Indiana</option><option value="IA">IA &mdash; Iowa</option><option value="KS">KS &mdash; Kansas</option><option value="KY">KY &mdash; Kentucky</option><option value="LA">LA &mdash; Louisiana</option><option value="ME">ME &mdash; Maine</option><option value="MD">MD &mdash; Maryland</option><option value="MA">MA &mdash; Massachusetts</option><option value="MI">MI &mdash; Michigan</option><option value="MN">MN &mdash; Minnesota</option><option value="MS">MS &mdash; Mississippi</option><option value="MO">MO &mdash; Missouri</option><option value="MT">MT &mdash; Montana</option><option value="NE">NE &mdash; Nebraska</option><option value="NV">NV &mdash; Nevada</option><option value="NH">NH &mdash; New Hampshire</option><option value="NJ">NJ &mdash; New Jersey</option><option value="NM">NM &mdash; New Mexico</option><option value="NY">NY &mdash; New York</option><option value="NC">NC &mdash; North Carolina</option><option value="ND">ND &mdash; North Dakota</option><option value="OH">OH &mdash; Ohio</option><option value="OK">OK &mdash; Oklahoma</option><option value="OR">OR &mdash; Oregon</option><option value="PA">PA &mdash; Pennsylvania</option><option value="RI">RI &mdash; Rhode Island</option><option value="SC">SC &mdash; South Carolina</option><option value="SD">SD &mdash; South Dakota</option><option value="TN">TN &mdash; Tennessee</option><option value="TX">TX &mdash; Texas</option><option value="UT">UT &mdash; Utah</option><option value="VT">VT &mdash; Vermont</option><option value="VA">VA &mdash; Virginia</option><option value="WA">WA &mdash; Washington</option><option value="WV">WV &mdash; West Virginia</option><option value="WI">WI &mdash; Wisconsin</option><option value="WY">WY &mdash; Wyoming</option><option value="DC">DC &mdash; Washington D.C.</option>
           </optgroup>
-          <optgroup label="── Canada ──">
-            <option value="AB">AB — Alberta</option><option value="BC">BC — British Columbia</option><option value="MB">MB — Manitoba</option><option value="NB">NB — New Brunswick</option><option value="NL">NL — Newfoundland</option><option value="NS">NS — Nova Scotia</option><option value="ON">ON — Ontario</option><option value="PE">PE — Prince Edward Island</option><option value="QC">QC — Quebec</option><option value="SK">SK — Saskatchewan</option><option value="NT">NT — Northwest Territories</option><option value="NU">NU — Nunavut</option><option value="YT">YT — Yukon</option>
+          <optgroup label="&mdash;&mdash; Canada &mdash;&mdash;">
+            <option value="AB">AB &mdash; Alberta</option><option value="BC">BC &mdash; British Columbia</option><option value="MB">MB &mdash; Manitoba</option><option value="NB">NB &mdash; New Brunswick</option><option value="NL">NL &mdash; Newfoundland</option><option value="NS">NS &mdash; Nova Scotia</option><option value="ON">ON &mdash; Ontario</option><option value="PE">PE &mdash; Prince Edward Island</option><option value="QC">QC &mdash; Quebec</option><option value="SK">SK &mdash; Saskatchewan</option><option value="NT">NT &mdash; Northwest Territories</option><option value="NU">NU &mdash; Nunavut</option><option value="YT">YT &mdash; Yukon</option>
           </optgroup>
         </select>
       </div>
@@ -365,25 +372,25 @@ td.nm:hover{text-decoration:underline}
     <div class="stitle">Offers / Promotions</div>
     <div style="display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:flex-end;margin-bottom:16px">
       <div class="field" style="margin:0"><label>Offer URL</label><input id="f-offer-url" type="url" placeholder="https://"></div>
-      <a id="f-offer-link" href="#" target="_blank" style="display:none;color:var(--blue);font-size:18px;text-decoration:none;line-height:1;padding-bottom:7px">↗</a>
+      <a id="f-offer-link" href="#" target="_blank" style="display:none;color:var(--blue);font-size:18px;text-decoration:none;line-height:1;padding-bottom:7px">&#x2197;</a>
     </div>
     <div class="div"></div>
     <div class="stitle">Shop Details</div>
     <div class="grid g3">
       <div class="field"><label>Status</label>
         <select id="f-status-i">
-          <option value="PRF">PRF — Preferred</option><option value="OPT">OPT — Opted In</option>
-          <option value="STD">STD — Standard</option><option value="NEW">NEW — New</option>
-          <option value="VIP">VIP — VIP</option><option value="MOB">MOB — Mobile</option>
-          <option value="NRV">NRV — Needs Review</option>
-          <option value="UPB">UPB — Unverified</option><option value="DNC">DNC — Do Not Contact</option>
-          <option value="BL">BL — Blacklisted</option><option value="PEND">PEND — Pending</option>
-          <option value="DEL">DEL — Deleted</option><option value="Other">Other</option>
+          <option value="PRF">PRF &mdash; Preferred</option><option value="OPT">OPT &mdash; Opted In</option>
+          <option value="STD">STD &mdash; Standard</option><option value="NEW">NEW &mdash; New</option>
+          <option value="VIP">VIP &mdash; VIP</option><option value="MOB">MOB &mdash; Mobile</option>
+          <option value="NRV">NRV &mdash; Needs Review</option>
+          <option value="UPB">UPB &mdash; Unverified</option><option value="DNC">DNC &mdash; Do Not Contact</option>
+          <option value="BL">BL &mdash; Blacklisted</option><option value="PEND">PEND &mdash; Pending</option>
+          <option value="DEL">DEL &mdash; Deleted</option><option value="Other">Other</option>
         </select>
       </div>
       <div class="field"><label>Shop Type</label>
         <select id="f-type-i">
-          <option value="">Select…</option><option>All</option><option>Asian</option><option>Body Shop</option>
+          <option value="">Select&hellip;</option><option>All</option><option>Asian</option><option>Body Shop</option>
           <option>Chain</option><option>Dealership</option><option>Domestic</option><option>European</option>
           <option>Independent</option><option>National</option><option>Quick Lube</option>
           <option>Specialty</option><option>Tire Shop</option><option>Other</option>
@@ -391,10 +398,10 @@ td.nm:hover{text-decoration:underline}
       </div>
       <div class="field"><label>Labor $/hr</label><input id="f-labor" type="number" step="0.01"></div>
       <div class="field"><label>Software</label>
-        <select id="f-sw"><option value="">Select…</option><option>Mitchell1</option><option>Shop-Ware</option><option>Tekmetric</option><option>Protractor</option><option>Other</option></select>
+        <select id="f-sw"><option value="">Select&hellip;</option><option>Mitchell1</option><option>Shop-Ware</option><option>Tekmetric</option><option>Protractor</option><option>Other</option></select>
       </div>
       <div class="field"><label>Labor Guide</label>
-        <select id="f-lg"><option value="">Select…</option><option>Mitchell</option><option>Alldata</option><option>Identifix</option><option>Motor</option><option>Other</option></select>
+        <select id="f-lg"><option value="">Select&hellip;</option><option>Mitchell</option><option>Alldata</option><option>Identifix</option><option>Motor</option><option>Other</option></select>
       </div>
       <div class="field"><label>Form Type</label>
         <select id="f-ft"><option>Web</option><option>Phone</option><option>Fax</option></select>
@@ -407,18 +414,18 @@ td.nm:hover{text-decoration:underline}
     <div class="div"></div>
     <div class="stitle">Notes</div>
     <div class="field" style="margin-bottom:4px">
-      <textarea id="f-notes" rows="3" style="font-family:inherit;font-size:13px;border:1px solid var(--border2);border-radius:5px;padding:7px 9px;background:var(--bg);color:var(--text);outline:none;resize:vertical;width:100%" placeholder="Internal notes, address validation flags, review comments…"></textarea>
+      <textarea id="f-notes" rows="3" style="font-family:inherit;font-size:13px;border:1px solid var(--border2);border-radius:5px;padding:7px 9px;background:var(--bg);color:var(--text);outline:none;resize:vertical;width:100%" placeholder="Internal notes, address validation flags, review comments&hellip;"></textarea>
     </div>
     </div>
     <div id="tab-history" style="display:none">
-      <div id="hist-body"><div class="hist-loading">Loading history…</div></div>
+      <div id="hist-body"><div class="hist-loading">Loading history&hellip;</div></div>
     </div>
     <div id="tab-messages" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <h3 style="font-size:14px;font-weight:700;color:#233348;margin:0">Facility Messages</h3>
         <span id="msgs-summary" style="font-size:12px;color:#8a93a2"></span>
       </div>
-      <div id="msgs-loading" style="text-align:center;padding:30px;color:#8a93a2;font-size:13px">Loading messages…</div>
+      <div id="msgs-loading" style="text-align:center;padding:30px;color:#8a93a2;font-size:13px">Loading messages&hellip;</div>
       <div id="msgs-list" class="msg-list" style="display:none"></div>
     </div>
   </div>
@@ -441,62 +448,20 @@ td.nm:hover{text-decoration:underline}
 <script>
 const SUPABASE_URL  = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
-
 const TABLE = 'facilities';
 const PG = 25;
 let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
 let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
 let refreshTimer = null;
 let msgCounts = {};
-
-function isAuthError(errMsg) {
-  if (!errMsg) return false;
-  const s = String(errMsg).toLowerCase();
-  return s.includes('jwt expired')||s.includes('pgrst303')||s.includes('invalid jwt')||s.includes('token is expired')||s.includes('401');
-}
-
-async function tryRefreshToken() {
-  if (!refreshToken) return false;
-  try {
-    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({refresh_token:refreshToken})});
-    const res = await r.json();
-    if (res.access_token) { token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();return true; }
-    return false;
-  } catch(e){return false;}
-}
-
-function scheduleTokenRefresh() {
-  if (refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(async()=>{const ok=await tryRefreshToken();if(ok)toast('Session refreshed.','',2000);else showReAuthOverlay();},45*60*1000);
-}
-
-function showReAuthOverlay() {
-  document.getElementById('re-email').value=userEmail;document.getElementById('re-pass').value='';document.getElementById('re-err').textContent='';
-  document.getElementById('session-expired-ov').classList.add('open');setTimeout(()=>document.getElementById('re-pass').focus(),100);
-}
-
-async function reAuth() {
-  const pass=document.getElementById('re-pass').value,err=document.getElementById('re-err');err.textContent='';
-  if(!pass){err.textContent='Password is required.';return;}
-  try {
-    const res=await api.signIn(userEmail,pass);
-    if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid password.';return;}
-    token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();
-    document.getElementById('session-expired-ov').classList.remove('open');toast('Session restored. You can continue where you left off.','ok',3500);
-  } catch(e){err.textContent='Connection error. Please try again.';}
-}
-
-async function withAuthRetry(fn) {
-  try{return await fn();}
-  catch(e){
-    if(isAuthError(e.message)){const refreshed=await tryRefreshToken();if(refreshed){try{return await fn();}catch(e2){throw e2;}}else{showReAuthOverlay();throw new Error('Session expired — please sign back in and retry.');}}
-    throw e;
-  }
-}
-
+function isAuthError(errMsg){if(!errMsg)return false;const s=String(errMsg).toLowerCase();return s.includes('jwt expired')||s.includes('pgrst303')||s.includes('invalid jwt')||s.includes('token is expired')||s.includes('401');}
+async function tryRefreshToken(){if(!refreshToken)return false;try{const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({refresh_token:refreshToken})});const res=await r.json();if(res.access_token){token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();return true;}return false;}catch(e){return false;}}
+function scheduleTokenRefresh(){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(async()=>{const ok=await tryRefreshToken();if(ok)toast('Session refreshed.','',2000);else showReAuthOverlay();},45*60*1000);}
+function showReAuthOverlay(){document.getElementById('re-email').value=userEmail;document.getElementById('re-pass').value='';document.getElementById('re-err').textContent='';document.getElementById('session-expired-ov').classList.add('open');setTimeout(()=>document.getElementById('re-pass').focus(),100);}
+async function reAuth(){const pass=document.getElementById('re-pass').value,err=document.getElementById('re-err');err.textContent='';if(!pass){err.textContent='Password is required.';return;}try{const res=await api.signIn(userEmail,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid password.';return;}token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();document.getElementById('session-expired-ov').classList.remove('open');toast('Session restored. You can continue where you left off.','ok',3500);}catch(e){err.textContent='Connection error. Please try again.';}}
+async function withAuthRetry(fn){try{return await fn();}catch(e){if(isAuthError(e.message)){const refreshed=await tryRefreshToken();if(refreshed){try{return await fn();}catch(e2){throw e2;}}else{showReAuthOverlay();throw new Error('Session expired — please sign back in and retry.');}}throw e;}}
 const hdrs=(extra={})=>({'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${token||SUPABASE_ANON}`,'Prefer':'return=representation',...extra});
-
-const api = {
+const api={
   async signIn(email,pass){const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({email,password:pass})});return r.json();},
   async signOut(){await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:hdrs()});},
   async getAll(){const PAGE=1000;let from=0,all=[],done=false;while(!done){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=numeric_id.desc&limit=${PAGE}&offset=${from}`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());const batch=await r.json();all=all.concat(batch);if(batch.length<PAGE)done=true;else from+=PAGE;showDbl(`Loading… ${all.length.toLocaleString()} facilities`);}return all;},
@@ -509,320 +474,76 @@ const api = {
   async getOpenMsgCounts(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=facility_id`,{headers:hdrs()});if(!r.ok)return[];return r.json();},
   async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();}
 };
-
-(function checkInviteToken(){
-  const hash=window.location.hash;if(!hash)return;
-  const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');
-  if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}
-})();
-
-async function setPassword(){
-  const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';
-  if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}
-  if(pass!==pass2){err.textContent='Passwords do not match.';return;}
-  if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}
-  try{
-    const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});
-    const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}
-    userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;
-    document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;
-    scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();
-  }catch(e){err.textContent='Connection error. Please try again.';}
-}
-
-async function signIn(){
-  const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';
-  try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}
-  catch(e){err.textContent='Connection error — check Supabase URL.';}
-}
-
-async function signOut(){
-  if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};
-  document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';
-}
-
-async function loadData(){
-  showDbl('Loading facilities…');
-  try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}
-  try{
-    const rows=await api.getOpenMsgCounts();
-    msgCounts={};
-    rows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});
-  }catch(e){msgCounts={};}
-  hideDbl();rebuild();go();
-}
-
+(function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
+async function setPassword(){const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}if(pass!==pass2){err.textContent='Passwords do not match.';return;}if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}try{const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();}catch(e){err.textContent='Connection error. Please try again.';}}
+async function signIn(){const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}catch(e){err.textContent='Connection error — check Supabase URL.';}}
+async function signOut(){if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
+async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const rows=await api.getOpenMsgCounts();msgCounts={};rows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};}hideDbl();rebuild();go();}
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth',NRV:'b-nrv',DNC:'b-del',BL:'b-del',DEL:'b-del'};
 const bc=s=>BMAP[String(s||'').toUpperCase()]||'b-oth';
 const today=()=>{const d=new Date();return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;};
-
-function rebuild(){
-  const mk=(id,vals)=>{const el=document.getElementById(id),cur=el.value;el.innerHTML='<option value="">All</option>'+[...new Set(vals.filter(Boolean))].sort().map(v=>`<option value="${v}">${v}</option>`).join('');el.value=cur;};
-  mk('f-state',data.map(f=>f.state));mk('f-status',data.map(f=>f.status));mk('f-type',data.map(f=>f.shop_type));
-}
-
-function go(){
-  const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fm=document.getElementById('f-has-msgs').checked;
-  filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;return true;});
-  filtered.sort((a,b)=>sortKey==='numeric_id'?sortDir*((+a.numeric_id||0)-(+b.numeric_id||0)):sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase()));
-  document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;
-  document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;
-  page=1;render();pgRender();
-}
-
+function rebuild(){const mk=(id,vals)=>{const el=document.getElementById(id),cur=el.value;el.innerHTML='<option value="">All</option>'+[...new Set(vals.filter(Boolean))].sort().map(v=>`<option value="${v}">${v}</option>`).join('');el.value=cur;};mk('f-state',data.map(f=>f.state));mk('f-status',data.map(f=>f.status));mk('f-type',data.map(f=>f.shop_type));}
+function toggleMsgsFilter(){const cb=document.getElementById('f-has-msgs');const btn=document.getElementById('msgs-toggle-btn');cb.checked=!cb.checked;btn.classList.toggle('active',cb.checked);go();}
+function go(){const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fm=document.getElementById('f-has-msgs').checked;filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;return true;});filtered.sort((a,b)=>sortKey==='numeric_id'?sortDir*((+a.numeric_id||0)-(+b.numeric_id||0)):sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase()));document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;page=1;render();pgRender();}
 function srt(k){sortDir=sortKey===k?sortDir*-1:-1;sortKey=k;go();}
-
-function render(){
-  const rows=filtered.slice((page-1)*PG,page*PG),tb=document.getElementById('tbody'),em=document.getElementById('empty');
-  if(!filtered.length){tb.innerHTML='';em.style.display='';return;}
-  em.style.display='none';
-  tb.innerHTML=rows.map(f=>{
-    const mc=msgCounts[f.id];
-    const msgBadge=mc?`<span class="msg-badge">${mc}</span>`:'';
-    return`<tr><td class="mono">${f.numeric_id||'—'}</td><td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}${msgBadge}</td><td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td><td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td><td>${esc(f.phone||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td>${esc(f.shop_type||'—')}</td><td>${esc(f.added_on||'')}</td><td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td></tr>`;
-  }).join('');
-}
-
-function pgRender(){
-  const total=Math.ceil(filtered.length/PG),pg=document.getElementById('pgbar');if(total<=1){pg.innerHTML='';return;}
-  const r=pgRange(page,total);let h=`<button class="pg" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
-  r.forEach(p=>{h+=p==='…'?`<span style="padding:3px 5px;color:var(--text3)">…</span>`:`<button class="pg ${p===page?'on':''}" onclick="goPage(${p})">${p}</button>`;});
-  h+=`<button class="pg" onclick="goPage(${page+1})" ${page===total?'disabled':''}>›</button><div class="sp"></div><span class="pginfo">${(page-1)*PG+1}–${Math.min(page*PG,filtered.length)} of ${filtered.length.toLocaleString()}</span>`;
-  pg.innerHTML=h;
-}
+function render(){const rows=filtered.slice((page-1)*PG,page*PG),tb=document.getElementById('tbody'),em=document.getElementById('empty');if(!filtered.length){tb.innerHTML='';em.style.display='';return;}em.style.display='none';tb.innerHTML=rows.map(f=>{const mc=msgCounts[f.id];const msgBadge=mc?`<span class="msg-badge">${mc}</span>`:'';return`<tr><td class="mono">${f.numeric_id||'—'}</td><td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}${msgBadge}</td><td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td><td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td><td>${esc(f.phone||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td>${esc(f.shop_type||'—')}</td><td>${esc(f.added_on||'')}</td><td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td></tr>`;}).join('');}
+function pgRender(){const total=Math.ceil(filtered.length/PG),pg=document.getElementById('pgbar');if(total<=1){pg.innerHTML='';return;}const r=pgRange(page,total);let h=`<button class="pg" onclick="goPage(${page-1})" ${page===1?'disabled':''}>&#x2039;</button>`;r.forEach(p=>{h+=p==='…'?`<span style="padding:3px 5px;color:var(--text3)">…</span>`:`<button class="pg ${p===page?'on':''}" onclick="goPage(${p})">${p}</button>`;});h+=`<button class="pg" onclick="goPage(${page+1})" ${page===total?'disabled':''}>&#x203A;</button><div class="sp"></div><span class="pginfo">${(page-1)*PG+1}–${Math.min(page*PG,filtered.length)} of ${filtered.length.toLocaleString()}</span>`;pg.innerHTML=h;}
 function pgRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);if(c<=4)return[1,2,3,4,5,'…',t];if(c>=t-3)return[1,'…',t-4,t-3,t-2,t-1,t];return[1,'…',c-1,c,c+1,'…',t];}
 function goPage(p){const t=Math.ceil(filtered.length/PG);if(p<1||p>t)return;page=p;render();pgRender();document.querySelector('.tbl-wrap').scrollTop=0;}
-
-function clr(){
-  ['f-name','f-phone','f-contact','f-cemail','f-addr','f-city','f-zip','f-web','f-email','f-lat','f-lng','f-labor','f-offer-url','f-notes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
-  const lk=document.getElementById('f-offer-link');lk.style.display='none';lk.href='#';
-  document.getElementById('f-country').value='USA';
-  document.getElementById('f-state-i').value='';
-  document.getElementById('f-status-i').value='PRF';
-  ['f-type-i','f-sw','f-lg'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('f-ft').value='Web';
-  document.getElementById('f-ev').checked=false;document.getElementById('f-shipped').checked=false;
-}
-
-function openAdd(){
-  editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';
-  document.getElementById('del-btn').style.display='none';document.getElementById('ptabs').style.display='none';document.getElementById('save-btn').style.display='';
-  switchTab('details');document.getElementById('ov').classList.add('open');
-}
-
-function openEdit(id){
-  const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr();
-  document.getElementById('ptitle').textContent=f.name||'Edit Facility';
-  const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';
-  document.getElementById('del-btn').style.display='';
-  const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};
-  s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);
-  s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);
-  s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);
-  s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);
-  s('f-status-i',f.status);s('f-type-i',f.shop_type);s('f-sw',f.software);
-  s('f-lg',f.labor_guide);s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');
-  document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;
-  const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}
-  document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';
-  document.getElementById('msgs-tab-count').style.display='none';
-  document.getElementById('msgs-list').style.display='none';
-  document.getElementById('msgs-loading').style.display='block';
-  document.getElementById('msgs-loading').textContent='Loading messages…';
-  const openCount=msgCounts[id]||0;
-  if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}
-  switchTab('details');document.getElementById('ov').classList.add('open');
-}
-
+function clr(){['f-name','f-phone','f-contact','f-cemail','f-addr','f-city','f-zip','f-web','f-email','f-lat','f-lng','f-labor','f-offer-url','f-notes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});const lk=document.getElementById('f-offer-link');lk.style.display='none';lk.href='#';document.getElementById('f-country').value='USA';document.getElementById('f-state-i').value='';document.getElementById('f-status-i').value='PRF';['f-type-i','f-sw','f-lg'].forEach(i=>document.getElementById(i).value='');document.getElementById('f-ft').value='Web';document.getElementById('f-ev').checked=false;document.getElementById('f-shipped').checked=false;}
+function openAdd(){editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';document.getElementById('del-btn').style.display='none';document.getElementById('ptabs').style.display='none';document.getElementById('save-btn').style.display='';switchTab('details');document.getElementById('ov').classList.add('open');}
+function openEdit(id){const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr();document.getElementById('ptitle').textContent=f.name||'Edit Facility';const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';document.getElementById('del-btn').style.display='';const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);s('f-status-i',f.status);s('f-type-i',f.shop_type);s('f-sw',f.software);s('f-lg',f.labor_guide);s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';document.getElementById('msgs-tab-count').style.display='none';document.getElementById('msgs-list').style.display='none';document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';const openCount=msgCounts[id]||0;if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}switchTab('details');document.getElementById('ov').classList.add('open');}
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
-
-function switchTab(tab){
-  ['details','history','messages'].forEach(t=>{
-    document.getElementById('tab-btn-'+t)?.classList.remove('on');
-    document.getElementById('tab-'+t).style.display='none';
-  });
-  document.getElementById('tab-btn-'+tab)?.classList.add('on');
-  document.getElementById('tab-'+tab).style.display='';
-  document.getElementById('save-btn').style.display=tab==='details'?'':'none';
-  if(tab==='history'&&editId)loadHistory(editId);
-  if(tab==='messages'&&editId)loadFacilityMessages(editId);
-}
-
-async function loadHistory(facilityId){
-  const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';
-  try{
-    const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}
-    const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL'};
-    el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');
-  }catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}
-}
-
-async function loadFacilityMessages(facilityId){
-  document.getElementById('msgs-loading').style.display='block';
-  document.getElementById('msgs-loading').textContent='Loading messages…';
-  document.getElementById('msgs-list').style.display='none';
-  try{
-    const messages=await api.getMessages(facilityId);
-    document.getElementById('msgs-loading').style.display='none';
-    const list=document.getElementById('msgs-list');list.style.display='block';
-    const open=messages.filter(m=>!m.is_addressed).length;
-    const total=messages.length;
-    const tabCount=document.getElementById('msgs-tab-count');
-    if(open>0){tabCount.textContent=open;tabCount.style.display='inline';}else{tabCount.style.display='none';}
-    document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open`:'';
-    if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">💬</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}
-    list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');
-  }catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}
-}
-
-function renderMsgCard(m){
-  const matchBadge={email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';
-  const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';
-  const addressedSection=m.is_addressed
-    ?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`
-    :`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;
-  return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}"><div class="msg-card-head"><div class="msg-meta"><div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div><div class="msg-sub">${esc(m.subject||'')}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;
-}
-
-async function markMsgAddressed(msgId){
-  const btn=document.getElementById('addr-btn-'+msgId);
-  if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  try{
-    await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));
-    const card=document.getElementById('msg-'+msgId);
-    card.classList.add('addressed');
-    const footer=card.querySelector('.msg-footer');
-    const oldBtn=footer.querySelector('.btn-address');
-    if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;
-    const tabCount=document.getElementById('msgs-tab-count');
-    const cur=parseInt(tabCount.textContent||'0',10);
-    if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;
-    if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}
-    const list=document.getElementById('msgs-list');
-    const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;
-    const totalNow=list.querySelectorAll('.msg-card').length;
-    document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';
-    toast('Message marked as addressed.','ok');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}
-    toast('Error: '+e.message,'err');
-  }
-}
-
+function switchTab(tab){['details','history','messages'].forEach(t=>{document.getElementById('tab-btn-'+t)?.classList.remove('on');document.getElementById('tab-'+t).style.display='none';});document.getElementById('tab-btn-'+tab)?.classList.add('on');document.getElementById('tab-'+tab).style.display='';document.getElementById('save-btn').style.display=tab==='details'?'':'none';if(tab==='history'&&editId)loadHistory(editId);if(tab==='messages'&&editId)loadFacilityMessages(editId);}
+async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
+async function loadFacilityMessages(facilityId){document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';document.getElementById('msgs-list').style.display='none';try{const messages=await api.getMessages(facilityId);document.getElementById('msgs-loading').style.display='none';const list=document.getElementById('msgs-list');list.style.display='block';const open=messages.filter(m=>!m.is_addressed).length;const total=messages.length;const tabCount=document.getElementById('msgs-tab-count');if(open>0){tabCount.textContent=open;tabCount.style.display='inline';}else{tabCount.style.display='none';}document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open`:'';if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">&#x1F4AC;</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');}catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}}
+function renderMsgCard(m){const matchBadge={email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';const addressedSection=m.is_addressed?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`:`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}"><div class="msg-card-head"><div class="msg-meta"><div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div><div class="msg-sub">${esc(m.subject||'')}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;}
+async function markMsgAddressed(msgId){const btn=document.getElementById('addr-btn-'+msgId);if(btn){btn.disabled=true;btn.textContent='Saving…';}try{await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));const card=document.getElementById('msg-'+msgId);card.classList.add('addressed');const footer=card.querySelector('.msg-footer');const oldBtn=footer.querySelector('.btn-address');if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;const tabCount=document.getElementById('msgs-tab-count');const cur=parseInt(tabCount.textContent||'0',10);if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}const list=document.getElementById('msgs-list');const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;const totalNow=list.querySelectorAll('.msg-card').length;document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';toast('Message marked as addressed.','ok');}catch(e){if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}toast('Error: '+e.message,'err');}}
 const GOOGLE_API_KEY='AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0';
 let addrPending=null,googleMapsReady=false,googleMapsLoading=false,googleMapsCallbacks=[];
-
 function loadGoogleMaps(){return new Promise((resolve,reject)=>{if(googleMapsReady){resolve();return;}googleMapsCallbacks.push({resolve,reject});if(googleMapsLoading)return;googleMapsLoading=true;window.__googleMapsLoaded=()=>{googleMapsReady=true;googleMapsCallbacks.forEach(cb=>cb.resolve());googleMapsCallbacks=[];};const s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=geocoding&callback=__googleMapsLoaded`;s.onerror=()=>{googleMapsLoading=false;googleMapsCallbacks.forEach(cb=>cb.reject(new Error('Google Maps failed to load')));googleMapsCallbacks=[];};document.head.appendChild(s);});}
-
 async function geocodeAddress(addr,city,state,zip,country){await loadGoogleMaps();const full=`${addr}, ${city}, ${state} ${zip}, ${country||'USA'}`;return new Promise((resolve)=>{const geocoder=new google.maps.Geocoder();geocoder.geocode({address:full},(results,status)=>{if(status==='OK'&&results?.length)resolve(results[0]);else resolve(null);});});}
-
 function parseGeoResult(result){const get=(types)=>{for(const t of types){const c=result.address_components.find(x=>x.types.includes(t));if(c)return c;}return null;};return{address:[get(['street_number'])?.long_name,get(['route'])?.long_name].filter(Boolean).join(' '),city:get(['locality','sublocality','neighborhood'])?.long_name||'',state:get(['administrative_area_level_1'])?.short_name||'',zip:get(['postal_code'])?.long_name||'',country:get(['country'])?.short_name||'US',lat:result.geometry.location.lat(),lng:result.geometry.location.lng(),formatted:result.formatted_address};}
-
 function highlightDiff(entered,suggested){if(!suggested||entered.toLowerCase()===suggested.toLowerCase())return esc(suggested||entered);return`<span class="addr-diff">${esc(suggested)}</span>`;}
-
-async function validateAndSave(rec,existing){
-  const addr=rec.address||'',city=rec.city||'',state=rec.state||'',zip=rec.zip||'';
-  if(!addr||!city||!state||!zip){await doSave(rec,existing);return;}
-  showDbl('Validating address…');let geoResult=null;
-  try{geoResult=await geocodeAddress(addr,city,state,zip,rec.country);}catch(e){hideDbl();showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}
-  hideDbl();if(!geoResult){showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}
-  const locationType=geoResult.geometry?.location_type,partialMatch=geoResult.partial_match===true,highConfidence=['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);
-  if(partialMatch||!highConfidence){showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}
-  const parsed=parseGeoResult(geoResult);
-  const allMatch=addr.toLowerCase()===parsed.address.toLowerCase()&&city.toLowerCase()===parsed.city.toLowerCase()&&state.toUpperCase()===parsed.state.toUpperCase()&&zip===parsed.zip;
-  if(allMatch){if(!rec.lat&&!rec.lng){rec.lat=String(parsed.lat);rec.lng=String(parsed.lng);}await doSave(rec,existing);return;}
-  showAddrDialog({mode:'suggestion',rec,existing,entered:{address:addr,city,state,zip},suggested:{address:parsed.address,city:parsed.city,state:parsed.state,zip:parsed.zip,lat:String(parsed.lat),lng:String(parsed.lng)}});
-}
-
-function showAddrDialog({mode,rec,existing,entered,suggested}){
-  addrPending={rec,existing,suggested};
-  const warn=document.getElementById('addr-warn'),warnMsg=document.getElementById('addr-warn-msg'),compare=document.getElementById('addr-compare'),title=document.getElementById('addr-ov-title'),msg=document.getElementById('addr-ov-msg'),acceptBtn=document.getElementById('addr-accept-btn');
-  if(mode==='unverified'){title.textContent='Address Could Not Be Verified';msg.textContent='Google could not find this address. You can go back and correct it, or save it as entered.';warn.style.display='flex';warnMsg.textContent='This address was not found in Google Maps. It may be incorrect or missing information.';compare.style.display='none';acceptBtn.style.display='none';}
-  else{title.textContent='Address Correction Suggested';msg.textContent='Google found a corrected version of this address. Accepting will also fill in the latitude and longitude automatically.';warn.style.display='none';compare.style.display='grid';acceptBtn.style.display='';document.getElementById('addr-entered').innerHTML=`${esc(entered.address)}<br>${esc(entered.city)}, ${esc(entered.state)} ${esc(entered.zip)}`;document.getElementById('addr-suggested').innerHTML=`${highlightDiff(entered.address,suggested.address)}<br>${highlightDiff(entered.city,suggested.city)}, ${highlightDiff(entered.state,suggested.state)} ${highlightDiff(entered.zip,suggested.zip)}`;}
-  document.getElementById('addr-ov').classList.add('open');
-}
-
+async function validateAndSave(rec,existing){const addr=rec.address||'',city=rec.city||'',state=rec.state||'',zip=rec.zip||'';if(!addr||!city||!state||!zip){await doSave(rec,existing);return;}showDbl('Validating address…');let geoResult=null;try{geoResult=await geocodeAddress(addr,city,state,zip,rec.country);}catch(e){hideDbl();showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}hideDbl();if(!geoResult){showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}const locationType=geoResult.geometry?.location_type,partialMatch=geoResult.partial_match===true,highConfidence=['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);if(partialMatch||!highConfidence){showAddrDialog({mode:'unverified',rec,existing,entered:{address:addr,city,state,zip}});return;}const parsed=parseGeoResult(geoResult);const allMatch=addr.toLowerCase()===parsed.address.toLowerCase()&&city.toLowerCase()===parsed.city.toLowerCase()&&state.toUpperCase()===parsed.state.toUpperCase()&&zip===parsed.zip;if(allMatch){if(!rec.lat&&!rec.lng){rec.lat=String(parsed.lat);rec.lng=String(parsed.lng);}await doSave(rec,existing);return;}showAddrDialog({mode:'suggestion',rec,existing,entered:{address:addr,city,state,zip},suggested:{address:parsed.address,city:parsed.city,state:parsed.state,zip:parsed.zip,lat:String(parsed.lat),lng:String(parsed.lng)}});}
+function showAddrDialog({mode,rec,existing,entered,suggested}){addrPending={rec,existing,suggested};const warn=document.getElementById('addr-warn'),warnMsg=document.getElementById('addr-warn-msg'),compare=document.getElementById('addr-compare'),title=document.getElementById('addr-ov-title'),msg=document.getElementById('addr-ov-msg'),acceptBtn=document.getElementById('addr-accept-btn');if(mode==='unverified'){title.textContent='Address Could Not Be Verified';msg.textContent='Google could not find this address. You can go back and correct it, or save it as entered.';warn.style.display='flex';warnMsg.textContent='This address was not found in Google Maps. It may be incorrect or missing information.';compare.style.display='none';acceptBtn.style.display='none';}else{title.textContent='Address Correction Suggested';msg.textContent='Google found a corrected version of this address. Accepting will also fill in the latitude and longitude automatically.';warn.style.display='none';compare.style.display='grid';acceptBtn.style.display='';document.getElementById('addr-entered').innerHTML=`${esc(entered.address)}<br>${esc(entered.city)}, ${esc(entered.state)} ${esc(entered.zip)}`;document.getElementById('addr-suggested').innerHTML=`${highlightDiff(entered.address,suggested.address)}<br>${highlightDiff(entered.city,suggested.city)}, ${highlightDiff(entered.state,suggested.state)} ${highlightDiff(entered.zip,suggested.zip)}`;}document.getElementById('addr-ov').classList.add('open');}
 function addrAcceptSuggestion(){if(!addrPending)return;const{rec,existing,suggested}=addrPending;rec.address=suggested.address||rec.address;rec.city=suggested.city||rec.city;rec.state=suggested.state||rec.state;rec.zip=suggested.zip||rec.zip;rec.lat=suggested.lat||rec.lat;rec.lng=suggested.lng||rec.lng;const s=(id,v)=>{const e=document.getElementById(id);if(e&&v)e.value=v;};s('f-addr',rec.address);s('f-city',rec.city);s('f-state-i',rec.state);s('f-zip',rec.zip);s('f-lat',rec.lat);s('f-lng',rec.lng);closeAddrDialog();doSave(rec,existing);}
 function addrKeepOriginal(){if(!addrPending)return;const{rec,existing}=addrPending;closeAddrDialog();doSave(rec,existing);}
 function addrGoBack(){closeAddrDialog();addrPending=null;}
 function closeAddrDialog(){document.getElementById('addr-ov').classList.remove('open');}
-
-async function doSave(rec,existing){
-  showDbl('Saving…');
-  try{
-    const [saved]=await withAuthRetry(()=>api.upsert(rec));
-    const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes'];
-    const changes={};if(editId&&existing){TRACK.forEach(k=>{const oldVal=existing[k]??null,newVal=rec[k]??null;if(String(oldVal)!==String(newVal))changes[k]={from:oldVal,to:newVal};});}
-    await withAuthRetry(()=>api.logHistory({facility_id:saved.id,facility_name:saved.name,changed_by:userEmail,changes:Object.keys(changes).length?changes:null})).catch(()=>{});
-    if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}else data.unshift(saved);
-    rebuild();go();closePanel();toast(editId?'Facility updated.':'Facility added.','ok');
-  }catch(e){if(!e.message.includes('sign back in'))toast('Save failed: '+e.message,'err',6000);}
-  hideDbl();
-}
-
-async function saveFac(){
-  const g=i=>document.getElementById(i);const name=g('f-name').value.trim();
-  if(!name){toast('Name is required.','err');return;}
-  if(!g('f-city').value.trim()||!g('f-state-i').value||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}
-  const existing=editId?data.find(f=>f.id===editId):null;
-  const rec={...(editId&&{id:editId}),numeric_id:existing?.numeric_id||null,name,phone:g('f-phone').value.trim(),contact:g('f-contact').value.trim(),contact_email:g('f-cemail').value.trim(),address:g('f-addr').value.trim(),city:g('f-city').value.trim(),state:g('f-state-i').value,zip:g('f-zip').value.trim(),country:g('f-country').value.trim()||'USA',website:g('f-web').value.trim()||null,email1:g('f-email').value.trim()||null,lat:g('f-lat').value.trim()||null,lng:g('f-lng').value.trim()||null,labor:g('f-labor').value||null,status:g('f-status-i').value,shop_type:g('f-type-i').value||null,software:g('f-sw').value||null,labor_guide:g('f-lg').value||null,form_type:g('f-ft').value,ev_certified:g('f-ev').checked,accepts_shipped:g('f-shipped').checked,offer_url:g('f-offer-url').value.trim()||null,notes:g('f-notes').value.trim()||null,added_on:existing?.added_on||today(),edited_on:today(),edited_by:userEmail};
-  await checkDupesAndSave(rec,existing);
-}
-
+async function doSave(rec,existing){showDbl('Saving…');try{const [saved]=await withAuthRetry(()=>api.upsert(rec));const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes'];const changes={};if(editId&&existing){TRACK.forEach(k=>{const oldVal=existing[k]??null,newVal=rec[k]??null;if(String(oldVal)!==String(newVal))changes[k]={from:oldVal,to:newVal};});}await withAuthRetry(()=>api.logHistory({facility_id:saved.id,facility_name:saved.name,changed_by:userEmail,changes:Object.keys(changes).length?changes:null})).catch(()=>{});if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}else data.unshift(saved);rebuild();go();closePanel();toast(editId?'Facility updated.':'Facility added.','ok');}catch(e){if(!e.message.includes('sign back in'))toast('Save failed: '+e.message,'err',6000);}hideDbl();}
+async function saveFac(){const g=i=>document.getElementById(i);const name=g('f-name').value.trim();if(!name){toast('Name is required.','err');return;}if(!g('f-city').value.trim()||!g('f-state-i').value||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}const existing=editId?data.find(f=>f.id===editId):null;const rec={...(editId&&{id:editId}),numeric_id:existing?.numeric_id||null,name,phone:g('f-phone').value.trim(),contact:g('f-contact').value.trim(),contact_email:g('f-cemail').value.trim(),address:g('f-addr').value.trim(),city:g('f-city').value.trim(),state:g('f-state-i').value,zip:g('f-zip').value.trim(),country:g('f-country').value.trim()||'USA',website:g('f-web').value.trim()||null,email1:g('f-email').value.trim()||null,lat:g('f-lat').value.trim()||null,lng:g('f-lng').value.trim()||null,labor:g('f-labor').value||null,status:g('f-status-i').value,shop_type:g('f-type-i').value||null,software:g('f-sw').value||null,labor_guide:g('f-lg').value||null,form_type:g('f-ft').value,ev_certified:g('f-ev').checked,accepts_shipped:g('f-shipped').checked,offer_url:g('f-offer-url').value.trim()||null,notes:g('f-notes').value.trim()||null,added_on:existing?.added_on||today(),edited_on:today(),edited_by:userEmail};await checkDupesAndSave(rec,existing);}
 function confirmDel(){delId=editId;const f=data.find(x=>x.id===editId);document.getElementById('cfm-msg').textContent=`Delete "${f?.name}"? This cannot be undone.`;document.getElementById('cfm-ov').classList.add('open');}
 function closeCfm(){document.getElementById('cfm-ov').classList.remove('open');}
 async function doDel(){showDbl('Deleting…');try{await withAuthRetry(()=>api.del(delId));data=data.filter(f=>f.id!==delId);rebuild();go();closeCfm();closePanel();toast('Deleted.','ok');}catch(e){if(!e.message.includes('sign back in'))toast('Delete failed: '+e.message,'err',6000);}hideDbl();}
-
 function toast(msg,type='',dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',dur);}
-
 document.getElementById('f-offer-url').addEventListener('input',e=>{const v=e.target.value.trim(),lk=document.getElementById('f-offer-link');if(v&&v.startsWith('http')){lk.href=v;lk.style.display='inline-block';}else lk.style.display='none';});
-
 function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='srn_facilities.json';a.click();}
 function openMap(){const base=window.location.href.replace(/srn_admin\.html.*$/,'');window.open(base+'srn_map.html','_blank');}
-
-function downloadTemplate(){
-  const headers=['Name *','Address *','City *','State *','Zip *','Country','Phone','Contact','Contact Email','Website','Latitude','Longitude','Status','Shop Type','Labor $','Labor Guide','Software','Form Type','EV Certified','Accepts Shipped','Offer URL','Added On','Added By','Numeric ID'];
-  const notes=['* Required','* Required','* Required','* Required — 2-letter state code (e.g. MO)','* Required','Default: USA','Digits only e.g. 8005551234','Contact person name','Contact email address','Full URL with https://','Decimal e.g. 38.627003','Decimal e.g. -90.199402','PRF | OPT | STD | NEW | VIP | MOB | UPB | DNC | BL | PEND | DEL','Dealership | Independent | Chain | Specialty | Body Shop | Quick Lube | Tire Shop | European | Asian | Domestic | National | Other','Numeric e.g. 180.00','Mitchell | Alldata | Identifix | Motor | Other','Mitchell1 | Shop-Ware | Tekmetric | Protractor | Other','Web | Phone | Fax','TRUE or FALSE','TRUE or FALSE','Full URL to offers page e.g. https://www.goodyear.com/en_US/offers.html','MM-DD-YYYY','Who added this record','Leave blank for new records'];
-  const csvRow=arr=>arr.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');
-  const csv=[csvRow(headers),csvRow(notes)].join('\r\n');
-  const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SRN_Facility_Import_Template.csv';a.click();toast('Template downloaded.','ok');
-}
-
+function downloadTemplate(){const headers=['Name *','Address *','City *','State *','Zip *','Country','Phone','Contact','Contact Email','Website','Latitude','Longitude','Status','Shop Type','Labor $','Labor Guide','Software','Form Type','EV Certified','Accepts Shipped','Offer URL','Added On','Added By','Numeric ID'];const notes=['* Required','* Required','* Required','* Required — 2-letter state code (e.g. MO)','* Required','Default: USA','Digits only e.g. 8005551234','Contact person name','Contact email address','Full URL with https://','Decimal e.g. 38.627003','Decimal e.g. -90.199402','PRF | OPT | STD | NEW | VIP | MOB | UPB | DNC | BL | PEND | DEL','Dealership | Independent | Chain | Specialty | Body Shop | Quick Lube | Tire Shop | European | Asian | Domestic | National | Other','Numeric e.g. 180.00','Mitchell | Alldata | Identifix | Motor | Other','Mitchell1 | Shop-Ware | Tekmetric | Protractor | Other','Web | Phone | Fax','TRUE or FALSE','TRUE or FALSE','Full URL to offers page e.g. https://www.goodyear.com/en_US/offers.html','MM-DD-YYYY','Who added this record','Leave blank for new records'];const csvRow=arr=>arr.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');const csv=[csvRow(headers),csvRow(notes)].join('\r\n');const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SRN_Facility_Import_Template.csv';a.click();toast('Template downloaded.','ok');}
 const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes'};
-
 function normDate(v){if(!v)return null;const s=String(v).trim();if(/^\d{2}-\d{2}-\d{4}$/.test(s))return s;const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){const yr=m[3].length===2?'20'+m[3]:m[3];return`${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;}const mt=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);if(mt)return`${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;if(/^\d{5}$/.test(s)){const d=new Date(Math.round((+s-25569)*86400*1000));return`${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}-${d.getUTCFullYear()}`;}try{const d=new Date(s);if(!isNaN(d)&&d.getFullYear()>1970&&d.getFullYear()<2100)return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;}catch(e){}return null;}
-
 function rowToRec(headers,row){const rec={};headers.forEach((h,i)=>{const key=COL_MAP[String(h).toLowerCase().trim()];if(!key)return;let val=row[i];if(val===undefined||val===null)val='';if(key==='ev_certified'||key==='accepts_shipped')val=val===true||String(val).toLowerCase()==='true'||String(val)==='1';else if(key==='added_on'||key==='edited_on')val=normDate(val);else if(['lat','lng','labor'].includes(key))val=val===''?null:(+val||null);else if(key==='numeric_id')val=val===''?null:(+val||null);else val=String(val).trim()||null;rec[key]=val;});return rec;}
-
-function showImportSummary(clean,flagged,total){const msg=`<div style="text-align:center;padding:28px 24px"><div style="font-size:32px;margin-bottom:12px">📋</div><h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">Import Complete</h3><p style="font-size:13px;color:var(--text2);margin-bottom:20px">${total.toLocaleString()} records processed</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px"><div style="background:var(--green-bg);border:1px solid #a3d9b4;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:var(--green)">${clean.toLocaleString()}</div><div style="font-size:12px;color:var(--green);margin-top:2px">✓ Address Verified</div></div><div style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:#7e22ce">${flagged.toLocaleString()}</div><div style="font-size:12px;color:#7e22ce;margin-top:2px">⚠ Needs Review</div></div></div>${flagged>0?`<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.</p>`:'<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}<button class="btn btn-save" onclick="document.getElementById(\'import-summary-ov\').classList.remove(\'open\')" style="margin-top:16px;padding:8px 24px">Done</button></div>`;let ov=document.getElementById('import-summary-ov');if(!ov){ov=document.createElement('div');ov.id='import-summary-ov';ov.className='ov';ov.style.zIndex='7000';ov.innerHTML=`<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">${msg}</div>`;document.body.appendChild(ov);}else{ov.querySelector('div').innerHTML=msg;}ov.classList.add('open');}
-
+function showImportSummary(clean,flagged,total){const msg=`<div style="text-align:center;padding:28px 24px"><div style="font-size:32px;margin-bottom:12px">&#x1F4CB;</div><h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">Import Complete</h3><p style="font-size:13px;color:var(--text2);margin-bottom:20px">${total.toLocaleString()} records processed</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px"><div style="background:var(--green-bg);border:1px solid #a3d9b4;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:var(--green)">${clean.toLocaleString()}</div><div style="font-size:12px;color:var(--green);margin-top:2px">✓ Address Verified</div></div><div style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:#7e22ce">${flagged.toLocaleString()}</div><div style="font-size:12px;color:#7e22ce;margin-top:2px">⚠ Needs Review</div></div></div>${flagged>0?`<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.</p>`:'<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}<button class="btn btn-save" onclick="document.getElementById(\'import-summary-ov\').classList.remove(\'open\')" style="margin-top:16px;padding:8px 24px">Done</button></div>`;let ov=document.getElementById('import-summary-ov');if(!ov){ov=document.createElement('div');ov.id='import-summary-ov';ov.className='ov';ov.style.zIndex='7000';ov.innerHTML=`<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">${msg}</div>`;document.body.appendChild(ov);}else{ov.querySelector('div').innerHTML=msg;}ov.classList.add('open');}
 async function geocodeForImport(rec){if(!rec.address||!rec.city||!rec.state||!rec.zip)return{status:'unverified',rec};try{await loadGoogleMaps();const full=`${rec.address}, ${rec.city}, ${rec.state} ${rec.zip}, ${rec.country||'USA'}`;return new Promise((resolve)=>{const geocoder=new google.maps.Geocoder();geocoder.geocode({address:full},(results,status)=>{if(status!=='OK'||!results?.length){resolve({status:'unverified',rec});return;}const result=results[0];const locationType=result.geometry?.location_type,partialMatch=result.partial_match===true,highConfidence=['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);if(partialMatch||!highConfidence){resolve({status:'unverified',rec});return;}const parsed=parseGeoResult(result);const allMatch=(rec.address||'').toLowerCase()===parsed.address.toLowerCase()&&(rec.city||'').toLowerCase()===parsed.city.toLowerCase()&&(rec.state||'').toUpperCase()===parsed.state.toUpperCase()&&(rec.zip||'')===parsed.zip;if(allMatch){if(!rec.lat)rec.lat=String(parsed.lat);if(!rec.lng)rec.lng=String(parsed.lng);resolve({status:'ok',rec});}else{const suggestion=`Google suggested: ${parsed.address}, ${parsed.city}, ${parsed.state} ${parsed.zip}`;rec.notes=rec.notes?`${rec.notes} | ${suggestion}`:suggestion;rec.status='NRV';rec.lat=rec.lat||String(parsed.lat);rec.lng=rec.lng||String(parsed.lng);resolve({status:'corrected',rec});}});});}catch(e){return{status:'unverified',rec};}}
-
 async function mergeAndUpload(rows){const valid=rows.filter(r=>r.name),total=valid.length,BATCH=200,GEO_THROTTLE=50;let done=0,clean=0,flagged=0;showDbl(`Validating addresses… 0 / ${total.toLocaleString()}`);await loadGoogleMaps().catch(()=>{});for(let i=0;i<valid.length;i++){const rec=valid[i];if(i%10===0)showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);const geoResult=await geocodeForImport(rec);if(geoResult.status==='ok')clean++;else{flagged++;if(geoResult.status==='unverified'){rec.status=rec.status||'NRV';rec.notes=rec.notes?rec.notes+' | Address could not be verified by Google':'Address could not be verified by Google';}}valid[i]=geoResult.rec;const dupMatches=await checkDupesForImport(valid[i],data,valid.slice(0,i));if(dupMatches.length>0){const best=dupMatches[0];const dupNote=`Possible duplicate of: "${best.facility.name}" (ID: ${best.facility.numeric_id||best.facility.id}) — matched on ${best.reasons.join(' + ')}`;valid[i].status='NRV';valid[i].notes=valid[i].notes?`${valid[i].notes} | ${dupNote}`:dupNote;flagged++;}await new Promise(r=>setTimeout(r,GEO_THROTTLE));}for(let i=0;i<valid.length;i+=BATCH){const batch=valid.slice(i,i+BATCH);showDbl(`Uploading ${Math.min(done+BATCH,total).toLocaleString()} / ${total.toLocaleString()}…`);await withAuthRetry(()=>api.upsertBatch(batch));done+=batch.length;}await loadData();hideDbl();showImportSummary(clean,flagged,total);}
-
 function normPhone(p){if(!p)return'';return String(p).replace(/\D/g,'').replace(/^1/,'');}
 const ADDR_ABBR={'street':'st','drive':'dr','avenue':'ave','boulevard':'blvd','road':'rd','lane':'ln','court':'ct','place':'pl','circle':'cir','trail':'trl','parkway':'pkwy','highway':'hwy','suite':'ste','building':'bldg','north':'n','south':'s','east':'e','west':'w','northeast':'ne','northwest':'nw','southeast':'se','southwest':'sw'};
 function normAddr(a){if(!a)return'';let s=String(a).toLowerCase().trim();s=s.replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();Object.entries(ADDR_ABBR).forEach(([long,short])=>{s=s.replace(new RegExp(`\\b${long}\\b`,'g'),short);});return s.replace(/\s+/g,' ').trim();}
 function normStreetName(a){if(!a)return'';return normAddr(a).replace(/^\d+\s*/,'').trim();}
 function similarity(a,b){if(!a||!b)return 0;if(a===b)return 1;const aNS=a.replace(/\s/g,''),bNS=b.replace(/\s/g,'');if(aNS===bNS)return 1;const la=a.length,lb=b.length,max=Math.max(la,lb);if(max===0)return 1;if(Math.abs(la-lb)/max>0.6)return 0;const dp=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=la;i++)for(let j=1;j<=lb;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);const levSim=1-dp[la][lb]/max;const laNS=aNS.length,lbNS=bNS.length,maxNS=Math.max(laNS,lbNS);if(maxNS===0)return levSim;const dp2=Array.from({length:laNS+1},(_,i)=>Array.from({length:lbNS+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=laNS;i++)for(let j=1;j<=lbNS;j++)dp2[i][j]=aNS[i-1]===bNS[j-1]?dp2[i-1][j-1]:1+Math.min(dp2[i-1][j],dp2[i][j-1],dp2[i-1][j-1]);return Math.max(levSim,1-dp2[laNS][lbNS]/maxNS);}
-
 function findDupesFor(rec,candidates,excludeId=null){const recPhone=normPhone(rec.phone),recAddr=normAddr(rec.address),recStreet=normStreetName(rec.address),recName=(rec.name||'').toLowerCase().trim(),recZip=(rec.zip||'').trim(),matches=[];for(const c of candidates){if(c.id&&c.id===excludeId)continue;if(c===rec)continue;const reasons=[],cPhone=normPhone(c.phone);let confidence=0;if(recPhone&&cPhone&&recPhone===cPhone&&recPhone.length>=7){reasons.push('phone match');confidence+=60;}const cAddr=normAddr(c.address),cStreet=normStreetName(c.address),cZip=(c.zip||'').trim(),sameState=rec.state===c.state,sameZip=recZip&&cZip&&recZip===cZip;if(recAddr&&cAddr&&sameState){const addrSim=similarity(recAddr,cAddr),streetSim=similarity(recStreet,cStreet),bestSim=Math.max(addrSim,streetSim);if(bestSim>=0.80){reasons.push(`address match (${Math.round(bestSim*100)}%)`);confidence+=50;}else if(sameZip&&streetSim>=0.70){reasons.push(`address match (zip+street ${Math.round(streetSim*100)}%)`);confidence+=45;}}if(sameZip){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.70&&confidence===0){reasons.push(`name match (${Math.round(nameSim*100)}%)`);confidence+=40;}else if(nameSim>=0.65)confidence+=15;}if(confidence>0){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.65)confidence+=15;}if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});}return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);}
-
 let dupPending=null;
-async function checkDupesAndSave(rec,existing){const excludeId=rec.id||null,sameState=data.filter(f=>f.state===rec.state),matches=findDupesFor(rec,sameState,excludeId);if(matches.length===0){await validateAndSave(rec,existing);return;}dupPending={rec,existing};const container=document.getElementById('dup-matches');container.innerHTML=matches.map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'📞 '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;·&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');document.getElementById('dup-ov').classList.add('open');}
-
+async function checkDupesAndSave(rec,existing){const excludeId=rec.id||null,sameState=data.filter(f=>f.state===rec.state),matches=findDupesFor(rec,sameState,excludeId);if(matches.length===0){await validateAndSave(rec,existing);return;}dupPending={rec,existing};const container=document.getElementById('dup-matches');container.innerHTML=matches.map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;&middot;&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');document.getElementById('dup-ov').classList.add('open');}
 function dupGoBack(){document.getElementById('dup-ov').classList.remove('open');dupPending=null;}
 function dupSaveAnyway(){if(!dupPending)return;const{rec,existing}=dupPending;document.getElementById('dup-ov').classList.remove('open');dupPending=null;validateAndSave(rec,existing);}
 function dupFlagAndSave(){if(!dupPending)return;const{rec,existing}=dupPending;rec.status='NRV';const dupNote='Flagged as possible duplicate — review before approving.';rec.notes=rec.notes?`${rec.notes} | ${dupNote}`:dupNote;document.getElementById('dup-ov').classList.remove('open');dupPending=null;validateAndSave(rec,existing);}
 function closeAllOverlays(){['dup-ov','dup-report-ov','addr-ov'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
-
-async function findDuplicates(){showDbl('Scanning for duplicates…');const byState={};data.forEach(f=>{const st=f.state||'__';if(!byState[st])byState[st]=[];byState[st].push(f);});const pairs=[],seen=new Set(),states=Object.keys(byState);for(let si=0;si<states.length;si++){const group=byState[states[si]];showDbl(`Scanning ${states[si]}… (${si+1}/${states.length} states)`);await new Promise(r=>setTimeout(r,0));for(let i=0;i<group.length;i++){const rec=group[i],candidates=group.slice(i+1),matches=findDupesFor(rec,candidates);for(const m of matches){const key=[rec.id,m.facility.id].sort().join('|');if(!seen.has(key)){seen.add(key);pairs.push({a:rec,b:m.facility,reasons:m.reasons,confidence:m.confidence});}}}}hideDbl();const body=document.getElementById('dup-report-body'),summary=document.getElementById('dup-report-summary');if(pairs.length===0){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';summary.textContent='No duplicates found';}else{pairs.sort((a,b)=>b.confidence-a.confidence);body.innerHTML=pairs.map(p=>`<div class="dup-pair"><div class="dup-pair-head"><span class="dup-pair-label">${p.reasons.join(' + ')}</span><span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span></div><div class="dup-pair-body"><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>${p.a.phone?'📞 '+esc(p.a.phone)+'<br>':''}ID: ${p.a.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span></div><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>${p.b.phone?'📞 '+esc(p.b.phone)+'<br>':''}ID: ${p.b.numeric_id||'—'} &nbsp;·&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span></div></div></div>`).join('');summary.textContent=`${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;}document.getElementById('dup-report-ov').classList.add('open');}
-
+async function findDuplicates(){showDbl('Scanning for duplicates…');const byState={};data.forEach(f=>{const st=f.state||'__';if(!byState[st])byState[st]=[];byState[st].push(f);});const pairs=[],seen=new Set(),states=Object.keys(byState);for(let si=0;si<states.length;si++){const group=byState[states[si]];showDbl(`Scanning ${states[si]}… (${si+1}/${states.length} states)`);await new Promise(r=>setTimeout(r,0));for(let i=0;i<group.length;i++){const rec=group[i],candidates=group.slice(i+1),matches=findDupesFor(rec,candidates);for(const m of matches){const key=[rec.id,m.facility.id].sort().join('|');if(!seen.has(key)){seen.add(key);pairs.push({a:rec,b:m.facility,reasons:m.reasons,confidence:m.confidence});}}}}hideDbl();const body=document.getElementById('dup-report-body'),summary=document.getElementById('dup-report-summary');if(pairs.length===0){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';summary.textContent='No duplicates found';}else{pairs.sort((a,b)=>b.confidence-a.confidence);body.innerHTML=pairs.map(p=>`<div class="dup-pair"><div class="dup-pair-head"><span class="dup-pair-label">${p.reasons.join(' + ')}</span><span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span></div><div class="dup-pair-body"><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>${p.a.phone?'&#x1F4DE; '+esc(p.a.phone)+'<br>':''}ID: ${p.a.numeric_id||'—'} &nbsp;&middot;&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span></div><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>${p.b.phone?'&#x1F4DE; '+esc(p.b.phone)+'<br>':''}ID: ${p.b.numeric_id||'—'} &nbsp;&middot;&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span></div></div></div>`).join('');summary.textContent=`${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;}document.getElementById('dup-report-ov').classList.add('open');}
 async function checkDupesForImport(rec,existingData,batchSoFar){const candidates=[...existingData.filter(f=>f.state===rec.state),...batchSoFar.filter(f=>f.state===rec.state)];return findDupesFor(rec,candidates);}
-
 function importFile(e){const f=e.target.files[0];if(!f)return;const ext=f.name.split('.').pop().toLowerCase();if(ext==='json'){const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;mergeAndUpload(d);}catch{toast('Invalid JSON.','err');}};rd.readAsText(f);}else if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){toast('Loading Excel parser…','',5000);const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=()=>importFile(e);document.head.appendChild(s);return;}const rd=new FileReader();rd.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});let hi=0;for(let i=0;i<Math.min(5,rows.length);i++){const l=rows[i].map(c=>String(c).toLowerCase().trim());if(l.includes('name')||l.includes('name *')){hi=i;break;}}const headers=rows[hi].map(h=>String(h));const recs=rows.slice(hi+1).map(r=>rowToRec(headers,r)).filter(r=>r.name);mergeAndUpload(recs);}catch(err){toast('Excel error: '+err.message,'err');}};rd.readAsArrayBuffer(f);}else if(ext==='csv'){const rd=new FileReader();rd.onload=ev=>{try{const pcsv=l=>{const o=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c='';}else c+=ch;}o.push(c);return o;};const lines=ev.target.result.split(/\r?\n/).filter(l=>l.trim());if(lines.length<2){toast('CSV empty.','err');return;}const headers=pcsv(lines[0]);const recs=lines.slice(1).map(l=>rowToRec(headers,pcsv(l))).filter(r=>r.name);mergeAndUpload(recs);}catch{toast('CSV error.','err');}};rd.readAsText(f);}else toast('Unsupported file type.','err');e.target.value='';}
 </script>
 </body>
