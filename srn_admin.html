@@ -31,6 +31,8 @@ nav{flex-shrink:0;height:52px;background:var(--navy);display:flex;align-items:ce
 .nb.primary:hover{background:var(--blue)}
 .nb.danger{background:rgba(185,28,28,.35);border-color:rgba(239,68,68,.5);color:#fca5a5;font-weight:600}
 .nb.danger:hover{background:rgba(185,28,28,.55);color:#fff}
+.nb.metrics-btn{background:rgba(29,176,209,.2);border-color:rgba(29,176,209,.5);color:#7de8f8}
+.nb.metrics-btn:hover{background:rgba(29,176,209,.35)}
 .ubadge{font-size:11px;color:#c8d8f0;display:flex;align-items:center;gap:6px}
 .sout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#c8d8f0;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
 .sout:hover{background:rgba(255,255,255,.18);color:#fff}
@@ -63,6 +65,12 @@ td.nm:hover{text-decoration:underline}
 .b-oth{background:#f0f9ff;color:#1e40af;border:1px solid #93c5fd}
 .b-nrv{background:#fdf4ff;color:#7e22ce;border:1px solid #d8b4fe}
 .b-bl{background:#1c0707;color:#ff6b6b;border:1px solid #7f1d1d;font-weight:800;letter-spacing:.06em}
+/* Source method badges */
+.src-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.src-manual{background:#e8f0fc;color:#1a5fb4;border:1px solid #93c5fd}
+.src-bulk{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.src-n8n{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.src-unknown{background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db}
 .empty{text-align:center;padding:48px;color:var(--text3);font-size:14px}
 .pgbar{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 20px;display:flex;align-items:center;gap:3px;font-size:12px}
 .pg{border:1px solid var(--border2);background:var(--surface);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;min-width:26px;text-align:center}
@@ -206,6 +214,10 @@ td.nm:hover{text-decoration:underline}
 .msg-empty-icon{font-size:32px;margin-bottom:8px}
 .msg-badge{display:inline-flex;align-items:center;justify-content:center;background:#CA383B;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;padding:0 4px;margin-left:5px;vertical-align:middle}
 .tab-msg-count{background:#CA383B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:5px}
+/* Source info row in facility panel */
+.src-info-row{display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:9px 12px;margin-bottom:14px;flex-wrap:wrap}
+.src-info-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)}
+.src-info-val{font-size:12px;color:var(--text2)}
 /* BL import summary overlay */
 .bl-summary-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .bl-summary-ov.open{display:flex}
@@ -223,6 +235,35 @@ td.nm:hover{text-decoration:underline}
 .bl-stat.total{background:#f0f9ff;border:1px solid #93c5fd}.bl-stat.total .bl-stat-num{color:#1e40af}.bl-stat.total .bl-stat-lbl{color:#1e3a8a}
 .bl-summary-note{font-size:12px;color:var(--text3);line-height:1.6;background:var(--bg);border-radius:8px;padding:12px 14px;border:1px solid var(--border)}
 .bl-summary-foot{padding:14px 24px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+/* ── Metrics overlay ─────────────────────────────────────────── */
+.metrics-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:7000;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
+.metrics-ov.open{display:flex}
+.metrics-box{background:#fff;border-radius:14px;width:100%;max-width:860px;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;margin:auto}
+.metrics-head{background:#1a3a6b;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:10px}
+.metrics-head h2{font-size:16px;font-weight:700;flex:1}
+.metrics-body{padding:24px;max-height:80vh;overflow-y:auto}
+.metrics-section{margin-bottom:28px}
+.metrics-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.metric-card{border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.metric-card-num{font-size:26px;font-weight:800;font-family:monospace;line-height:1.1}
+.metric-card-lbl{font-size:11px;font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
+.metric-card-sub{font-size:11px;margin-top:3px;opacity:.6}
+/* source-specific card colours */
+.mc-manual{background:#eef3fd;border-color:#93c5fd;color:#1a5fb4}
+.mc-bulk{background:#fff7ed;border-color:#fdba74;color:#c2410c}
+.mc-n8n{background:#f0fdf4;border-color:#86efac;color:#15803d}
+.mc-total{background:#1a3a6b;border-color:#1a3a6b;color:#fff}
+/* status breakdown table */
+.status-table{width:100%;border-collapse:collapse;font-size:12px}
+.status-table th{background:#f4f6f9;padding:7px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.status-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.status-table tr:last-child td{border-bottom:none}
+.status-table tr:hover td{background:var(--blue-lt)}
+.pct-bar{height:6px;border-radius:3px;background:#e2e8f0;margin-top:4px;overflow:hidden}
+.pct-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .4s}
+.metrics-foot{padding:14px 24px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.metrics-updated{font-size:11px;color:var(--text3)}
 </style>
 </head>
 <body>
@@ -324,10 +365,30 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
+<!-- Metrics Overlay -->
+<div class="metrics-ov" id="metrics-ov">
+  <div class="metrics-box">
+    <div class="metrics-head">
+      <span style="font-size:20px">&#x1F4CA;</span>
+      <h2>SRN Network Metrics</h2>
+      <button class="pclose" onclick="document.getElementById('metrics-ov').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="metrics-body" id="metrics-body">
+      <div style="text-align:center;padding:40px;color:var(--text3)">Loading metrics…</div>
+    </div>
+    <div class="metrics-foot">
+      <span class="metrics-updated" id="metrics-updated"></span>
+      <div class="sp"></div>
+      <button class="btn btn-ghost" onclick="document.getElementById('metrics-ov').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
 <nav>
   <div class="brand">SRN <span>Facility</span> Manager</div>
   <div class="sp"></div>
   <span class="pill" id="nav-count">0 Facilities</span>
+  <button class="nb metrics-btn" onclick="openMetrics()" title="View network metrics &amp; source tracking">&#x1F4CA; Metrics</button>
   <button class="nb" onclick="downloadTemplate()" title="Download CSV import template">&#x2B07; Template</button>
   <button class="nb" onclick="exportJSON()" title="Export all facilities as JSON">&#x2B07; JSON</button>
   <button class="nb" onclick="exportXLSX()" title="Export all facilities as Excel spreadsheet">&#x2B07; Excel</button>
@@ -346,6 +407,13 @@ td.nm:hover{text-decoration:underline}
   <label>State</label><select id="f-state" onchange="go()"><option value="">All</option></select>
   <label>Status</label><select id="f-status" onchange="go()"><option value="">All</option></select>
   <label>Type</label><select id="f-type" onchange="go()"><option value="">All</option></select>
+  <label>Source</label>
+  <select id="f-source" onchange="go()">
+    <option value="">All</option>
+    <option value="manual">Manual</option>
+    <option value="bulk_import">Bulk Import</option>
+    <option value="n8n_submission">Submission (n8n)</option>
+  </select>
   <button id="msgs-toggle-btn" class="msgs-toggle" onclick="toggleMsgsFilter()" title="Show only facilities with open messages">
     &#x1F4AC; Has Messages
   </button>
@@ -361,7 +429,9 @@ td.nm:hover{text-decoration:underline}
       <th onclick="srt('address')">Address</th><th onclick="srt('city')">City</th>
       <th onclick="srt('state')">St</th><th onclick="srt('zip')">Zip</th>
       <th onclick="srt('phone')">Phone</th><th onclick="srt('status')">Status</th>
-      <th onclick="srt('shop_type')">Type</th><th onclick="srt('added_on')">Added</th>
+      <th onclick="srt('shop_type')">Type</th>
+      <th onclick="srt('added_at')">Added</th>
+      <th onclick="srt('source_method')">Source</th>
       <th style="cursor:default">Actions</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
@@ -380,6 +450,13 @@ td.nm:hover{text-decoration:underline}
       <button class="ptab" id="tab-btn-messages" onclick="switchTab('messages')">Messages <span class="tab-msg-count" id="msgs-tab-count" style="display:none"></span></button>
     </div>
     <div id="tab-details">
+    <!-- Source info row — shown only when editing existing records -->
+    <div class="src-info-row" id="src-info-row" style="display:none">
+      <span class="src-info-label">Origin</span>
+      <span id="src-info-badge"></span>
+      <span class="src-info-val" id="src-info-date"></span>
+      <span class="src-info-val" id="src-info-by"></span>
+    </div>
     <div class="grid">
       <div class="field s2"><label>Name <span class="r">*</span></label><input id="f-name"></div>
       <div class="field"><label>Phone</label><input id="f-phone"></div>
@@ -393,7 +470,7 @@ td.nm:hover{text-decoration:underline}
         <select id="f-state-i">
           <option value="">&mdash; Select &mdash;</option>
           <optgroup label="&mdash;&mdash; United States &mdash;&mdash;">
-            <option value="AL">AL &mdash; Alabama</option><option value="AK">AK &mdash; Alaska</option><option value="AZ">AZ &mdash; Arizona</option><option value="AR">AR &mdash; Arkansas</option><option value="CA">CA &mdash; California</option><option value="CO">CO &mdash; Colorado</option><option value="CT">CT &mdash; Connecticut</option><option value="DE">DE &mdash; Delaware</option><option value="FL">FL &mdash; Florida</option><option value="GA">GA &mdash; Georgia</option><option value="HI">HI &mdash; Hawaii</option><option value="ID">ID &mdash; Idaho</option><option value="IL">IL &mdash; Illinois</option><option value="IN">IN &mdash; Indiana</option><option value="IA">IA &mdash; Iowa</option><option value="KS">KS &mdash; Kansas</option><option value="KY">KY &mdash; Kentucky</option><option value="LA">LA &mdash; Louisiana</option><option value="ME">ME &mdash; Maine</option><option value="MD">MD &mdash; Maryland</option><option value="MA">MA &mdash; Massachusetts</option><option value="MI">MI &mdash; Michigan</option><option value="MN">MN &mdash; Minnesota</option><option value="MS">MS &mdash; Mississippi</option><option value="MO">MO &mdash; Missouri</option><option value="MT">MT &mdash; Montana</option><option value="NE">NE &mdash; Nebraska</option><option value="NV">NV &mdash; Nevada</option><option value="NH">NH &mdash; New Hampshire</option><option value="NJ">NJ &mdash; New Jersey</option><option value="NM">NM &mdash; New Mexico</option><option value="NY">NY &mdash; New York</option><option value="NC">NC &mdash; North Carolina</option><option value="ND">ND &mdash; North Dakota</option><option value="OH">OH &mdash; Ohio</option><option value="OK">OK &mdash; Oklahoma</option><option value="OR">OR &mdash; Oregon</option><option value="PA">PA &mdash; Pennsylvania</option><option value="RI">RI &mdash; Rhode Island</option><option value="SC">SC &mdash; South Carolina</option><option value="SD">SD &mdash; South Dakota</option><option value="TN">TN &mdash; Tennessee</option><option value="TX">TX &mdash; Texas</option><option value="UT">UT &mdash; Utah</option><option value="VT">VT &mdash; Vermont</option><option value="VA">VA &mdash; Virginia</option><option value="WA">WA &mdash; Washington</option><option value="WV">WV &mdash; West Virginia</option><option value="WI">WI &mdash; Wisconsin</option><option value="WY">WY &mdash; Wyoming</option><option value="DC">DC &mdash; Washington D.C.</option>
+            <option value="AL">AL &mdash; Alabama</option><option value="AK">AK &mdash; Alaska</option><option value="AZ">AZ &mdash; Arizona</option><option value="AR">AR &mdash; Arkansas</option><option value="CA">CA &mdash; California</option><option value="CO">CO &mdash; Colorado</option><option value="CT">CT &mdash; Connecticut</option><option value="DE">DE &mdash; Delaware</option><option value="FL">FL &mdash; Florida</option><option value="GA">GA &mdash; Georgia</option><option value="HI">HI &mdash; Hawaii</option><option value="ID">ID &mdash; Idaho</option><option value="IL">IL &mdash; Illinois</option><option value="IN">IN &mdash; Indiana</option><option value="IA">IA &mdash; Iowa</option><option value="KS">KS &mdash; Kansas</option><option value="KY">KY &mdash; Kentucky</option><option value="LA">LA &mdash; Louisiana</option><option value="ME">ME &mdash; Maine</option><option value="MD">MD &mdash; Maryland</option><option value="MA">MA &mdash; Massachusetts</option><option value="MI">MI &mdash; Michigan</option><option value="MN">MN &mdash; Minnesota</option><option value="MS">MS &mdash; Mississippi</option><option value="MO">MO &mdash; Missouri</option><option value="MT">MT &mdash; Montana</option><option value="NE">NE &mdash; Nebraska</option><option value="NV">NV &mdash; Nevada</option><option value="NH">NH &mdash; New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">NM &mdash; New Mexico</option><option value="NY">NY &mdash; New York</option><option value="NC">NC &mdash; North Carolina</option><option value="ND">ND &mdash; North Dakota</option><option value="OH">OH &mdash; Ohio</option><option value="OK">OK &mdash; Oklahoma</option><option value="OR">OR &mdash; Oregon</option><option value="PA">PA &mdash; Pennsylvania</option><option value="RI">RI &mdash; Rhode Island</option><option value="SC">SC &mdash; South Carolina</option><option value="SD">SD &mdash; South Dakota</option><option value="TN">TN &mdash; Tennessee</option><option value="TX">TX &mdash; Texas</option><option value="UT">UT &mdash; Utah</option><option value="VT">VT &mdash; Vermont</option><option value="VA">VA &mdash; Virginia</option><option value="WA">WA &mdash; Washington</option><option value="WV">WV &mdash; West Virginia</option><option value="WI">WI &mdash; Wisconsin</option><option value="WY">WY &mdash; Wyoming</option><option value="DC">DC &mdash; Washington D.C.</option>
           </optgroup>
           <optgroup label="&mdash;&mdash; Canada &mdash;&mdash;">
             <option value="AB">AB &mdash; Alberta</option><option value="BC">BC &mdash; British Columbia</option><option value="MB">MB &mdash; Manitoba</option><option value="NB">NB &mdash; New Brunswick</option><option value="NL">NL &mdash; Newfoundland</option><option value="NS">NS &mdash; Nova Scotia</option><option value="ON">ON &mdash; Ontario</option><option value="PE">PE &mdash; Prince Edward Island</option><option value="QC">QC &mdash; Quebec</option><option value="SK">SK &mdash; Saskatchewan</option><option value="NT">NT &mdash; Northwest Territories</option><option value="NU">NU &mdash; Nunavut</option><option value="YT">YT &mdash; Yukon</option>
@@ -492,9 +569,21 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const TABLE = 'facilities';
 const PG = 25;
 let token = null, refreshToken = null, userEmail = '', data = [], filtered = [];
-let page = 1, sortKey = 'numeric_id', sortDir = -1, editId = null, delId = null;
+let page = 1, sortKey = 'added_at', sortDir = -1, editId = null, delId = null;
 let refreshTimer = null;
 let msgCounts = {};
+
+// ─── Source method helpers ──────────────────────────────────────────
+const SOURCE_LABELS = {
+  manual:         { label: 'Manual',          cls: 'src-manual', icon: '✏️' },
+  bulk_import:    { label: 'Bulk Import',      cls: 'src-bulk',   icon: '📥' },
+  n8n_submission: { label: 'Submission (n8n)', cls: 'src-n8n',    icon: '📋' },
+};
+function srcBadgeHtml(method) {
+  const m = SOURCE_LABELS[method] || { label: method || 'Unknown', cls: 'src-unknown', icon: '❓' };
+  return `<span class="src-badge ${m.cls}">${m.icon} ${m.label}</span>`;
+}
+
 function isAuthError(errMsg){if(!errMsg)return false;const s=String(errMsg).toLowerCase();return s.includes('jwt expired')||s.includes('pgrst303')||s.includes('invalid jwt')||s.includes('token is expired')||s.includes('401');}
 async function tryRefreshToken(){if(!refreshToken)return false;try{const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({refresh_token:refreshToken})});const res=await r.json();if(res.access_token){token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();return true;}return false;}catch(e){return false;}}
 function scheduleTokenRefresh(){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(async()=>{const ok=await tryRefreshToken();if(ok)toast('Session refreshed.','',2000);else showReAuthOverlay();},45*60*1000);}
@@ -505,7 +594,7 @@ const hdrs=(extra={})=>({'Content-Type':'application/json','apikey':SUPABASE_ANO
 const api={
   async signIn(email,pass){const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({email,password:pass})});return r.json();},
   async signOut(){await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:hdrs()});},
-  async getAll(){const PAGE=1000;let from=0,all=[],done=false;while(!done){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=numeric_id.desc&limit=${PAGE}&offset=${from}`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());const batch=await r.json();all=all.concat(batch);if(batch.length<PAGE)done=true;else from+=PAGE;showDbl(`Loading… ${all.length.toLocaleString()} facilities`);}return all;},
+  async getAll(){const PAGE=1000;let from=0,all=[],done=false;while(!done){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=added_at.desc.nullslast&limit=${PAGE}&offset=${from}`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());const batch=await r.json();all=all.concat(batch);if(batch.length<PAGE)done=true;else from+=PAGE;showDbl(`Loading… ${all.length.toLocaleString()} facilities`);}return all;},
   async upsert(rec){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdrs({'Prefer':'resolution=merge-duplicates,return=representation'}),body:JSON.stringify(rec)});if(!r.ok)throw new Error(await r.text());return r.json();},
   async upsertBatch(recs){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdrs({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(recs)});if(!r.ok)throw new Error(await r.text());},
   async patch(id,fields){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify(fields)});if(!r.ok)throw new Error(await r.text());return r.json();},
@@ -516,6 +605,7 @@ const api={
   async getOpenMsgCounts(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=facility_id`,{headers:hdrs()});if(!r.ok)return[];return r.json();},
   async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();}
 };
+
 (function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
 async function setPassword(){const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}if(pass!==pass2){err.textContent='Passwords do not match.';return;}if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}try{const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();}catch(e){err.textContent='Connection error. Please try again.';}}
 async function signIn(){const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}catch(e){err.textContent='Connection error — check Supabase URL.';}}
@@ -527,21 +617,129 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth',NRV:'b-nrv',DNC:'b-del',BL:'b-bl',DEL:'b-del'};
 const bc=s=>BMAP[String(s||'').toUpperCase()]||'b-oth';
 const today=()=>{const d=new Date();return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;};
+
+function fmtAddedAt(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch(e) { return ts; }
+}
+
 function rebuild(){const mk=(id,vals)=>{const el=document.getElementById(id),cur=el.value;el.innerHTML='<option value="">All</option>'+[...new Set(vals.filter(Boolean))].sort().map(v=>`<option value="${v}">${v}</option>`).join('');el.value=cur;};mk('f-state',data.map(f=>f.state));mk('f-status',data.map(f=>f.status));mk('f-type',data.map(f=>f.shop_type));}
-function resetFilters(){document.getElementById('search').value='';document.getElementById('f-state').value='';document.getElementById('f-status').value='';document.getElementById('f-type').value='';document.getElementById('f-has-msgs').checked=false;document.getElementById('msgs-toggle-btn').classList.remove('active');go();}
+function resetFilters(){document.getElementById('search').value='';document.getElementById('f-state').value='';document.getElementById('f-status').value='';document.getElementById('f-type').value='';document.getElementById('f-source').value='';document.getElementById('f-has-msgs').checked=false;document.getElementById('msgs-toggle-btn').classList.remove('active');go();}
 function toggleMsgsFilter(){const cb=document.getElementById('f-has-msgs');const btn=document.getElementById('msgs-toggle-btn');cb.checked=!cb.checked;btn.classList.toggle('active',cb.checked);go();}
-function go(){const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fm=document.getElementById('f-has-msgs').checked;filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fm&&!msgCounts[f.id])return false;if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;return true;});filtered.sort((a,b)=>sortKey==='numeric_id'?sortDir*((+a.numeric_id||0)-(+b.numeric_id||0)):sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase()));document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;page=1;render();pgRender();}
+function go(){
+  const q=document.getElementById('search').value.toLowerCase(),
+        fs=document.getElementById('f-state').value,
+        fp=document.getElementById('f-status').value,
+        ft=document.getElementById('f-type').value,
+        fsrc=document.getElementById('f-source').value,
+        fm=document.getElementById('f-has-msgs').checked;
+  filtered=data.filter(f=>{
+    if(fs&&f.state!==fs)return false;
+    if(fp&&f.status!==fp)return false;
+    if(ft&&f.shop_type!==ft)return false;
+    if(fsrc&&f.source_method!==fsrc)return false;
+    if(fm&&!msgCounts[f.id])return false;
+    if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    if(sortKey==='numeric_id') return sortDir*((+a.numeric_id||0)-(+b.numeric_id||0));
+    if(sortKey==='added_at'){
+      const da=a.added_at?new Date(a.added_at).getTime():0;
+      const db=b.added_at?new Date(b.added_at).getTime():0;
+      return sortDir*(da-db);
+    }
+    return sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase());
+  });
+  document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;
+  document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;
+  page=1;render();pgRender();
+}
 function srt(k){sortDir=sortKey===k?sortDir*-1:-1;sortKey=k;go();}
-function render(){const rows=filtered.slice((page-1)*PG,page*PG),tb=document.getElementById('tbody'),em=document.getElementById('empty');if(!filtered.length){tb.innerHTML='';em.style.display='';return;}em.style.display='none';tb.innerHTML=rows.map(f=>{const mc=msgCounts[f.id];const msgBadge=mc?`<span class="msg-badge">${mc}</span>`:'';return`<tr><td class="mono">${f.numeric_id||'—'}</td><td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}${msgBadge}</td><td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td><td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td><td>${esc(f.phone||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td>${esc(f.shop_type||'—')}</td><td>${esc(f.added_on||'')}</td><td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td></tr>`;}).join('');}
+function render(){
+  const rows=filtered.slice((page-1)*PG,page*PG),tb=document.getElementById('tbody'),em=document.getElementById('empty');
+  if(!filtered.length){tb.innerHTML='';em.style.display='';return;}
+  em.style.display='none';
+  tb.innerHTML=rows.map(f=>{
+    const mc=msgCounts[f.id];
+    const msgBadge=mc?`<span class="msg-badge">${mc}</span>`:'';
+    const srcHtml = f.source_method ? srcBadgeHtml(f.source_method) : '<span style="color:var(--text3);font-size:11px">—</span>';
+    const addedDisplay = fmtAddedAt(f.added_at);
+    return`<tr>
+      <td class="mono">${f.numeric_id||'—'}</td>
+      <td class="nm" onclick="openEdit('${f.id}')">${esc(f.name)}${msgBadge}</td>
+      <td>${esc(f.address||'')}</td><td>${esc(f.city||'')}</td>
+      <td>${esc(f.state||'')}</td><td>${esc(f.zip||'')}</td>
+      <td>${esc(f.phone||'')}</td>
+      <td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td>
+      <td>${esc(f.shop_type||'—')}</td>
+      <td style="font-size:11px;color:var(--text3)">${addedDisplay}</td>
+      <td>${srcHtml}</td>
+      <td><button onclick="openEdit('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-family:inherit">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
 function pgRender(){const total=Math.ceil(filtered.length/PG),pg=document.getElementById('pgbar');if(total<=1){pg.innerHTML='';return;}const r=pgRange(page,total);let h=`<button class="pg" onclick="goPage(${page-1})" ${page===1?'disabled':''}>&#x2039;</button>`;r.forEach(p=>{h+=p==='…'?`<span style="padding:3px 5px;color:var(--text3)">…</span>`:`<button class="pg ${p===page?'on':''}" onclick="goPage(${p})">${p}</button>`;});h+=`<button class="pg" onclick="goPage(${page+1})" ${page===total?'disabled':''}>&#x203A;</button><div class="sp"></div><span class="pginfo">${(page-1)*PG+1}–${Math.min(page*PG,filtered.length)} of ${filtered.length.toLocaleString()}</span>`;pg.innerHTML=h;}
 function pgRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);if(c<=4)return[1,2,3,4,5,'…',t];if(c>=t-3)return[1,'…',t-4,t-3,t-2,t-1,t];return[1,'…',c-1,c,c+1,'…',t];}
 function goPage(p){const t=Math.ceil(filtered.length/PG);if(p<1||p>t)return;page=p;render();pgRender();document.querySelector('.tbl-wrap').scrollTop=0;}
 function clr(){['f-name','f-phone','f-contact','f-cemail','f-addr','f-city','f-zip','f-web','f-email','f-lat','f-lng','f-labor','f-offer-url','f-notes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});const lk=document.getElementById('f-offer-link');lk.style.display='none';lk.href='#';document.getElementById('f-country').value='USA';document.getElementById('f-state-i').value='';document.getElementById('f-status-i').value='PRF';['f-type-i','f-sw','f-lg'].forEach(i=>document.getElementById(i).value='');document.getElementById('f-ft').value='Web';document.getElementById('f-ev').checked=false;document.getElementById('f-shipped').checked=false;}
-function openAdd(){editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';document.getElementById('del-btn').style.display='none';document.getElementById('ptabs').style.display='none';document.getElementById('save-btn').style.display='';switchTab('details');document.getElementById('ov').classList.add('open');}
-function openEdit(id){const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr();document.getElementById('ptitle').textContent=f.name||'Edit Facility';const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';document.getElementById('del-btn').style.display='';const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);s('f-status-i',f.status);s('f-type-i',f.shop_type);s('f-sw',f.software);s('f-lg',f.labor_guide);s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';document.getElementById('msgs-tab-count').style.display='none';document.getElementById('msgs-list').style.display='none';document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';const openCount=msgCounts[id]||0;if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}switchTab('details');document.getElementById('ov').classList.add('open');}
+function openAdd(){
+  editId=null;clr();
+  document.getElementById('ptitle').textContent='Add Facility';
+  document.getElementById('pbadge').style.display='none';
+  document.getElementById('del-btn').style.display='none';
+  document.getElementById('ptabs').style.display='none';
+  document.getElementById('save-btn').style.display='';
+  document.getElementById('src-info-row').style.display='none';
+  switchTab('details');
+  document.getElementById('ov').classList.add('open');
+}
+function openEdit(id){
+  const f=data.find(x=>x.id===id);if(!f)return;
+  editId=id;clr();
+  document.getElementById('ptitle').textContent=f.name||'Edit Facility';
+  const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';
+  document.getElementById('del-btn').style.display='';
+  const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};
+  s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);
+  s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);
+  s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);
+  s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);s('f-status-i',f.status);
+  s('f-type-i',f.shop_type);s('f-sw',f.software);s('f-lg',f.labor_guide);
+  s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');
+  document.getElementById('f-ev').checked=!!f.ev_certified;
+  document.getElementById('f-shipped').checked=!!f.accepts_shipped;
+  const lk=document.getElementById('f-offer-link');
+  if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}
+  // Source info row
+  const srcRow = document.getElementById('src-info-row');
+  if (f.source_method || f.added_at || f.added_by) {
+    srcRow.style.display = 'flex';
+    document.getElementById('src-info-badge').innerHTML = f.source_method ? srcBadgeHtml(f.source_method) : '';
+    document.getElementById('src-info-date').textContent = f.added_at
+      ? 'Added ' + new Date(f.added_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
+      : (f.added_on ? 'Added ' + f.added_on : '');
+    document.getElementById('src-info-by').textContent = f.added_by ? 'by ' + f.added_by : '';
+  } else {
+    srcRow.style.display = 'none';
+  }
+  document.getElementById('ptabs').style.display='flex';
+  document.getElementById('save-btn').style.display='';
+  document.getElementById('msgs-tab-count').style.display='none';
+  document.getElementById('msgs-list').style.display='none';
+  document.getElementById('msgs-loading').style.display='block';
+  document.getElementById('msgs-loading').textContent='Loading messages…';
+  const openCount=msgCounts[id]||0;
+  if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}
+  switchTab('details');
+  document.getElementById('ov').classList.add('open');
+}
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
 function switchTab(tab){['details','history','messages'].forEach(t=>{document.getElementById('tab-btn-'+t)?.classList.remove('on');document.getElementById('tab-'+t).style.display='none';});document.getElementById('tab-btn-'+tab)?.classList.add('on');document.getElementById('tab-'+tab).style.display='';document.getElementById('save-btn').style.display=tab==='details'?'':'none';if(tab==='history'&&editId)loadHistory(editId);if(tab==='messages'&&editId)loadFacilityMessages(editId);}
-async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
+async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL',source_method:'Source Method'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
 async function loadFacilityMessages(facilityId){document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';document.getElementById('msgs-list').style.display='none';try{const messages=await api.getMessages(facilityId);document.getElementById('msgs-loading').style.display='none';const list=document.getElementById('msgs-list');list.style.display='block';const open=messages.filter(m=>!m.is_addressed).length;const total=messages.length;const tabCount=document.getElementById('msgs-tab-count');if(open>0){tabCount.textContent=open;tabCount.style.display='inline';}else{tabCount.style.display='none';}document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open`:'';if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">&#x1F4AC;</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');}catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}}
 function renderMsgCard(m){const matchBadge={email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';const addressedSection=m.is_addressed?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`:`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}"><div class="msg-card-head"><div class="msg-meta"><div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div><div class="msg-sub">${esc(m.subject||'')}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;}
 async function markMsgAddressed(msgId){const btn=document.getElementById('addr-btn-'+msgId);if(btn){btn.disabled=true;btn.textContent='Saving…';}try{await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));const card=document.getElementById('msg-'+msgId);card.classList.add('addressed');const footer=card.querySelector('.msg-footer');const oldBtn=footer.querySelector('.btn-address');if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;const tabCount=document.getElementById('msgs-tab-count');const cur=parseInt(tabCount.textContent||'0',10);if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}const list=document.getElementById('msgs-list');const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;const totalNow=list.querySelectorAll('.msg-card').length;document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';toast('Message marked as addressed.','ok');}catch(e){if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}toast('Error: '+e.message,'err');}}
@@ -557,8 +755,65 @@ function addrAcceptSuggestion(){if(!addrPending)return;const{rec,existing,sugges
 function addrKeepOriginal(){if(!addrPending)return;const{rec,existing}=addrPending;closeAddrDialog();doSave(rec,existing);}
 function addrGoBack(){closeAddrDialog();addrPending=null;}
 function closeAddrDialog(){document.getElementById('addr-ov').classList.remove('open');}
-async function doSave(rec,existing){showDbl('Saving…');try{const [saved]=await withAuthRetry(()=>api.upsert(rec));const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes'];const changes={};if(editId&&existing){TRACK.forEach(k=>{const oldVal=existing[k]??null,newVal=rec[k]??null;if(String(oldVal)!==String(newVal))changes[k]={from:oldVal,to:newVal};});}await withAuthRetry(()=>api.logHistory({facility_id:saved.id,facility_name:saved.name,changed_by:userEmail,changes:Object.keys(changes).length?changes:null})).catch(()=>{});if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}else{data.unshift(saved);resetFilters();}rebuild();go();closePanel();toast(editId?'Facility updated.':'Facility added.','ok');}catch(e){if(!e.message.includes('sign back in'))toast('Save failed: '+e.message,'err',6000);}hideDbl();}
-async function saveFac(){const g=i=>document.getElementById(i);const name=g('f-name').value.trim();if(!name){toast('Name is required.','err');return;}if(!g('f-city').value.trim()||!g('f-state-i').value||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}const existing=editId?data.find(f=>f.id===editId):null;const rec={...(editId&&{id:editId}),numeric_id:existing?.numeric_id||null,name,phone:g('f-phone').value.trim(),contact:g('f-contact').value.trim(),contact_email:g('f-cemail').value.trim(),address:g('f-addr').value.trim(),city:g('f-city').value.trim(),state:g('f-state-i').value,zip:g('f-zip').value.trim(),country:g('f-country').value.trim()||'USA',website:g('f-web').value.trim()||null,email1:g('f-email').value.trim()||null,lat:g('f-lat').value.trim()||null,lng:g('f-lng').value.trim()||null,labor:g('f-labor').value||null,status:g('f-status-i').value,shop_type:g('f-type-i').value||null,software:g('f-sw').value||null,labor_guide:g('f-lg').value||null,form_type:g('f-ft').value,ev_certified:g('f-ev').checked,accepts_shipped:g('f-shipped').checked,offer_url:g('f-offer-url').value.trim()||null,notes:g('f-notes').value.trim()||null,added_on:existing?.added_on||today(),edited_on:today(),edited_by:userEmail};await checkDupesAndSave(rec,existing);}
+
+async function doSave(rec,existing){
+  showDbl('Saving…');
+  try{
+    const [saved]=await withAuthRetry(()=>api.upsert(rec));
+    const TRACK=['name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes','source_method'];
+    const changes={};
+    if(editId&&existing){TRACK.forEach(k=>{const oldVal=existing[k]??null,newVal=rec[k]??null;if(String(oldVal)!==String(newVal))changes[k]={from:oldVal,to:newVal};});}
+    await withAuthRetry(()=>api.logHistory({facility_id:saved.id,facility_name:saved.name,changed_by:userEmail,changes:Object.keys(changes).length?changes:null})).catch(()=>{});
+    if(editId){const i=data.findIndex(f=>f.id===editId);if(i>-1)data[i]=saved;}
+    else{data.unshift(saved);resetFilters();}
+    rebuild();go();closePanel();toast(editId?'Facility updated.':'Facility added.','ok');
+  }catch(e){if(!e.message.includes('sign back in'))toast('Save failed: '+e.message,'err',6000);}
+  hideDbl();
+}
+
+async function saveFac(){
+  const g=i=>document.getElementById(i);
+  const name=g('f-name').value.trim();
+  if(!name){toast('Name is required.','err');return;}
+  if(!g('f-city').value.trim()||!g('f-state-i').value||!g('f-zip').value.trim()){toast('City, State and Zip required.','err');return;}
+  const existing=editId?data.find(f=>f.id===editId):null;
+  const rec={
+    ...(editId&&{id:editId}),
+    numeric_id:existing?.numeric_id||null,
+    name,
+    phone:g('f-phone').value.trim(),
+    contact:g('f-contact').value.trim(),
+    contact_email:g('f-cemail').value.trim(),
+    address:g('f-addr').value.trim(),
+    city:g('f-city').value.trim(),
+    state:g('f-state-i').value,
+    zip:g('f-zip').value.trim(),
+    country:g('f-country').value.trim()||'USA',
+    website:g('f-web').value.trim()||null,
+    email1:g('f-email').value.trim()||null,
+    lat:g('f-lat').value.trim()||null,
+    lng:g('f-lng').value.trim()||null,
+    labor:g('f-labor').value||null,
+    status:g('f-status-i').value,
+    shop_type:g('f-type-i').value||null,
+    software:g('f-sw').value||null,
+    labor_guide:g('f-lg').value||null,
+    form_type:g('f-ft').value,
+    ev_certified:g('f-ev').checked,
+    accepts_shipped:g('f-shipped').checked,
+    offer_url:g('f-offer-url').value.trim()||null,
+    notes:g('f-notes').value.trim()||null,
+    added_on:existing?.added_on||today(),
+    // Preserve existing source & timestamps; stamp 'manual' + added_at for new records
+    source_method: existing?.source_method || 'manual',
+    added_at: existing?.added_at || new Date().toISOString(),
+    added_by: existing?.added_by || userEmail,
+    edited_on:today(),
+    edited_by:userEmail,
+  };
+  await checkDupesAndSave(rec,existing);
+}
+
 function confirmDel(){delId=editId;const f=data.find(x=>x.id===editId);document.getElementById('cfm-msg').textContent=`Delete "${f?.name}"? This cannot be undone.`;document.getElementById('cfm-ov').classList.add('open');}
 function closeCfm(){document.getElementById('cfm-ov').classList.remove('open');}
 async function doDel(){showDbl('Deleting…');try{await withAuthRetry(()=>api.del(delId));data=data.filter(f=>f.id!==delId);rebuild();go();closeCfm();closePanel();toast('Deleted.','ok');}catch(e){if(!e.message.includes('sign back in'))toast('Delete failed: '+e.message,'err',6000);}hideDbl();}
@@ -576,13 +831,15 @@ function exportXLSX(){
   }
   const cols=['numeric_id','name','address','city','state','zip','phone','status','shop_type',
     'contact','contact_email','email1','website','labor','labor_guide','software','form_type',
-    'ev_certified','accepts_shipped','offer_url','lat','lng','added_on','added_by','edited_on','edited_by','notes'];
+    'ev_certified','accepts_shipped','offer_url','lat','lng',
+    'source_method','added_at','added_by','added_on','edited_on','edited_by','notes'];
   const labels={numeric_id:'ID',name:'Name',address:'Address',city:'City',state:'State',zip:'Zip',
     phone:'Phone',status:'Status',shop_type:'Shop Type',contact:'Contact',contact_email:'Contact Email',
     email1:'Email',website:'Website',labor:'Labor $',labor_guide:'Labor Guide',software:'Software',
     form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped Parts',
-    offer_url:'Offer URL',lat:'Latitude',lng:'Longitude',added_on:'Added On',added_by:'Added By',
-    edited_on:'Edited On',edited_by:'Edited By',notes:'Notes'};
+    offer_url:'Offer URL',lat:'Latitude',lng:'Longitude',
+    source_method:'Source Method',added_at:'Added At (timestamp)',added_by:'Added By',
+    added_on:'Added On',edited_on:'Edited On',edited_by:'Edited By',notes:'Notes'};
   const headers=cols.map(c=>labels[c]||c);
   const rows=data.map(f=>cols.map(c=>{
     const v=f[c];
@@ -604,12 +861,175 @@ function exportXLSX(){
 }
 function openMap(){const base=window.location.href.replace(/srn_admin\.html.*$/,'');window.open(base+'srn_map.html','_blank');}
 function downloadTemplate(){const headers=['Name *','Address *','City *','State *','Zip *','Country','Phone','Contact','Contact Email','Website','Latitude','Longitude','Status','Shop Type','Labor $','Labor Guide','Software','Form Type','EV Certified','Accepts Shipped','Offer URL','Added On','Added By','Numeric ID'];const notes=['* Required','* Required','* Required','* Required — 2-letter state code (e.g. MO)','* Required','Default: USA','Digits only e.g. 8005551234','Contact person name','Contact email address','Full URL with https://','Decimal e.g. 38.627003','Decimal e.g. -90.199402','PRF | OPT | STD | NEW | VIP | MOB | UPB | DNC | BL | PEND | DEL','Dealership | Independent | Chain | Specialty | Body Shop | Quick Lube | Tire Shop | European | Asian | Domestic | National | Other','Numeric e.g. 180.00','Mitchell | Alldata | Identifix | Motor | Other','Mitchell1 | Shop-Ware | Tekmetric | Protractor | Other','Web | Phone | Fax','TRUE or FALSE','TRUE or FALSE','Full URL to offers page e.g. https://www.goodyear.com/en_US/offers.html','MM-DD-YYYY','Who added this record','Leave blank for new records'];const csvRow=arr=>arr.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');const csv=[csvRow(headers),csvRow(notes)].join('\r\n');const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SRN_Facility_Import_Template.csv';a.click();toast('Template downloaded.','ok');}
-const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes'};
+
+// ─── Metrics ───────────────────────────────────────────────────────
+function openMetrics() {
+  const body = document.getElementById('metrics-body');
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)"><div class="spin" style="margin:0 auto 12px"></div>Building metrics…</div>';
+  document.getElementById('metrics-ov').classList.add('open');
+  setTimeout(() => renderMetrics(), 50);
+}
+
+function renderMetrics() {
+  const total = data.length;
+  if (!total) {
+    document.getElementById('metrics-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">No data loaded.</div>';
+    return;
+  }
+
+  // ── Source counts ──
+  const bySrc = { manual: 0, bulk_import: 0, n8n_submission: 0, unknown: 0 };
+  data.forEach(f => {
+    const s = f.source_method || 'unknown';
+    bySrc[s] = (bySrc[s] || 0) + 1;
+  });
+
+  // ── Status counts ──
+  const byStatus = {};
+  data.forEach(f => {
+    const s = f.status || 'Unknown';
+    byStatus[s] = (byStatus[s] || 0) + 1;
+  });
+
+  // ── Status by source ──
+  const srcStatusMatrix = {};
+  Object.keys(bySrc).forEach(src => { srcStatusMatrix[src] = {}; });
+  data.forEach(f => {
+    const src = f.source_method || 'unknown';
+    const st = f.status || 'Unknown';
+    if (!srcStatusMatrix[src]) srcStatusMatrix[src] = {};
+    srcStatusMatrix[src][st] = (srcStatusMatrix[src][st] || 0) + 1;
+  });
+
+  // ── Recent 30-day additions ──
+  const now = Date.now();
+  const DAY30 = 30 * 24 * 60 * 60 * 1000;
+  const recent30 = data.filter(f => f.added_at && (now - new Date(f.added_at).getTime()) < DAY30).length;
+
+  // ── Build HTML ──
+  const srcCardHtml = [
+    { key: 'manual',         label: 'Manually Added',     cls: 'mc-manual', icon: '✏️' },
+    { key: 'bulk_import',    label: 'Bulk Import',        cls: 'mc-bulk',   icon: '📥' },
+    { key: 'n8n_submission', label: 'Submission (n8n)',   cls: 'mc-n8n',    icon: '📋' },
+  ].map(s => {
+    const cnt = bySrc[s.key] || 0;
+    const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+    return `<div class="metric-card ${s.cls}">
+      <div class="metric-card-num">${cnt.toLocaleString()}</div>
+      <div class="metric-card-lbl">${s.icon} ${s.label}</div>
+      <div class="metric-card-sub">${pct}% of total</div>
+    </div>`;
+  }).join('');
+
+  const totalCard = `<div class="metric-card mc-total">
+    <div class="metric-card-num">${total.toLocaleString()}</div>
+    <div class="metric-card-lbl">🏪 Total Facilities</div>
+    <div class="metric-card-sub">+${recent30.toLocaleString()} in last 30 days</div>
+  </div>`;
+
+  // Status breakdown table
+  const statusRows = Object.entries(byStatus)
+    .sort((a, b) => b[1] - a[1])
+    .map(([st, cnt]) => {
+      const pct = Math.round(cnt / total * 100);
+      const manCnt = srcStatusMatrix['manual']?.[st] || 0;
+      const bulkCnt = srcStatusMatrix['bulk_import']?.[st] || 0;
+      const n8nCnt = srcStatusMatrix['n8n_submission']?.[st] || 0;
+      return `<tr>
+        <td><span class="badge ${bc(st)}">${esc(st)}</span></td>
+        <td style="font-weight:700">${cnt.toLocaleString()}</td>
+        <td>
+          <div style="font-size:11px;color:var(--text3)">${pct}%</div>
+          <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
+        </td>
+        <td style="font-size:12px;color:var(--text3)">${manCnt > 0 ? `<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>` : ''}${bulkCnt > 0 ? `<span class="src-badge src-bulk" style="margin-right:3px">📥 ${bulkCnt}</span>` : ''}${n8nCnt > 0 ? `<span class="src-badge src-n8n">📋 ${n8nCnt}</span>` : ''}</td>
+      </tr>`;
+    }).join('');
+
+  // Recent signups (n8n_submission in last 90 days)
+  const DAY90 = 90 * 24 * 60 * 60 * 1000;
+  const recentSignups = data
+    .filter(f => f.source_method === 'n8n_submission' && f.added_at && (now - new Date(f.added_at).getTime()) < DAY90)
+    .sort((a, b) => new Date(b.added_at) - new Date(a.added_at))
+    .slice(0, 8);
+
+  const signupRows = recentSignups.length > 0
+    ? recentSignups.map(f => `<tr>
+        <td style="font-weight:500;color:var(--blue);cursor:pointer" onclick="document.getElementById('metrics-ov').classList.remove('open');openEdit('${f.id}')">${esc(f.name)}</td>
+        <td>${esc(f.city||'')}, ${esc(f.state||'')}</td>
+        <td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td>
+        <td style="font-size:11px;color:var(--text3)">${fmtAddedAt(f.added_at)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No submission records in last 90 days</td></tr>`;
+
+  document.getElementById('metrics-body').innerHTML = `
+    <div class="metrics-section">
+      <div class="metrics-section-title">Network Overview</div>
+      <div class="metrics-grid">${totalCard}${srcCardHtml}</div>
+    </div>
+
+    <div class="metrics-section">
+      <div class="metrics-section-title">Status Breakdown — by Source</div>
+      <table class="status-table">
+        <thead><tr>
+          <th>Status</th><th>Count</th><th>% of Total</th><th>Source Breakdown</th>
+        </tr></thead>
+        <tbody>${statusRows}</tbody>
+      </table>
+    </div>
+
+    <div class="metrics-section">
+      <div class="metrics-section-title">Recent Submissions (n8n) — Last 90 Days</div>
+      <table class="status-table">
+        <thead><tr><th>Facility</th><th>Location</th><th>Status</th><th>Added</th></tr></thead>
+        <tbody>${signupRows}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('metrics-updated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+}
+
+const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes','source method':'source_method','source_method':'source_method','added at':'added_at','added_at':'added_at'};
 function normDate(v){if(!v)return null;const s=String(v).trim();if(/^\d{2}-\d{2}-\d{4}$/.test(s))return s;const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){const yr=m[3].length===2?'20'+m[3]:m[3];return`${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;}const mt=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);if(mt)return`${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;if(/^\d{5}$/.test(s)){const d=new Date(Math.round((+s-25569)*86400*1000));return`${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}-${d.getUTCFullYear()}`;}try{const d=new Date(s);if(!isNaN(d)&&d.getFullYear()>1970&&d.getFullYear()<2100)return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;}catch(e){}return null;}
 function rowToRec(headers,row){const rec={};headers.forEach((h,i)=>{const key=COL_MAP[String(h).toLowerCase().trim()];if(!key)return;let val=row[i];if(val===undefined||val===null)val='';if(key==='ev_certified'||key==='accepts_shipped')val=val===true||String(val).toLowerCase()==='true'||String(val)==='1';else if(key==='added_on'||key==='edited_on')val=normDate(val);else if(['lat','lng','labor'].includes(key))val=val===''?null:(+val||null);else if(key==='numeric_id')val=val===''?null:(+val||null);else val=String(val).trim()||null;rec[key]=val;});return rec;}
 function showImportSummary(clean,flagged,total){const msg=`<div style="text-align:center;padding:28px 24px"><div style="font-size:32px;margin-bottom:12px">&#x1F4CB;</div><h3 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px">Import Complete</h3><p style="font-size:13px;color:var(--text2);margin-bottom:20px">${total.toLocaleString()} records processed</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px"><div style="background:var(--green-bg);border:1px solid #a3d9b4;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:var(--green)">${clean.toLocaleString()}</div><div style="font-size:12px;color:var(--green);margin-top:2px">✓ Address Verified</div></div><div style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:8px;padding:14px"><div style="font-size:24px;font-weight:700;color:#7e22ce">${flagged.toLocaleString()}</div><div style="font-size:12px;color:#7e22ce;margin-top:2px">⚠ Needs Review</div></div></div>${flagged>0?`<p style="font-size:12px;color:var(--text3)">Filter by <strong>NRV — Needs Review</strong> status to resolve flagged records.</p>`:'<p style="font-size:12px;color:var(--green)">All addresses verified and no duplicates found!</p>'}<button class="btn btn-save" onclick="document.getElementById(\'import-summary-ov\').classList.remove(\'open\')" style="margin-top:16px;padding:8px 24px">Done</button></div>`;let ov=document.getElementById('import-summary-ov');if(!ov){ov=document.createElement('div');ov.id='import-summary-ov';ov.className='ov';ov.style.zIndex='7000';ov.innerHTML=`<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">${msg}</div>`;document.body.appendChild(ov);}else{ov.querySelector('div').innerHTML=msg;}ov.classList.add('open');}
 async function geocodeForImport(rec){if(!rec.address||!rec.city||!rec.state||!rec.zip)return{status:'unverified',rec};try{await loadGoogleMaps();const full=`${rec.address}, ${rec.city}, ${rec.state} ${rec.zip}, ${rec.country||'USA'}`;return new Promise((resolve)=>{const geocoder=new google.maps.Geocoder();geocoder.geocode({address:full},(results,status)=>{if(status!=='OK'||!results?.length){resolve({status:'unverified',rec});return;}const result=results[0];const locationType=result.geometry?.location_type,partialMatch=result.partial_match===true,highConfidence=['ROOFTOP','RANGE_INTERPOLATED'].includes(locationType);if(partialMatch||!highConfidence){resolve({status:'unverified',rec});return;}const parsed=parseGeoResult(result);const allMatch=(rec.address||'').toLowerCase()===parsed.address.toLowerCase()&&(rec.city||'').toLowerCase()===parsed.city.toLowerCase()&&(rec.state||'').toUpperCase()===parsed.state.toUpperCase()&&(rec.zip||'')===parsed.zip;if(allMatch){if(!rec.lat)rec.lat=String(parsed.lat);if(!rec.lng)rec.lng=String(parsed.lng);resolve({status:'ok',rec});}else{rec.address=parsed.address||rec.address;rec.city=parsed.city||rec.city;rec.state=parsed.state||rec.state;rec.zip=parsed.zip||rec.zip;rec.lat=String(parsed.lat);rec.lng=String(parsed.lng);resolve({status:'ok',rec});}});});}catch(e){return{status:'unverified',rec};}}
-async function mergeAndUpload(rows){const valid=rows.filter(r=>r.name),total=valid.length,BATCH=200,GEO_THROTTLE=50;let done=0,clean=0,flagged=0;showDbl(`Validating addresses… 0 / ${total.toLocaleString()}`);await loadGoogleMaps().catch(()=>{});for(let i=0;i<valid.length;i++){const rec=valid[i];if(i%10===0)showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);const geoResult=await geocodeForImport(rec);valid[i]=geoResult.rec;if(geoResult.status==='ok'||geoResult.status==='corrected')clean++;else{flagged++;valid[i].status='NRV';valid[i].notes=valid[i].notes?valid[i].notes+' | Address could not be verified by Google':'Address could not be verified by Google';}const dupMatches=await checkDupesForImport(valid[i],data,valid.slice(0,i));if(dupMatches.length>0){const best=dupMatches[0];const dupNote=`Possible duplicate of: "${best.facility.name}" (${best.facility.city||''}, ${best.facility.state||''}) — matched on ${best.reasons.join(' + ')}`;if(valid[i].status!=='NRV'){flagged++;clean=Math.max(0,clean-1);}valid[i].status='NRV';valid[i].notes=valid[i].notes?`${valid[i].notes} | ${dupNote}`:dupNote;}await new Promise(r=>setTimeout(r,GEO_THROTTLE));}const ALL_KEYS=['numeric_id','name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes','added_on','edited_on','edited_by'];for(let i=0;i<valid.length;i+=BATCH){const batch=valid.slice(i,i+BATCH).map(r=>{const n={};ALL_KEYS.forEach(k=>n[k]=r.hasOwnProperty(k)?r[k]:null);return n;});showDbl(`Uploading ${Math.min(done+BATCH,total).toLocaleString()} / ${total.toLocaleString()}…`);await withAuthRetry(()=>api.upsertBatch(batch));done+=batch.length;}await loadData();hideDbl();showImportSummary(clean,flagged,total);}
+async function mergeAndUpload(rows){
+  const valid=rows.filter(r=>r.name),total=valid.length,BATCH=200,GEO_THROTTLE=50;
+  let done=0,clean=0,flagged=0;
+  showDbl(`Validating addresses… 0 / ${total.toLocaleString()}`);
+  await loadGoogleMaps().catch(()=>{});
+  const importTimestamp = new Date().toISOString();
+  for(let i=0;i<valid.length;i++){
+    const rec=valid[i];
+    if(i%10===0)showDbl(`Validating addresses… ${i.toLocaleString()} / ${total.toLocaleString()}`);
+    const geoResult=await geocodeForImport(rec);
+    valid[i]=geoResult.rec;
+    if(geoResult.status==='ok'||geoResult.status==='corrected')clean++;
+    else{flagged++;valid[i].status='NRV';valid[i].notes=valid[i].notes?valid[i].notes+' | Address could not be verified by Google':'Address could not be verified by Google';}
+    const dupMatches=await checkDupesForImport(valid[i],data,valid.slice(0,i));
+    if(dupMatches.length>0){const best=dupMatches[0];const dupNote=`Possible duplicate of: "${best.facility.name}" (${best.facility.city||''}, ${best.facility.state||''}) — matched on ${best.reasons.join(' + ')}`;if(valid[i].status!=='NRV'){flagged++;clean=Math.max(0,clean-1);}valid[i].status='NRV';valid[i].notes=valid[i].notes?`${valid[i].notes} | ${dupNote}`:dupNote;}
+    await new Promise(r=>setTimeout(r,GEO_THROTTLE));
+  }
+  const ALL_KEYS=['numeric_id','name','phone','contact','contact_email','address','city','state','zip','country','website','email1','lat','lng','labor','status','shop_type','software','labor_guide','form_type','ev_certified','accepts_shipped','offer_url','notes','added_on','edited_on','edited_by','source_method','added_at','added_by'];
+  for(let i=0;i<valid.length;i+=BATCH){
+    const batch=valid.slice(i,i+BATCH).map(r=>{
+      const n={};
+      ALL_KEYS.forEach(k=>n[k]=r.hasOwnProperty(k)?r[k]:null);
+      // Stamp bulk_import if no source set, and record added_at
+      if(!n.source_method) n.source_method = 'bulk_import';
+      if(!n.added_at) n.added_at = importTimestamp;
+      if(!n.added_by) n.added_by = userEmail;
+      return n;
+    });
+    showDbl(`Uploading ${Math.min(done+BATCH,total).toLocaleString()} / ${total.toLocaleString()}…`);
+    await withAuthRetry(()=>api.upsertBatch(batch));
+    done+=batch.length;
+  }
+  await loadData();
+  hideDbl();
+  showImportSummary(clean,flagged,total);
+}
 function normPhone(p){if(!p)return'';return String(p).replace(/\D/g,'').replace(/^1/,'');}
 const ADDR_ABBR={'street':'st','drive':'dr','avenue':'ave','boulevard':'blvd','road':'rd','lane':'ln','court':'ct','place':'pl','circle':'cir','trail':'trl','parkway':'pkwy','highway':'hwy','suite':'ste','building':'bldg','north':'n','south':'s','east':'e','west':'w','northeast':'ne','northwest':'nw','southeast':'se','southwest':'sw'};
 function normAddr(a){if(!a)return'';let s=String(a).toLowerCase().trim();s=s.replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();Object.entries(ADDR_ABBR).forEach(([long,short])=>{s=s.replace(new RegExp(`\\b${long}\\b`,'g'),short);});return s.replace(/\s+/g,' ').trim();}
@@ -624,14 +1044,12 @@ if(sameZip||sameCity){const cName=(c.name||'').toLowerCase().trim(),nameSim=simi
 if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});}return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);}
 let dupPending=null;
 async function checkDupesAndSave(rec,existing){const excludeId=rec.id||null,sameState=data.filter(f=>f.state===rec.state);const recEmails=[rec.email1,rec.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const emailCandidates=recEmails.length>0?data.filter(f=>{const fEmails=[f.email1,f.email2,f.email3,f.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());return fEmails.some(e=>recEmails.includes(e))&&f.id!==excludeId;}):[];const allCandidates=[...new Map([...sameState,...emailCandidates].map(f=>[f.id,f])).values()];const matches=findDupesFor(rec,allCandidates,excludeId);if(matches.length===0){await validateAndSave(rec,existing);return;}
-// If any match is already BL, block the save entirely — we don't want a second record for a blacklisted shop
 const blMatch=matches.find(m=>m.facility.status==='BL');
 if(blMatch){
   const f=blMatch.facility;
   dupPending={rec,existing,matches};
   const container=document.getElementById('dup-matches');
   container.innerHTML=`<div class="dup-match" style="border-color:#fca5a5;background:#fff1f2"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason" style="background:#fee2e2;color:#b91c1c">⛔ Already Blacklisted</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone)+'<br>':''}<strong style="color:#b91c1c">This shop is already in the database as BL. Saving a new record would create a duplicate.</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open existing BL record</a></div></div>`+matches.filter(m=>m.facility.status!=='BL').map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;&middot;&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');
-  // Change footer: hide "Save Anyway", replace with "Open BL Record"
   document.getElementById('dup-ov-msg').textContent='A matching facility already exists with BL status. Creating a duplicate is not recommended.';
   document.getElementById('dup-save-anyway-btn').style.display='none';
   document.getElementById('dup-flag-btn').style.display='none';
@@ -641,7 +1059,6 @@ if(blMatch){
   return;
 }
 dupPending={rec,existing,matches};const container=document.getElementById('dup-matches');container.innerHTML=matches.map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;&middot;&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');
-// Restore normal footer buttons
 document.getElementById('dup-save-anyway-btn').style.display='';
 document.getElementById('dup-flag-btn').style.display='';
 document.getElementById('dup-open-bl-btn').style.display='none';
@@ -657,8 +1074,6 @@ function importFile(e){const f=e.target.files[0];if(!f)return;const ext=f.name.s
 // ============================================================
 // BL IMPORT — Helper Site column mapping + merge/override logic
 // ============================================================
-
-// Maps Helper Site column headers to SRN fields
 function parseBLRow(headers, row) {
   const get = (h) => {
     const i = headers.indexOf(h);
@@ -671,7 +1086,6 @@ function parseBLRow(headers, row) {
   const normZip = v => {
     if (v == null) return null;
     const s = String(v).trim();
-    // Excel may parse numeric zips as integers — pad to 5
     if (/^\d{1,5}$/.test(s)) return s.padStart(5, '0');
     return s || null;
   };
@@ -679,7 +1093,6 @@ function parseBLRow(headers, row) {
     if (!v) return null;
     const d = String(v).replace(/\D/g, '').replace(/^1/, '');
     if (d.length < 7) return null;
-    // Format as XXX-XXX-XXXX
     if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
     return d;
   };
@@ -689,7 +1102,6 @@ function parseBLRow(headers, row) {
     const n = parseFloat(v);
     return isNaN(n) ? null : String(n);
   };
-
   return {
     name:             normStr(get('LegalName')),
     address:          normStr(get('StreetAddress')),
@@ -714,18 +1126,10 @@ function parseBLRow(headers, row) {
     ev_certified:     normBool(get('IsEVCertified')),
     accepts_shipped:  normBool(get('AcceptsShippedParts')),
     status:           'BL',
-    // Preserve Helper Site IDs in notes for traceability
     _helperRepairID:  get('RepairFacilityID'),
     _helperCSID:      get('CarShieldID'),
   };
 }
-
-// Find ALL existing matches for a BL record.
-// Matching rules (any combination reaching score >= 60 qualifies):
-//   Email exact match                          → +70  (alone sufficient)
-//   Phone exact match                          → +65  (alone sufficient)
-//   Name ≥ 85% AND Address ≥ 85% (same state) → +60  (both required — prevents chain-shop false positives)
-//   Name alone or address alone never triggers a match.
 function findBLMatches(blRec, existingFacilities) {
   const recPhone = normPhone(blRec.phone);
   const recEmails = [blRec.email1, blRec.email2, blRec.email3, blRec.contact_email]
@@ -734,26 +1138,18 @@ function findBLMatches(blRec, existingFacilities) {
   const recState = blRec.state;
   const recAddr = normAddr(blRec.address);
   const matches = [];
-
   for (const f of existingFacilities) {
     let score = 0;
     const reasons = [];
-
-    // Email exact match
     const fEmails = [f.email1, f.email2, f.email3, f.contact_email]
       .filter(v => v && String(v).trim()).map(e => e.toLowerCase().trim());
     if (recEmails.length > 0 && fEmails.length > 0 && recEmails.some(e => fEmails.includes(e))) {
       score += 70; reasons.push('email match');
     }
-
-    // Phone exact match
     const fPhone = normPhone(f.phone);
     if (recPhone && fPhone && recPhone === fPhone && recPhone.length >= 7) {
       score += 65; reasons.push('phone match');
     }
-
-    // Name + Address + State — both name AND address must meet threshold (≥85% each)
-    // This prevents two "Goodyear" shops in Ohio from matching just on name.
     if (recState && f.state === recState && recAddr) {
       const fName = (f.name || '').toLowerCase().trim();
       const fAddr = normAddr(f.address);
@@ -766,18 +1162,12 @@ function findBLMatches(blRec, existingFacilities) {
         reasons.push(`name+address match (${Math.round(nameSim*100)}% / ${Math.round(addrSim*100)}%)`);
       }
     }
-
     if (score >= 60) matches.push({ facility: f, score, reasons });
   }
-
   return matches.sort((a, b) => b.score - a.score);
 }
-
-// Geocode a BL record: auto-accept Google's suggestion if one exists (high or low confidence).
-// If Google returns nothing at all, save as-is and flag with a note.
 async function geocodeBLRecord(blRec) {
   if (!blRec.address || !blRec.city || !blRec.state || !blRec.zip) {
-    // No address to geocode — flag it
     blRec._addrFlag = 'Address incomplete — could not geocode';
     return blRec;
   }
@@ -788,12 +1178,10 @@ async function geocodeBLRecord(blRec) {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address: full }, (results, status) => {
         if (status !== 'OK' || !results?.length) {
-          // Google found nothing — save as-is with a flag note
           blRec._addrFlag = 'Address unverified — not found in Google Maps';
           resolve(blRec);
           return;
         }
-        // Auto-accept whatever Google returns (corrected or exact)
         const parsed = parseGeoResult(results[0]);
         blRec.address = parsed.address || blRec.address;
         blRec.city    = parsed.city    || blRec.city;
@@ -809,32 +1197,25 @@ async function geocodeBLRecord(blRec) {
     return blRec;
   }
 }
-
 async function importBLFile(e) {
   const f = e.target.files[0];
   if (!f) return;
   e.target.value = '';
-
   const ext = f.name.split('.').pop().toLowerCase();
   if (!['xlsx', 'xls', 'csv'].includes(ext)) {
     toast('BL import requires .xlsx, .xls, or .csv', 'err');
     return;
   }
-
-  // Load XLSX library if needed
   if ((ext === 'xlsx' || ext === 'xls') && typeof XLSX === 'undefined') {
     toast('Loading Excel parser…', '', 5000);
     await new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-      s.onload = resolve;
-      s.onerror = reject;
+      s.onload = resolve; s.onerror = reject;
       document.head.appendChild(s);
     });
   }
-
   showDbl('Reading BL file…');
-
   let blRows = [];
   try {
     if (ext === 'xlsx' || ext === 'xls') {
@@ -843,11 +1224,8 @@ async function importBLFile(e) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       const headers = rawRows[0].map(h => String(h).trim());
-      blRows = rawRows.slice(1)
-        .map(row => parseBLRow(headers, row))
-        .filter(r => r.name);
+      blRows = rawRows.slice(1).map(row => parseBLRow(headers, row)).filter(r => r.name);
     } else {
-      // CSV fallback
       const text = await f.text();
       const pcsv = l => {
         const o = []; let c = '', q = false;
@@ -860,24 +1238,15 @@ async function importBLFile(e) {
       };
       const lines = text.split(/\r?\n/).filter(l => l.trim());
       const headers = pcsv(lines[0]).map(h => String(h).trim());
-      blRows = lines.slice(1)
-        .map(l => parseBLRow(headers, pcsv(l)))
-        .filter(r => r.name);
+      blRows = lines.slice(1).map(l => parseBLRow(headers, pcsv(l))).filter(r => r.name);
     }
   } catch (err) {
     hideDbl();
     toast('Could not read BL file: ' + err.message, 'err', 6000);
     return;
   }
-
   const total = blRows.length;
-  if (!total) {
-    hideDbl();
-    toast('No valid BL records found in file.', 'warn');
-    return;
-  }
-
-  // Phase 1: geocode — auto-accept any Google suggestion, save as-is if no result
+  if (!total) { hideDbl(); toast('No valid BL records found in file.', 'warn'); return; }
   showDbl(`Geocoding 0 / ${total.toLocaleString()}…`);
   await loadGoogleMaps().catch(() => {});
   const GEO_THROTTLE = 50;
@@ -886,169 +1255,94 @@ async function importBLFile(e) {
     blRows[i] = await geocodeBLRecord(blRows[i]);
     await new Promise(r => setTimeout(r, GEO_THROTTLE));
   }
-
-  // Phase 2: match each BL record against existing database
   showDbl(`Matching ${total.toLocaleString()} BL records against database…`);
-
-  // Stats
-  let countUpdated = 0;   // existing facility status changed to BL
-  let countMerged = 0;    // duplicate existing records deleted (kept best match)
-  let countInserted = 0;  // new BL records with no match in DB
-
-  const patchOps = [];
-  const insertRecs = [];
-
+  let countUpdated = 0, countMerged = 0, countInserted = 0;
+  const patchOps = [], insertRecs = [];
+  const blImportTimestamp = new Date().toISOString();
   for (let i = 0; i < blRows.length; i++) {
     if (i % 50 === 0) showDbl(`Matching ${i.toLocaleString()} / ${total.toLocaleString()}…`);
     await new Promise(r => setTimeout(r, 0));
-
     const blRec = blRows[i];
     const allMatches = findBLMatches(blRec, data);
-
     if (allMatches.length === 0) {
-      // No match — insert as new BL record
       const rec = {
-        name: blRec.name,
-        address: blRec.address,
-        city: blRec.city,
-        state: blRec.state,
-        zip: blRec.zip,
-        country: blRec.country || 'USA',
-        phone: blRec.phone,
-        contact: blRec.contact,
-        contact_email: blRec.contact_email,
-        email1: blRec.email1,
-        email2: blRec.email2,
-        email3: blRec.email3,
-        website: blRec.website,
-        lat: blRec.lat,
-        lng: blRec.lng,
-        labor: blRec.labor,
-        shop_type: blRec.shop_type,
-        software: blRec.software,
-        labor_guide: blRec.labor_guide,
-        form_type: blRec.form_type || 'Web',
-        ev_certified: blRec.ev_certified || false,
-        accepts_shipped: blRec.accepts_shipped || false,
-        status: 'BL',
-        added_on: today(),
-        edited_on: today(),
-        edited_by: userEmail,
+        name: blRec.name, address: blRec.address, city: blRec.city,
+        state: blRec.state, zip: blRec.zip, country: blRec.country || 'USA',
+        phone: blRec.phone, contact: blRec.contact, contact_email: blRec.contact_email,
+        email1: blRec.email1, email2: blRec.email2, email3: blRec.email3,
+        website: blRec.website, lat: blRec.lat, lng: blRec.lng, labor: blRec.labor,
+        shop_type: blRec.shop_type, software: blRec.software, labor_guide: blRec.labor_guide,
+        form_type: blRec.form_type || 'Web', ev_certified: blRec.ev_certified || false,
+        accepts_shipped: blRec.accepts_shipped || false, status: 'BL',
+        source_method: 'bulk_import',
+        added_at: blImportTimestamp, added_by: userEmail + ' (BL Import)',
+        added_on: today(), edited_on: today(), edited_by: userEmail,
         notes: (() => { const parts = ['Imported from BL list']; if (blRec._helperRepairID) parts.push('Helper ID: ' + blRec._helperRepairID); if (blRec._addrFlag) parts.push(blRec._addrFlag); return parts.join(' · '); })(),
       };
       insertRecs.push(rec);
       countInserted++;
     } else {
-      // Has matches — update best match to BL, mark extras for deletion
       const best = allMatches[0].facility;
       const extras = allMatches.slice(1).map(m => m.facility);
-
-      // Build patch for best match
       const oldStatus = best.status;
       const changes = {};
       if (oldStatus !== 'BL') changes.status = { from: oldStatus, to: 'BL' };
       if (blRec._addrFlag) changes.notes = { from: best.notes || null, to: (best.notes ? best.notes + ' · ' + blRec._addrFlag : blRec._addrFlag) };
-
       patchOps.push({
         id: best.id,
         fields: {
-          status: 'BL',
-          edited_on: today(),
-          edited_by: userEmail,
-          // Enrich with BL data if better quality
-          lat: blRec.lat || best.lat,
-          lng: blRec.lng || best.lng,
-          email1: best.email1 || blRec.email1,
-          email2: best.email2 || blRec.email2,
+          status: 'BL', edited_on: today(), edited_by: userEmail,
+          lat: blRec.lat || best.lat, lng: blRec.lng || best.lng,
+          email1: best.email1 || blRec.email1, email2: best.email2 || blRec.email2,
           email3: best.email3 || blRec.email3,
-          // Append address flag to notes if geocoding failed
-          notes: blRec._addrFlag
-            ? (best.notes ? best.notes + ' · ' + blRec._addrFlag : blRec._addrFlag)
-            : best.notes,
+          notes: blRec._addrFlag ? (best.notes ? best.notes + ' · ' + blRec._addrFlag : blRec._addrFlag) : best.notes,
         },
-        changes,
-        facilityName: best.name,
-        extraIds: extras.map(x => x.id),
+        changes, facilityName: best.name, extraIds: extras.map(x => x.id),
       });
       countUpdated++;
       countMerged += extras.length;
     }
   }
-
-  // Execute all patches in batches
   showDbl(`Updating ${countUpdated.toLocaleString()} existing facilities to BL…`);
   let patchDone = 0;
   for (const op of patchOps) {
     try {
       await withAuthRetry(() => api.patch(op.id, op.fields));
-      // Log history if status changed
       if (op.changes && Object.keys(op.changes).length > 0) {
-        await withAuthRetry(() => api.logHistory({
-          facility_id: op.id,
-          facility_name: op.facilityName,
-          changed_by: userEmail + ' (BL Import)',
-          changes: op.changes,
-        })).catch(() => {});
+        await withAuthRetry(() => api.logHistory({ facility_id: op.id, facility_name: op.facilityName, changed_by: userEmail + ' (BL Import)', changes: op.changes })).catch(() => {});
       }
-      // Delete extra duplicates
-      for (const xid of op.extraIds) {
-        await withAuthRetry(() => api.del(xid)).catch(() => {});
-      }
-    } catch (err) {
-      // Non-fatal: log and continue
-      console.warn('BL patch failed for', op.id, err.message);
-    }
+      for (const xid of op.extraIds) { await withAuthRetry(() => api.del(xid)).catch(() => {}); }
+    } catch (err) { console.warn('BL patch failed for', op.id, err.message); }
     patchDone++;
     if (patchDone % 50 === 0) showDbl(`Patching… ${patchDone} / ${patchOps.length}`);
     await new Promise(r => setTimeout(r, 0));
   }
-
-  // Insert new BL records in batches of 200
   if (insertRecs.length > 0) {
     showDbl(`Inserting ${insertRecs.length.toLocaleString()} new BL records…`);
     const BATCH = 200;
     for (let i = 0; i < insertRecs.length; i += BATCH) {
       const batch = insertRecs.slice(i, i + BATCH);
-      await withAuthRetry(() => api.upsertBatch(batch)).catch(err => {
-        console.warn('BL batch insert error:', err.message);
-      });
+      await withAuthRetry(() => api.upsertBatch(batch)).catch(err => { console.warn('BL batch insert error:', err.message); });
       showDbl(`Inserting… ${Math.min(i + BATCH, insertRecs.length)} / ${insertRecs.length}`);
       await new Promise(r => setTimeout(r, 0));
     }
   }
-
-  // Reload data and show summary
   await loadData();
   hideDbl();
   showBLSummary(countUpdated, countMerged, countInserted, total);
 }
-
 function showBLSummary(updated, merged, inserted, total) {
   const grid = document.getElementById('bl-stat-grid');
   grid.innerHTML = `
-    <div class="bl-stat updated">
-      <div class="bl-stat-num">${updated.toLocaleString()}</div>
-      <div class="bl-stat-lbl">⚠ Existing → BL</div>
-    </div>
-    <div class="bl-stat merged">
-      <div class="bl-stat-num">${merged.toLocaleString()}</div>
-      <div class="bl-stat-lbl">🗑 Duplicates Removed</div>
-    </div>
-    <div class="bl-stat inserted">
-      <div class="bl-stat-num">${inserted.toLocaleString()}</div>
-      <div class="bl-stat-lbl">+ New BL Records</div>
-    </div>
-    <div class="bl-stat total">
-      <div class="bl-stat-num">${total.toLocaleString()}</div>
-      <div class="bl-stat-lbl">Total Processed</div>
-    </div>`;
-
+    <div class="bl-stat updated"><div class="bl-stat-num">${updated.toLocaleString()}</div><div class="bl-stat-lbl">⚠ Existing → BL</div></div>
+    <div class="bl-stat merged"><div class="bl-stat-num">${merged.toLocaleString()}</div><div class="bl-stat-lbl">🗑 Duplicates Removed</div></div>
+    <div class="bl-stat inserted"><div class="bl-stat-num">${inserted.toLocaleString()}</div><div class="bl-stat-lbl">+ New BL Records</div></div>
+    <div class="bl-stat total"><div class="bl-stat-num">${total.toLocaleString()}</div><div class="bl-stat-lbl">Total Processed</div></div>`;
   const noteLines = [];
-  if (updated > 0) noteLines.push(`${updated.toLocaleString()} existing facilit${updated === 1 ? 'y was' : 'ies were'} already in the SRN — their status has been set to BL. These shops will not appear on the public map.`);
-  if (merged > 0) noteLines.push(`${merged.toLocaleString()} duplicate record${merged === 1 ? ' was' : 's were'} removed to keep the database clean.`);
-  if (inserted > 0) noteLines.push(`${inserted.toLocaleString()} new BL record${inserted === 1 ? ' was' : 's were'} added — these shops were not previously in the SRN.`);
+  if (updated > 0) noteLines.push(`${updated.toLocaleString()} existing facilit${updated === 1 ? 'y was' : 'ies were'} already in the SRN — their status has been set to BL.`);
+  if (merged > 0) noteLines.push(`${merged.toLocaleString()} duplicate record${merged === 1 ? ' was' : 's were'} removed.`);
+  if (inserted > 0) noteLines.push(`${inserted.toLocaleString()} new BL record${inserted === 1 ? ' was' : 's were'} added.`);
   noteLines.push('BL status overrides all other statuses. None of these shops will be referred to customers.');
-
   document.getElementById('bl-summary-note').innerHTML = noteLines.map(l => `<p style="margin-bottom:6px">${l}</p>`).join('');
   document.getElementById('bl-summary-ov').classList.add('open');
 }
