@@ -29,6 +29,8 @@ nav{flex-shrink:0;height:52px;background:var(--navy);display:flex;align-items:ce
 .nb:hover{background:rgba(255,255,255,.12)}
 .nb.primary{background:#2a6dd4;border-color:#3a7de4;font-weight:600}
 .nb.primary:hover{background:var(--blue)}
+.nb.danger{background:rgba(185,28,28,.35);border-color:rgba(239,68,68,.5);color:#fca5a5;font-weight:600}
+.nb.danger:hover{background:rgba(185,28,28,.55);color:#fff}
 .ubadge{font-size:11px;color:#c8d8f0;display:flex;align-items:center;gap:6px}
 .sout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#c8d8f0;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
 .sout:hover{background:rgba(255,255,255,.18);color:#fff}
@@ -60,6 +62,7 @@ td.nm:hover{text-decoration:underline}
 .b-del{background:var(--red-bg);color:var(--red);border:1px solid #fca5a5}
 .b-oth{background:#f0f9ff;color:#1e40af;border:1px solid #93c5fd}
 .b-nrv{background:#fdf4ff;color:#7e22ce;border:1px solid #d8b4fe}
+.b-bl{background:#1c0707;color:#ff6b6b;border:1px solid #7f1d1d;font-weight:800;letter-spacing:.06em}
 .empty{text-align:center;padding:48px;color:var(--text3);font-size:14px}
 .pgbar{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 20px;display:flex;align-items:center;gap:3px;font-size:12px}
 .pg{border:1px solid var(--border2);background:var(--surface);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;min-width:26px;text-align:center}
@@ -203,6 +206,23 @@ td.nm:hover{text-decoration:underline}
 .msg-empty-icon{font-size:32px;margin-bottom:8px}
 .msg-badge{display:inline-flex;align-items:center;justify-content:center;background:#CA383B;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;padding:0 4px;margin-left:5px;vertical-align:middle}
 .tab-msg-count{background:#CA383B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:5px}
+/* BL import summary overlay */
+.bl-summary-ov{position:fixed;inset:0;background:rgba(10,20,40,.7);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.bl-summary-ov.open{display:flex}
+.bl-summary-box{background:#fff;border-radius:14px;width:100%;max-width:500px;box-shadow:0 24px 64px rgba(0,0,0,.4);overflow:hidden}
+.bl-summary-head{background:#7f1d1d;color:#fff;padding:18px 24px;display:flex;align-items:center;gap:10px}
+.bl-summary-head h3{font-size:16px;font-weight:700;flex:1}
+.bl-summary-body{padding:24px}
+.bl-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.bl-stat{border-radius:10px;padding:16px;text-align:center}
+.bl-stat-num{font-size:28px;font-weight:800;font-family:monospace;line-height:1}
+.bl-stat-lbl{font-size:11px;font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+.bl-stat.updated{background:#fff1f2;border:1px solid #fecaca}.bl-stat.updated .bl-stat-num{color:#b91c1c}.bl-stat.updated .bl-stat-lbl{color:#991b1b}
+.bl-stat.merged{background:#fef3c7;border:1px solid #fcd38a}.bl-stat.merged .bl-stat-num{color:#92400e}.bl-stat.merged .bl-stat-lbl{color:#78350f}
+.bl-stat.inserted{background:#f0fdf4;border:1px solid #a3d9b4}.bl-stat.inserted .bl-stat-num{color:#15803d}.bl-stat.inserted .bl-stat-lbl{color:#14532d}
+.bl-stat.total{background:#f0f9ff;border:1px solid #93c5fd}.bl-stat.total .bl-stat-num{color:#1e40af}.bl-stat.total .bl-stat-lbl{color:#1e3a8a}
+.bl-summary-note{font-size:12px;color:var(--text3);line-height:1.6;background:var(--bg);border-radius:8px;padding:12px 14px;border:1px solid var(--border)}
+.bl-summary-foot{padding:14px 24px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -286,6 +306,23 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 
+<!-- BL Import Summary Overlay -->
+<div class="bl-summary-ov" id="bl-summary-ov">
+  <div class="bl-summary-box">
+    <div class="bl-summary-head">
+      <span style="font-size:22px">&#x26D4;</span>
+      <h3>Blacklist Import Complete</h3>
+    </div>
+    <div class="bl-summary-body">
+      <div class="bl-stat-grid" id="bl-stat-grid"></div>
+      <div class="bl-summary-note" id="bl-summary-note"></div>
+    </div>
+    <div class="bl-summary-foot">
+      <button class="btn btn-save" onclick="document.getElementById('bl-summary-ov').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+
 <nav>
   <div class="brand">SRN <span>Facility</span> Manager</div>
   <div class="sp"></div>
@@ -295,6 +332,8 @@ td.nm:hover{text-decoration:underline}
   <button class="nb" onclick="exportXLSX()" title="Export all facilities as Excel spreadsheet">&#x2B07; Excel</button>
   <button class="nb" onclick="document.getElementById('imp-file').click()">&#x2B06; Import</button>
   <input type="file" id="imp-file" accept=".json,.xlsx,.xls,.csv" style="display:none" onchange="importFile(event)">
+  <button class="nb danger" onclick="document.getElementById('bl-file').click()" title="Import blacklisted shops from Helper Site export">&#x26D4; Import BL</button>
+  <input type="file" id="bl-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importBLFile(event)">
   <button class="nb" onclick="openMap()" title="Open public locator map">&#x1F5FA; View Map</button>
   <button class="nb" onclick="findDuplicates()" title="Scan for duplicate facilities">&#x1F50D; Find Dupes</button>
   <button class="nb primary" onclick="openAdd()">+ Add Facility</button>
@@ -468,6 +507,7 @@ const api={
   async getAll(){const PAGE=1000;let from=0,all=[],done=false;while(!done){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=numeric_id.desc&limit=${PAGE}&offset=${from}`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());const batch=await r.json();all=all.concat(batch);if(batch.length<PAGE)done=true;else from+=PAGE;showDbl(`Loading… ${all.length.toLocaleString()} facilities`);}return all;},
   async upsert(rec){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdrs({'Prefer':'resolution=merge-duplicates,return=representation'}),body:JSON.stringify(rec)});if(!r.ok)throw new Error(await r.text());return r.json();},
   async upsertBatch(recs){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdrs({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(recs)});if(!r.ok)throw new Error(await r.text());},
+  async patch(id,fields){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify(fields)});if(!r.ok)throw new Error(await r.text());return r.json();},
   async del(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'DELETE',headers:hdrs()});if(!r.ok)throw new Error(await r.text());},
   async logHistory(entry){await fetch(`${SUPABASE_URL}/rest/v1/facility_history`,{method:'POST',headers:hdrs({'Prefer':'return=minimal'}),body:JSON.stringify(entry)});},
   async getHistory(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
@@ -483,7 +523,7 @@ async function loadData(){showDbl('Loading facilities…');try{data=await api.ge
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth',NRV:'b-nrv',DNC:'b-del',BL:'b-del',DEL:'b-del'};
+const BMAP={PRF:'b-prf',OPT:'b-prf',VIP:'b-prf',STD:'b-std',NEW:'b-std',MOB:'b-oth',UPB:'b-oth',PEND:'b-oth',NRV:'b-nrv',DNC:'b-del',BL:'b-bl',DEL:'b-del'};
 const bc=s=>BMAP[String(s||'').toUpperCase()]||'b-oth';
 const today=()=>{const d=new Date();return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;};
 function rebuild(){const mk=(id,vals)=>{const el=document.getElementById(id),cur=el.value;el.innerHTML='<option value="">All</option>'+[...new Set(vals.filter(Boolean))].sort().map(v=>`<option value="${v}">${v}</option>`).join('');el.value=cur;};mk('f-state',data.map(f=>f.state));mk('f-status',data.map(f=>f.status));mk('f-type',data.map(f=>f.shop_type));}
@@ -550,12 +590,10 @@ function exportXLSX(){
     return v;
   }));
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  // Auto-size columns
   ws['!cols']=cols.map((c,i)=>{
     const max=Math.max(headers[i].length,...rows.map(r=>String(r[i]||'').length));
     return{wch:Math.min(Math.max(max+2,8),55)};
   });
-  // Freeze header row
   ws['!freeze']={xSplit:0,ySplit:1};
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'SRN Facilities');
@@ -591,6 +629,403 @@ function closeAllOverlays(){['dup-ov','dup-report-ov','addr-ov'].forEach(id=>doc
 async function findDuplicates(){showDbl('Scanning for duplicates…');const byState={};data.forEach(f=>{const st=f.state||'__';if(!byState[st])byState[st]=[];byState[st].push(f);});const pairs=[],seen=new Set(),states=Object.keys(byState);for(let si=0;si<states.length;si++){const group=byState[states[si]];showDbl(`Scanning ${states[si]}… (${si+1}/${states.length} states)`);await new Promise(r=>setTimeout(r,0));for(let i=0;i<group.length;i++){const rec=group[i],candidates=group.slice(i+1),matches=findDupesFor(rec,candidates);for(const m of matches){const key=[rec.id,m.facility.id].sort().join('|');if(!seen.has(key)){seen.add(key);pairs.push({a:rec,b:m.facility,reasons:m.reasons,confidence:m.confidence});}}}}hideDbl();const body=document.getElementById('dup-report-body'),summary=document.getElementById('dup-report-summary');if(pairs.length===0){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px">✅ No duplicate facilities detected.</div>';summary.textContent='No duplicates found';}else{pairs.sort((a,b)=>b.confidence-a.confidence);body.innerHTML=pairs.map(p=>`<div class="dup-pair"><div class="dup-pair-head"><span class="dup-pair-label">${p.reasons.join(' + ')}</span><span style="font-size:11px;color:var(--text3);margin-left:auto">Confidence: ${p.confidence}%</span></div><div class="dup-pair-body"><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.a.id}')">${esc(p.a.name)}</strong>${esc(p.a.address||'')}${p.a.city?', '+esc(p.a.city):''} ${esc(p.a.state||'')} ${esc(p.a.zip||'')}<br>${p.a.phone?'&#x1F4DE; '+esc(p.a.phone)+'<br>':''}ID: ${p.a.numeric_id||'—'} &nbsp;&middot;&nbsp; <span class="badge ${bc(p.a.status)}">${p.a.status||'—'}</span></div><div class="dup-pair-rec"><strong onclick="document.getElementById('dup-report-ov').classList.remove('open');openEdit('${p.b.id}')">${esc(p.b.name)}</strong>${esc(p.b.address||'')}${p.b.city?', '+esc(p.b.city):''} ${esc(p.b.state||'')} ${esc(p.b.zip||'')}<br>${p.b.phone?'&#x1F4DE; '+esc(p.b.phone)+'<br>':''}ID: ${p.b.numeric_id||'—'} &nbsp;&middot;&nbsp; <span class="badge ${bc(p.b.status)}">${p.b.status||'—'}</span></div></div></div>`).join('');summary.textContent=`${pairs.length} potential duplicate pair${pairs.length===1?'':'s'} found across ${states.length} states`;}document.getElementById('dup-report-ov').classList.add('open');}
 async function checkDupesForImport(rec,existingData,batchSoFar){const candidates=[...existingData.filter(f=>f.state===rec.state),...batchSoFar.filter(f=>f.state===rec.state)];return findDupesFor(rec,candidates);}
 function importFile(e){const f=e.target.files[0];if(!f)return;const ext=f.name.split('.').pop().toLowerCase();if(ext==='json'){const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;mergeAndUpload(d);}catch{toast('Invalid JSON.','err');}};rd.readAsText(f);}else if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){toast('Loading Excel parser…','',5000);const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=()=>importFile(e);document.head.appendChild(s);return;}const rd=new FileReader();rd.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});let hi=0;for(let i=0;i<Math.min(5,rows.length);i++){const l=rows[i].map(c=>String(c).toLowerCase().trim());if(l.includes('name')||l.includes('name *')){hi=i;break;}}const headers=rows[hi].map(h=>String(h));const recs=rows.slice(hi+1).map(r=>rowToRec(headers,r)).filter(r=>r.name);mergeAndUpload(recs);}catch(err){toast('Excel error: '+err.message,'err');}};rd.readAsArrayBuffer(f);}else if(ext==='csv'){const rd=new FileReader();rd.onload=ev=>{try{const pcsv=l=>{const o=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c='';}else c+=ch;}o.push(c);return o;};const lines=ev.target.result.split(/\r?\n/).filter(l=>l.trim());if(lines.length<2){toast('CSV empty.','err');return;}const headers=pcsv(lines[0]);const recs=lines.slice(1).map(l=>rowToRec(headers,pcsv(l))).filter(r=>r.name);mergeAndUpload(recs);}catch{toast('CSV error.','err');}};rd.readAsText(f);}else toast('Unsupported file type.','err');e.target.value='';}
+
+// ============================================================
+// BL IMPORT — Helper Site column mapping + merge/override logic
+// ============================================================
+
+// Maps Helper Site column headers to SRN fields
+function parseBLRow(headers, row) {
+  const get = (h) => {
+    const i = headers.indexOf(h);
+    if (i < 0) return null;
+    const v = row[i];
+    if (v === null || v === undefined || v === '') return null;
+    return v;
+  };
+  const normStr = v => v != null ? String(v).trim() || null : null;
+  const normZip = v => {
+    if (v == null) return null;
+    const s = String(v).trim();
+    // Excel may parse numeric zips as integers — pad to 5
+    if (/^\d{1,5}$/.test(s)) return s.padStart(5, '0');
+    return s || null;
+  };
+  const normPhoneStr = v => {
+    if (!v) return null;
+    const d = String(v).replace(/\D/g, '').replace(/^1/, '');
+    if (d.length < 7) return null;
+    // Format as XXX-XXX-XXXX
+    if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+    return d;
+  };
+  const normBool = v => v === true || String(v).toLowerCase() === 'true' || v === 1;
+  const normLatLng = v => {
+    if (v == null || v === '') return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : String(n);
+  };
+
+  return {
+    name:             normStr(get('LegalName')),
+    address:          normStr(get('StreetAddress')),
+    city:             normStr(get('City')),
+    state:            normStr(get('StateCode')),
+    zip:              normZip(get('ZipCode')),
+    country:          normStr(get('CountryCode')) || 'USA',
+    phone:            normPhoneStr(get('Phone')),
+    contact:          normStr(get('ContactName')),
+    contact_email:    normStr(get('ContactEmail')),
+    email1:           normStr(get('Email1')),
+    email2:           normStr(get('Email2')),
+    email3:           normStr(get('Email3')),
+    website:          normStr(get('Website')),
+    lat:              normLatLng(get('Latitude')),
+    lng:              normLatLng(get('Longitude')),
+    labor:            (() => { const v = get('LaborRateInUSD'); return v != null && v !== '' ? (parseFloat(v) || null) : null; })(),
+    shop_type:        normStr(get('ShopType')),
+    software:         normStr(get('Software')),
+    labor_guide:      normStr(get('LaborGuide')),
+    form_type:        normStr(get('FormType')) || 'Web',
+    ev_certified:     normBool(get('IsEVCertified')),
+    accepts_shipped:  normBool(get('AcceptsShippedParts')),
+    status:           'BL',
+    // Preserve Helper Site IDs in notes for traceability
+    _helperRepairID:  get('RepairFacilityID'),
+    _helperCSID:      get('CarShieldID'),
+  };
+}
+
+// Find ALL existing matches for a BL record.
+// Matching rules (any combination reaching score >= 60 qualifies):
+//   Email exact match                          → +70  (alone sufficient)
+//   Phone exact match                          → +65  (alone sufficient)
+//   Name ≥ 85% AND Address ≥ 85% (same state) → +60  (both required — prevents chain-shop false positives)
+//   Name alone or address alone never triggers a match.
+function findBLMatches(blRec, existingFacilities) {
+  const recPhone = normPhone(blRec.phone);
+  const recEmails = [blRec.email1, blRec.email2, blRec.email3, blRec.contact_email]
+    .filter(v => v && String(v).trim()).map(e => e.toLowerCase().trim());
+  const recName = (blRec.name || '').toLowerCase().trim();
+  const recState = blRec.state;
+  const recAddr = normAddr(blRec.address);
+  const matches = [];
+
+  for (const f of existingFacilities) {
+    let score = 0;
+    const reasons = [];
+
+    // Email exact match
+    const fEmails = [f.email1, f.email2, f.email3, f.contact_email]
+      .filter(v => v && String(v).trim()).map(e => e.toLowerCase().trim());
+    if (recEmails.length > 0 && fEmails.length > 0 && recEmails.some(e => fEmails.includes(e))) {
+      score += 70; reasons.push('email match');
+    }
+
+    // Phone exact match
+    const fPhone = normPhone(f.phone);
+    if (recPhone && fPhone && recPhone === fPhone && recPhone.length >= 7) {
+      score += 65; reasons.push('phone match');
+    }
+
+    // Name + Address + State — both name AND address must meet threshold (≥85% each)
+    // This prevents two "Goodyear" shops in Ohio from matching just on name.
+    if (recState && f.state === recState && recAddr) {
+      const fName = (f.name || '').toLowerCase().trim();
+      const fAddr = normAddr(f.address);
+      const nameSim = similarity(recName, fName);
+      const addrSim = fAddr ? similarity(recAddr, fAddr) : 0;
+      if (nameSim >= 0.85 && addrSim >= 0.85) {
+        score += 60;
+        reasons.push(`name+address match (${Math.round(nameSim*100)}% / ${Math.round(addrSim*100)}%)`);
+      }
+    }
+
+    if (score >= 60) matches.push({ facility: f, score, reasons });
+  }
+
+  return matches.sort((a, b) => b.score - a.score);
+}
+
+// Geocode a BL record: auto-accept Google's suggestion if one exists (high or low confidence).
+// If Google returns nothing at all, save as-is and flag with a note.
+async function geocodeBLRecord(blRec) {
+  if (!blRec.address || !blRec.city || !blRec.state || !blRec.zip) {
+    // No address to geocode — flag it
+    blRec._addrFlag = 'Address incomplete — could not geocode';
+    return blRec;
+  }
+  try {
+    await loadGoogleMaps();
+    const full = `${blRec.address}, ${blRec.city}, ${blRec.state} ${blRec.zip}, ${blRec.country || 'USA'}`;
+    return new Promise(resolve => {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: full }, (results, status) => {
+        if (status !== 'OK' || !results?.length) {
+          // Google found nothing — save as-is with a flag note
+          blRec._addrFlag = 'Address unverified — not found in Google Maps';
+          resolve(blRec);
+          return;
+        }
+        // Auto-accept whatever Google returns (corrected or exact)
+        const parsed = parseGeoResult(results[0]);
+        blRec.address = parsed.address || blRec.address;
+        blRec.city    = parsed.city    || blRec.city;
+        blRec.state   = parsed.state   || blRec.state;
+        blRec.zip     = parsed.zip     || blRec.zip;
+        blRec.lat     = String(parsed.lat);
+        blRec.lng     = String(parsed.lng);
+        resolve(blRec);
+      });
+    });
+  } catch (e) {
+    blRec._addrFlag = 'Address unverified — geocoding error';
+    return blRec;
+  }
+}
+
+async function importBLFile(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  e.target.value = '';
+
+  const ext = f.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+    toast('BL import requires .xlsx, .xls, or .csv', 'err');
+    return;
+  }
+
+  // Load XLSX library if needed
+  if ((ext === 'xlsx' || ext === 'xls') && typeof XLSX === 'undefined') {
+    toast('Loading Excel parser…', '', 5000);
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  showDbl('Reading BL file…');
+
+  let blRows = [];
+  try {
+    if (ext === 'xlsx' || ext === 'xls') {
+      const buf = await f.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const headers = rawRows[0].map(h => String(h).trim());
+      blRows = rawRows.slice(1)
+        .map(row => parseBLRow(headers, row))
+        .filter(r => r.name);
+    } else {
+      // CSV fallback
+      const text = await f.text();
+      const pcsv = l => {
+        const o = []; let c = '', q = false;
+        for (const ch of l) {
+          if (ch === '"') q = !q;
+          else if (ch === ',' && !q) { o.push(c); c = ''; }
+          else c += ch;
+        }
+        o.push(c); return o;
+      };
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      const headers = pcsv(lines[0]).map(h => String(h).trim());
+      blRows = lines.slice(1)
+        .map(l => parseBLRow(headers, pcsv(l)))
+        .filter(r => r.name);
+    }
+  } catch (err) {
+    hideDbl();
+    toast('Could not read BL file: ' + err.message, 'err', 6000);
+    return;
+  }
+
+  const total = blRows.length;
+  if (!total) {
+    hideDbl();
+    toast('No valid BL records found in file.', 'warn');
+    return;
+  }
+
+  // Phase 1: geocode — auto-accept any Google suggestion, save as-is if no result
+  showDbl(`Geocoding 0 / ${total.toLocaleString()}…`);
+  await loadGoogleMaps().catch(() => {});
+  const GEO_THROTTLE = 50;
+  for (let i = 0; i < blRows.length; i++) {
+    if (i % 20 === 0) showDbl(`Geocoding ${i.toLocaleString()} / ${total.toLocaleString()}…`);
+    blRows[i] = await geocodeBLRecord(blRows[i]);
+    await new Promise(r => setTimeout(r, GEO_THROTTLE));
+  }
+
+  // Phase 2: match each BL record against existing database
+  showDbl(`Matching ${total.toLocaleString()} BL records against database…`);
+
+  // Stats
+  let countUpdated = 0;   // existing facility status changed to BL
+  let countMerged = 0;    // duplicate existing records deleted (kept best match)
+  let countInserted = 0;  // new BL records with no match in DB
+
+  const patchOps = [];
+  const insertRecs = [];
+
+  for (let i = 0; i < blRows.length; i++) {
+    if (i % 50 === 0) showDbl(`Matching ${i.toLocaleString()} / ${total.toLocaleString()}…`);
+    await new Promise(r => setTimeout(r, 0));
+
+    const blRec = blRows[i];
+    const allMatches = findBLMatches(blRec, data);
+
+    if (allMatches.length === 0) {
+      // No match — insert as new BL record
+      const rec = {
+        name: blRec.name,
+        address: blRec.address,
+        city: blRec.city,
+        state: blRec.state,
+        zip: blRec.zip,
+        country: blRec.country || 'USA',
+        phone: blRec.phone,
+        contact: blRec.contact,
+        contact_email: blRec.contact_email,
+        email1: blRec.email1,
+        email2: blRec.email2,
+        email3: blRec.email3,
+        website: blRec.website,
+        lat: blRec.lat,
+        lng: blRec.lng,
+        labor: blRec.labor,
+        shop_type: blRec.shop_type,
+        software: blRec.software,
+        labor_guide: blRec.labor_guide,
+        form_type: blRec.form_type || 'Web',
+        ev_certified: blRec.ev_certified || false,
+        accepts_shipped: blRec.accepts_shipped || false,
+        status: 'BL',
+        added_on: today(),
+        edited_on: today(),
+        edited_by: userEmail,
+        notes: (() => { const parts = ['Imported from BL list']; if (blRec._helperRepairID) parts.push('Helper ID: ' + blRec._helperRepairID); if (blRec._addrFlag) parts.push(blRec._addrFlag); return parts.join(' · '); })(),
+      };
+      insertRecs.push(rec);
+      countInserted++;
+    } else {
+      // Has matches — update best match to BL, mark extras for deletion
+      const best = allMatches[0].facility;
+      const extras = allMatches.slice(1).map(m => m.facility);
+
+      // Build patch for best match
+      const oldStatus = best.status;
+      const changes = {};
+      if (oldStatus !== 'BL') changes.status = { from: oldStatus, to: 'BL' };
+      if (blRec._addrFlag) changes.notes = { from: best.notes || null, to: (best.notes ? best.notes + ' · ' + blRec._addrFlag : blRec._addrFlag) };
+
+      patchOps.push({
+        id: best.id,
+        fields: {
+          status: 'BL',
+          edited_on: today(),
+          edited_by: userEmail,
+          // Enrich with BL data if better quality
+          lat: blRec.lat || best.lat,
+          lng: blRec.lng || best.lng,
+          email1: best.email1 || blRec.email1,
+          email2: best.email2 || blRec.email2,
+          email3: best.email3 || blRec.email3,
+          // Append address flag to notes if geocoding failed
+          notes: blRec._addrFlag
+            ? (best.notes ? best.notes + ' · ' + blRec._addrFlag : blRec._addrFlag)
+            : best.notes,
+        },
+        changes,
+        facilityName: best.name,
+        extraIds: extras.map(x => x.id),
+      });
+      countUpdated++;
+      countMerged += extras.length;
+    }
+  }
+
+  // Execute all patches in batches
+  showDbl(`Updating ${countUpdated.toLocaleString()} existing facilities to BL…`);
+  let patchDone = 0;
+  for (const op of patchOps) {
+    try {
+      await withAuthRetry(() => api.patch(op.id, op.fields));
+      // Log history if status changed
+      if (op.changes && Object.keys(op.changes).length > 0) {
+        await withAuthRetry(() => api.logHistory({
+          facility_id: op.id,
+          facility_name: op.facilityName,
+          changed_by: userEmail + ' (BL Import)',
+          changes: op.changes,
+        })).catch(() => {});
+      }
+      // Delete extra duplicates
+      for (const xid of op.extraIds) {
+        await withAuthRetry(() => api.del(xid)).catch(() => {});
+      }
+    } catch (err) {
+      // Non-fatal: log and continue
+      console.warn('BL patch failed for', op.id, err.message);
+    }
+    patchDone++;
+    if (patchDone % 50 === 0) showDbl(`Patching… ${patchDone} / ${patchOps.length}`);
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  // Insert new BL records in batches of 200
+  if (insertRecs.length > 0) {
+    showDbl(`Inserting ${insertRecs.length.toLocaleString()} new BL records…`);
+    const BATCH = 200;
+    for (let i = 0; i < insertRecs.length; i += BATCH) {
+      const batch = insertRecs.slice(i, i + BATCH);
+      await withAuthRetry(() => api.upsertBatch(batch)).catch(err => {
+        console.warn('BL batch insert error:', err.message);
+      });
+      showDbl(`Inserting… ${Math.min(i + BATCH, insertRecs.length)} / ${insertRecs.length}`);
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+
+  // Reload data and show summary
+  await loadData();
+  hideDbl();
+  showBLSummary(countUpdated, countMerged, countInserted, total);
+}
+
+function showBLSummary(updated, merged, inserted, total) {
+  const grid = document.getElementById('bl-stat-grid');
+  grid.innerHTML = `
+    <div class="bl-stat updated">
+      <div class="bl-stat-num">${updated.toLocaleString()}</div>
+      <div class="bl-stat-lbl">⚠ Existing → BL</div>
+    </div>
+    <div class="bl-stat merged">
+      <div class="bl-stat-num">${merged.toLocaleString()}</div>
+      <div class="bl-stat-lbl">🗑 Duplicates Removed</div>
+    </div>
+    <div class="bl-stat inserted">
+      <div class="bl-stat-num">${inserted.toLocaleString()}</div>
+      <div class="bl-stat-lbl">+ New BL Records</div>
+    </div>
+    <div class="bl-stat total">
+      <div class="bl-stat-num">${total.toLocaleString()}</div>
+      <div class="bl-stat-lbl">Total Processed</div>
+    </div>`;
+
+  const noteLines = [];
+  if (updated > 0) noteLines.push(`${updated.toLocaleString()} existing facilit${updated === 1 ? 'y was' : 'ies were'} already in the SRN — their status has been set to BL. These shops will not appear on the public map.`);
+  if (merged > 0) noteLines.push(`${merged.toLocaleString()} duplicate record${merged === 1 ? ' was' : 's were'} removed to keep the database clean.`);
+  if (inserted > 0) noteLines.push(`${inserted.toLocaleString()} new BL record${inserted === 1 ? ' was' : 's were'} added — these shops were not previously in the SRN.`);
+  noteLines.push('BL status overrides all other statuses. None of these shops will be referred to customers.');
+
+  document.getElementById('bl-summary-note').innerHTML = noteLines.map(l => `<p style="margin-bottom:6px">${l}</p>`).join('');
+  document.getElementById('bl-summary-ov').classList.add('open');
+}
 </script>
 </body>
 </html>
