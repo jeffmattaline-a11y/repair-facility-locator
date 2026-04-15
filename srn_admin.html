@@ -212,7 +212,7 @@ td.nm:hover{text-decoration:underline}
     <h1>SRN Facility Manager</h1>
     <p>Sign in to manage repair facilities</p>
     <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')signIn()"></div>
-    <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')signIn()"></div>
+    <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
     <button class="lbtn" onclick="signIn()">Sign In</button>
     <div class="lerr" id="l-err"></div>
   </div>
@@ -234,7 +234,7 @@ td.nm:hover{text-decoration:underline}
     <h3>&#x1F512; Session Expired</h3>
     <p>Your session has timed out. Please enter your password to continue &mdash; your unsaved work is still open.</p>
     <div class="lf"><label>Email</label><input type="email" id="re-email" readonly style="background:#f4f6f9;color:#4a5568"></div>
-    <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')reAuth()"></div>
+    <div class="lf"><label>Password</label><input type="password" id="re-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')reAuth()"></div>
     <button class="lbtn" onclick="reAuth()">Sign Back In</button>
     <div class="lerr" id="re-err"></div>
   </div>
@@ -291,7 +291,8 @@ td.nm:hover{text-decoration:underline}
   <div class="sp"></div>
   <span class="pill" id="nav-count">0 Facilities</span>
   <button class="nb" onclick="downloadTemplate()" title="Download CSV import template">&#x2B07; Template</button>
-  <button class="nb" onclick="exportJSON()">Export JSON</button>
+  <button class="nb" onclick="exportJSON()" title="Export all facilities as JSON">&#x2B07; JSON</button>
+  <button class="nb" onclick="exportXLSX()" title="Export all facilities as Excel spreadsheet">&#x2B07; Excel</button>
   <button class="nb" onclick="document.getElementById('imp-file').click()">&#x2B06; Import</button>
   <input type="file" id="imp-file" accept=".json,.xlsx,.xls,.csv" style="display:none" onchange="importFile(event)">
   <button class="nb" onclick="openMap()" title="Open public locator map">&#x1F5FA; View Map</button>
@@ -523,6 +524,45 @@ async function doDel(){showDbl('Deleting…');try{await withAuthRetry(()=>api.de
 function toast(msg,type='',dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',dur);}
 document.getElementById('f-offer-url').addEventListener('input',e=>{const v=e.target.value.trim(),lk=document.getElementById('f-offer-link');if(v&&v.startsWith('http')){lk.href=v;lk.style.display='inline-block';}else lk.style.display='none';});
 function exportJSON(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='srn_facilities.json';a.click();}
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){
+    toast('Loading Excel library…','',3000);
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>exportXLSX();
+    document.head.appendChild(s);
+    return;
+  }
+  const cols=['numeric_id','name','address','city','state','zip','phone','status','shop_type',
+    'contact','contact_email','email1','website','labor','labor_guide','software','form_type',
+    'ev_certified','accepts_shipped','offer_url','lat','lng','added_on','added_by','edited_on','edited_by','notes'];
+  const labels={numeric_id:'ID',name:'Name',address:'Address',city:'City',state:'State',zip:'Zip',
+    phone:'Phone',status:'Status',shop_type:'Shop Type',contact:'Contact',contact_email:'Contact Email',
+    email1:'Email',website:'Website',labor:'Labor $',labor_guide:'Labor Guide',software:'Software',
+    form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped Parts',
+    offer_url:'Offer URL',lat:'Latitude',lng:'Longitude',added_on:'Added On',added_by:'Added By',
+    edited_on:'Edited On',edited_by:'Edited By',notes:'Notes'};
+  const headers=cols.map(c=>labels[c]||c);
+  const rows=data.map(f=>cols.map(c=>{
+    const v=f[c];
+    if(v===null||v===undefined)return'';
+    if(typeof v==='boolean')return v?'TRUE':'FALSE';
+    return v;
+  }));
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  // Auto-size columns
+  ws['!cols']=cols.map((c,i)=>{
+    const max=Math.max(headers[i].length,...rows.map(r=>String(r[i]||'').length));
+    return{wch:Math.min(Math.max(max+2,8),55)};
+  });
+  // Freeze header row
+  ws['!freeze']={xSplit:0,ySplit:1};
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'SRN Facilities');
+  const ts=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`srn_facilities_${ts}.xlsx`);
+  toast(`Exported ${data.length.toLocaleString()} facilities to Excel.`,'ok',3500);
+}
 function openMap(){const base=window.location.href.replace(/srn_admin\.html.*$/,'');window.open(base+'srn_map.html','_blank');}
 function downloadTemplate(){const headers=['Name *','Address *','City *','State *','Zip *','Country','Phone','Contact','Contact Email','Website','Latitude','Longitude','Status','Shop Type','Labor $','Labor Guide','Software','Form Type','EV Certified','Accepts Shipped','Offer URL','Added On','Added By','Numeric ID'];const notes=['* Required','* Required','* Required','* Required — 2-letter state code (e.g. MO)','* Required','Default: USA','Digits only e.g. 8005551234','Contact person name','Contact email address','Full URL with https://','Decimal e.g. 38.627003','Decimal e.g. -90.199402','PRF | OPT | STD | NEW | VIP | MOB | UPB | DNC | BL | PEND | DEL','Dealership | Independent | Chain | Specialty | Body Shop | Quick Lube | Tire Shop | European | Asian | Domestic | National | Other','Numeric e.g. 180.00','Mitchell | Alldata | Identifix | Motor | Other','Mitchell1 | Shop-Ware | Tekmetric | Protractor | Other','Web | Phone | Fax','TRUE or FALSE','TRUE or FALSE','Full URL to offers page e.g. https://www.goodyear.com/en_US/offers.html','MM-DD-YYYY','Who added this record','Leave blank for new records'];const csvRow=arr=>arr.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');const csv=[csvRow(headers),csvRow(notes)].join('\r\n');const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SRN_Facility_Import_Template.csv';a.click();toast('Template downloaded.','ok');}
 const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes'};
@@ -537,13 +577,9 @@ function normAddr(a){if(!a)return'';let s=String(a).toLowerCase().trim();s=s.rep
 function normStreetName(a){if(!a)return'';return normAddr(a).replace(/^\d+\s*/,'').trim();}
 function similarity(a,b){if(!a||!b)return 0;if(a===b)return 1;const aNS=a.replace(/\s/g,''),bNS=b.replace(/\s/g,'');if(aNS===bNS)return 1;const la=a.length,lb=b.length,max=Math.max(la,lb);if(max===0)return 1;if(Math.abs(la-lb)/max>0.6)return 0;const dp=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=la;i++)for(let j=1;j<=lb;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);const levSim=1-dp[la][lb]/max;const laNS=aNS.length,lbNS=bNS.length,maxNS=Math.max(laNS,lbNS);if(maxNS===0)return levSim;const dp2=Array.from({length:laNS+1},(_,i)=>Array.from({length:lbNS+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=laNS;i++)for(let j=1;j<=lbNS;j++)dp2[i][j]=aNS[i-1]===bNS[j-1]?dp2[i-1][j-1]:1+Math.min(dp2[i-1][j],dp2[i][j-1],dp2[i-1][j-1]);return Math.max(levSim,1-dp2[laNS][lbNS]/maxNS);}
 function findDupesFor(rec,candidates,excludeId=null){const recPhone=normPhone(rec.phone),recAddr=normAddr(rec.address),recStreet=normStreetName(rec.address),recName=(rec.name||'').toLowerCase().trim(),recZip=(rec.zip||'').trim(),recCity=(rec.city||'').toLowerCase().trim(),matches=[];for(const c of candidates){if(c.id&&c.id===excludeId)continue;if(c===rec)continue;const reasons=[],cPhone=normPhone(c.phone);let confidence=0;
-// Email match — check all email fields on both sides
 const cEmails=[c.email1,c.email2,c.email3,c.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const recEmails=[rec.email1,rec.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const emailMatch=recEmails.length>0&&cEmails.length>0&&recEmails.some(e=>cEmails.includes(e));if(emailMatch){reasons.push('email match');confidence+=65;}
-// Phone match
 if(recPhone&&cPhone&&recPhone===cPhone&&recPhone.length>=7){reasons.push('phone match');confidence+=60;}
-// Address match
 const cAddr=normAddr(c.address),cStreet=normStreetName(c.address),cZip=(c.zip||'').trim(),cCity=(c.city||'').toLowerCase().trim(),sameState=rec.state===c.state,sameZip=recZip&&cZip&&recZip===cZip,sameCity=recCity&&cCity&&recCity===cCity;if(recAddr&&cAddr&&sameState){const addrSim=similarity(recAddr,cAddr),streetSim=similarity(recStreet,cStreet),bestSim=Math.max(addrSim,streetSim);if(bestSim>=0.80){reasons.push(`address match (${Math.round(bestSim*100)}%)`);confidence+=50;}else if(sameZip&&streetSim>=0.70){reasons.push(`address match (zip+street ${Math.round(streetSim*100)}%)`);confidence+=45;}}
-// Name match — only flag if ALSO same city or same zip (prevents chain store false positives)
 if(sameZip||sameCity){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.85&&confidence===0){reasons.push(`name match (${Math.round(nameSim*100)}%)`);confidence+=40;}else if(nameSim>=0.75)confidence+=15;}
 if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});}return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);}
 let dupPending=null;
