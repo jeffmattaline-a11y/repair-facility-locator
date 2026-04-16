@@ -654,7 +654,7 @@ function go(){
     if(ft&&f.shop_type!==ft)return false;
     if(fsrc&&f.source_method!==fsrc)return false;
     if(fm&&!msgCounts[f.id])return false;
-    if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q))return false;
+    const qDigits=q.replace(/\D/g,''); const phoneNorm=(f.phone||'').replace(/\D/g,''); if(q&&!`${f.name} ${f.city} ${f.phone} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q)&&!(qDigits.length>=7&&phoneNorm.includes(qDigits)))return false;
     return true;
   });
   filtered.sort((a,b)=>{
