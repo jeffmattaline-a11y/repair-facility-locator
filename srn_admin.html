@@ -69,7 +69,7 @@ td.nm:hover{text-decoration:underline}
 .src-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
 .src-manual{background:#e8f0fc;color:#1a5fb4;border:1px solid #93c5fd}
 .src-bulk{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
-.src-n8n{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.src-web{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
 .src-unknown{background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db}
 .empty{text-align:center;padding:48px;color:var(--text3);font-size:14px}
 .pgbar{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 20px;display:flex;align-items:center;gap:3px;font-size:12px}
@@ -252,8 +252,10 @@ td.nm:hover{text-decoration:underline}
 /* source-specific card colours */
 .mc-manual{background:#eef3fd;border-color:#93c5fd;color:#1a5fb4}
 .mc-bulk{background:#fff7ed;border-color:#fdba74;color:#c2410c}
-.mc-n8n{background:#f0fdf4;border-color:#86efac;color:#15803d}
+.mc-web{background:#f0fdf4;border-color:#86efac;color:#15803d}
 .mc-total{background:#1a3a6b;border-color:#1a3a6b;color:#fff}
+/* messages card colour */
+.mc-msgs{background:#fdf4ff;border-color:#d8b4fe;color:#7e22ce}
 /* status breakdown table */
 .status-table{width:100%;border-collapse:collapse;font-size:12px}
 .status-table th{background:#f4f6f9;padding:7px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
@@ -412,7 +414,7 @@ td.nm:hover{text-decoration:underline}
     <option value="">All</option>
     <option value="manual">Manual</option>
     <option value="bulk_import">Bulk Import</option>
-    <option value="n8n_submission">Submission (n8n)</option>
+    <option value="n8n_submission">Web/Email</option>
   </select>
   <button id="msgs-toggle-btn" class="msgs-toggle" onclick="toggleMsgsFilter()" title="Show only facilities with open messages">
     &#x1F4AC; Has Messages
@@ -575,9 +577,9 @@ let msgCounts = {};
 
 // ─── Source method helpers ──────────────────────────────────────────
 const SOURCE_LABELS = {
-  manual:         { label: 'Manual',          cls: 'src-manual', icon: '✏️' },
-  bulk_import:    { label: 'Bulk Import',      cls: 'src-bulk',   icon: '📥' },
-  n8n_submission: { label: 'Submission (n8n)', cls: 'src-n8n',    icon: '📋' },
+  manual:         { label: 'Manual',     cls: 'src-manual', icon: '✏️' },
+  bulk_import:    { label: 'Bulk Import', cls: 'src-bulk',  icon: '📥' },
+  n8n_submission: { label: 'Web/Email',  cls: 'src-web',    icon: '🌐' },
 };
 function srcBadgeHtml(method) {
   const m = SOURCE_LABELS[method] || { label: method || 'Unknown', cls: 'src-unknown', icon: '❓' };
@@ -603,7 +605,17 @@ const api={
   async getHistory(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_history?facility_id=eq.${facilityId}&order=changed_at.desc&limit=50`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
   async getMessages(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?facility_id=eq.${facilityId}&order=received_at.desc&limit=100`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
   async getOpenMsgCounts(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=facility_id`,{headers:hdrs()});if(!r.ok)return[];return r.json();},
-  async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();}
+  async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async getMsgMetrics(){
+    // Fetch total and open message counts
+    const [totalRes, openRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/facility_messages?select=id`, { headers: { ...hdrs(), 'Prefer': 'count=exact', 'Range': '0-0' } }),
+      fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=id`, { headers: { ...hdrs(), 'Prefer': 'count=exact', 'Range': '0-0' } }),
+    ]);
+    const totalCount = parseInt(totalRes.headers.get('content-range')?.split('/')[1] || '0', 10);
+    const openCount  = parseInt(openRes.headers.get('content-range')?.split('/')[1]  || '0', 10);
+    return { total: totalCount, open: openCount };
+  }
 };
 
 (function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
@@ -804,7 +816,6 @@ async function saveFac(){
     offer_url:g('f-offer-url').value.trim()||null,
     notes:g('f-notes').value.trim()||null,
     added_on:existing?.added_on||today(),
-    // Preserve existing source & timestamps; stamp 'manual' + added_at for new records
     source_method: existing?.source_method || 'manual',
     added_at: existing?.added_at || new Date().toISOString(),
     added_by: existing?.added_by || userEmail,
@@ -870,7 +881,7 @@ function openMetrics() {
   setTimeout(() => renderMetrics(), 50);
 }
 
-function renderMetrics() {
+async function renderMetrics() {
   const total = data.length;
   if (!total) {
     document.getElementById('metrics-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">No data loaded.</div>';
@@ -906,11 +917,21 @@ function renderMetrics() {
   const DAY30 = 30 * 24 * 60 * 60 * 1000;
   const recent30 = data.filter(f => f.added_at && (now - new Date(f.added_at).getTime()) < DAY30).length;
 
-  // ── Build HTML ──
+  // ── Message metrics (live from Supabase) ──
+  let msgTotal = 0, msgOpen = 0;
+  try {
+    const msgMetrics = await api.getMsgMetrics();
+    msgTotal = msgMetrics.total;
+    msgOpen  = msgMetrics.open;
+  } catch(e) {
+    // non-fatal — show zeros
+  }
+
+  // ── Build source cards HTML ──
   const srcCardHtml = [
-    { key: 'manual',         label: 'Manually Added',     cls: 'mc-manual', icon: '✏️' },
-    { key: 'bulk_import',    label: 'Bulk Import',        cls: 'mc-bulk',   icon: '📥' },
-    { key: 'n8n_submission', label: 'Submission (n8n)',   cls: 'mc-n8n',    icon: '📋' },
+    { key: 'manual',         label: 'Manually Added', cls: 'mc-manual', icon: '✏️' },
+    { key: 'bulk_import',    label: 'Bulk Import',    cls: 'mc-bulk',   icon: '📥' },
+    { key: 'n8n_submission', label: 'Web/Email',      cls: 'mc-web',    icon: '🌐' },
   ].map(s => {
     const cnt = bySrc[s.key] || 0;
     const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
@@ -927,14 +948,21 @@ function renderMetrics() {
     <div class="metric-card-sub">+${recent30.toLocaleString()} in last 30 days</div>
   </div>`;
 
+  // ── Messages card ──
+  const msgsCard = `<div class="metric-card mc-msgs">
+    <div class="metric-card-num">${msgTotal.toLocaleString()}</div>
+    <div class="metric-card-lbl">💬 Facility Messages</div>
+    <div class="metric-card-sub">${msgOpen.toLocaleString()} open · ${(msgTotal - msgOpen).toLocaleString()} addressed</div>
+  </div>`;
+
   // Status breakdown table
   const statusRows = Object.entries(byStatus)
     .sort((a, b) => b[1] - a[1])
     .map(([st, cnt]) => {
       const pct = Math.round(cnt / total * 100);
-      const manCnt = srcStatusMatrix['manual']?.[st] || 0;
-      const bulkCnt = srcStatusMatrix['bulk_import']?.[st] || 0;
-      const n8nCnt = srcStatusMatrix['n8n_submission']?.[st] || 0;
+      const manCnt  = srcStatusMatrix['manual']?.[st]         || 0;
+      const bulkCnt = srcStatusMatrix['bulk_import']?.[st]    || 0;
+      const webCnt  = srcStatusMatrix['n8n_submission']?.[st] || 0;
       return `<tr>
         <td><span class="badge ${bc(st)}">${esc(st)}</span></td>
         <td style="font-weight:700">${cnt.toLocaleString()}</td>
@@ -942,11 +970,15 @@ function renderMetrics() {
           <div style="font-size:11px;color:var(--text3)">${pct}%</div>
           <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
         </td>
-        <td style="font-size:12px;color:var(--text3)">${manCnt > 0 ? `<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>` : ''}${bulkCnt > 0 ? `<span class="src-badge src-bulk" style="margin-right:3px">📥 ${bulkCnt}</span>` : ''}${n8nCnt > 0 ? `<span class="src-badge src-n8n">📋 ${n8nCnt}</span>` : ''}</td>
+        <td style="font-size:12px;color:var(--text3)">
+          ${manCnt  > 0 ? `<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>`  : ''}
+          ${bulkCnt > 0 ? `<span class="src-badge src-bulk"   style="margin-right:3px">📥 ${bulkCnt}</span>` : ''}
+          ${webCnt  > 0 ? `<span class="src-badge src-web">🌐 ${webCnt}</span>`                              : ''}
+        </td>
       </tr>`;
     }).join('');
 
-  // Recent signups (n8n_submission in last 90 days)
+  // Recent Web/Email signups (n8n_submission in last 90 days)
   const DAY90 = 90 * 24 * 60 * 60 * 1000;
   const recentSignups = data
     .filter(f => f.source_method === 'n8n_submission' && f.added_at && (now - new Date(f.added_at).getTime()) < DAY90)
@@ -960,12 +992,12 @@ function renderMetrics() {
         <td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td>
         <td style="font-size:11px;color:var(--text3)">${fmtAddedAt(f.added_at)}</td>
       </tr>`).join('')
-    : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No submission records in last 90 days</td></tr>`;
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No web/email submission records in last 90 days</td></tr>`;
 
   document.getElementById('metrics-body').innerHTML = `
     <div class="metrics-section">
       <div class="metrics-section-title">Network Overview</div>
-      <div class="metrics-grid">${totalCard}${srcCardHtml}</div>
+      <div class="metrics-grid">${totalCard}${srcCardHtml}${msgsCard}</div>
     </div>
 
     <div class="metrics-section">
@@ -979,7 +1011,7 @@ function renderMetrics() {
     </div>
 
     <div class="metrics-section">
-      <div class="metrics-section-title">Recent Submissions (n8n) — Last 90 Days</div>
+      <div class="metrics-section-title">Recent Web/Email Submissions — Last 90 Days</div>
       <table class="status-table">
         <thead><tr><th>Facility</th><th>Location</th><th>Status</th><th>Added</th></tr></thead>
         <tbody>${signupRows}</tbody>
@@ -1016,7 +1048,6 @@ async function mergeAndUpload(rows){
     const batch=valid.slice(i,i+BATCH).map(r=>{
       const n={};
       ALL_KEYS.forEach(k=>n[k]=r.hasOwnProperty(k)?r[k]:null);
-      // Stamp bulk_import if no source set, and record added_at
       if(!n.source_method) n.source_method = 'bulk_import';
       if(!n.added_at) n.added_at = importTimestamp;
       if(!n.added_by) n.added_by = userEmail;
