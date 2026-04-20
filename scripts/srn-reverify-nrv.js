@@ -21,7 +21,10 @@ function supabaseFetch(path, method = 'GET', body = null) {
     const req = https.request(options, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(JSON.parse(data || '[]')));
+      res.on('end', () => {
+        try { resolve(JSON.parse(data || '[]')); }
+        catch (e) { resolve([]); }
+      });
     });
     req.on('error', reject);
     if (body) req.write(JSON.stringify(body));
@@ -41,12 +44,10 @@ function geocode(address, city, state, zip) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        const json = JSON.parse(data);
-        if (json.status === 'OK' && json.results.length > 0) {
-          resolve(json.results[0]);
-        } else {
-          resolve(null);
-        }
+        try {
+          const json = JSON.parse(data);
+          resolve(json.status === 'OK' && json.results.length > 0 ? json.results[0] : null);
+        } catch (e) { resolve(null); }
       });
     });
     req.on('error', reject);
@@ -59,14 +60,27 @@ function sleep(ms) {
 }
 
 async function main() {
-  console.log('Fetching NRV facilities with unverified address note...');
+  console.log('Fetching all NRV facilities...');
 
-  // Fetch all matching NRV records
-  const facilities = await supabaseFetch(
-    `facilities?status=eq.NRV&notes=eq.Address%20could%20not%20be%20verified%20by%20Google&select=id,name,address,city,state,zip`
-  );
+  // Fetch all NRV records with notes, paginated
+  const PAGE = 1000;
+  let allNRV = [];
+  let from = 0;
+  while (true) {
+    const batch = await supabaseFetch(
+      `facilities?status=eq.NRV&select=id,name,address,city,state,zip,notes&limit=${PAGE}&offset=${from}`
+    );
+    allNRV = allNRV.concat(batch);
+    if (batch.length < PAGE) break;
+    from += PAGE;
+  }
 
-  console.log(`Found ${facilities.length} records to re-verify.\n`);
+  // Filter in JS for exact note match
+  const TARGET_NOTE = 'Address could not be verified by Google';
+  const facilities = allNRV.filter(f => f.notes === TARGET_NOTE);
+
+  console.log(`Total NRV records fetched: ${allNRV.length}`);
+  console.log(`Matching target note: ${facilities.length}\n`);
 
   let promoted = 0;
   let stillFailed = 0;
@@ -80,13 +94,13 @@ async function main() {
       const result = await geocode(f.address, f.city, f.state, f.zip);
 
       if (result) {
-        // Update to PRF and clear note
-        await supabaseFetch(
+        const updateResult = await supabaseFetch(
           `facilities?id=eq.${f.id}`,
           'PATCH',
           { status: 'PRF', notes: null }
         );
-        console.log(`✓ Verified → PRF`);
+        // Log the raw response to confirm update succeeded
+        console.log(`✓ Verified → PRF (update response: ${JSON.stringify(updateResult).substring(0, 80)})`);
         promoted++;
       } else {
         console.log(`✗ Still unverified — left as NRV`);
@@ -97,7 +111,6 @@ async function main() {
       errors++;
     }
 
-    // Throttle to ~10 requests/sec to stay under Google's limit
     await sleep(100);
   }
 
