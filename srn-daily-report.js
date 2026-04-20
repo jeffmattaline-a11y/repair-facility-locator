@@ -35,25 +35,55 @@ async function fetchNewFacilities() {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Query Supabase for network-wide status snapshot (all facilities)
+// 2. Query Supabase for network-wide status snapshot (aggregated)
 // ---------------------------------------------------------------------------
 async function fetchStatusSnapshot() {
-  const url = `${SUPABASE_URL}/rest/v1/facilities?select=status,source_method`;
-
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!res.ok) return [];
-  return res.json();
+  // Fetch only status + source_method, paginated to avoid timeout
+  const PAGE = 1000;
+  let from = 0, all = [], done = false;
+  while (!done) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/facilities?select=status,source_method&limit=${PAGE}&offset=${from}`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!res.ok) return [];
+    const batch = await res.json();
+    all = all.concat(batch);
+    if (batch.length < PAGE) done = true;
+    else from += PAGE;
+  }
+  return all;
 }
 
 // ---------------------------------------------------------------------------
-// 3. Source method display helpers
+// 3. Query open (unaddressed) messages count
+// ---------------------------------------------------------------------------
+async function fetchOpenMessagesCount() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=id`,
+    {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      },
+    }
+  );
+  if (!res.ok) return 0;
+  const range = res.headers.get('content-range');
+  return parseInt(range?.split('/')[1] || '0', 10);
+}
+
+// ---------------------------------------------------------------------------
+// 4. Source method display helpers
 // ---------------------------------------------------------------------------
 const SOURCE_LABELS = {
   manual:         { label: 'Manual',          color: '#1a5fb4', bg: '#e8f0fc' },
@@ -67,9 +97,9 @@ function sourceChip(method) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Build the HTML email body
+// 5. Build the HTML email body
 // ---------------------------------------------------------------------------
-function buildEmailHtml(facilities, snapshot) {
+function buildEmailHtml(facilities, snapshot, openMessages) {
   const reportDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Chicago',
@@ -113,7 +143,6 @@ function buildEmailHtml(facilities, snapshot) {
   let statusSummaryRows = '';
   for (const [status, items] of Object.entries(grouped)) {
     const color = statusColors[status] || '#374151';
-    // show source breakdown per status
     const srcBreakdown = [
       { key: 'manual', icon: '✏️' },
       { key: 'bulk_import', icon: '📥' },
@@ -135,7 +164,7 @@ function buildEmailHtml(facilities, snapshot) {
       </tr>`;
   }
 
-  // ── Network snapshot (all facilities by status) ──
+  // ── Network snapshot ──
   let snapshotRows = '';
   if (snapshot.length > 0) {
     const snapByStatus = {};
@@ -159,8 +188,6 @@ function buildEmailHtml(facilities, snapshot) {
           <td style="padding:8px 16px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:12px;text-align:right;">${pct}%</td>
         </tr>`;
     }
-
-    // Source totals row
     const srcSummaryHtml = [
       { key: 'manual', icon: '✏️' },
       { key: 'bulk_import', icon: '📥' },
@@ -208,6 +235,21 @@ function buildEmailHtml(facilities, snapshot) {
 
   const noNewText = total === 0 ? ' — No New Additions' : '';
 
+  // ── Open messages alert banner ──
+  const messagesBanner = openMessages > 0 ? `
+      <!-- Messages Alert -->
+      <tr>
+        <td style="padding:16px 32px;">
+          <div style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:22px;">💬</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#6b21a8;">${openMessages} Open Message${openMessages === 1 ? '' : 's'} Awaiting Response</div>
+              <div style="font-size:12px;color:#7e22ce;margin-top:2px;">Facilities have unaddressed contact form messages. <a href="https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html" style="color:#7e22ce;font-weight:600;">Open Admin Tool →</a></div>
+            </div>
+          </div>
+        </td>
+      </tr>` : '';
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -233,6 +275,8 @@ function buildEmailHtml(facilities, snapshot) {
           </tr></table>
         </td>
       </tr>
+
+      ${messagesBanner}
 
       ${total > 0 ? `
       <!-- Source Breakdown Banner -->
@@ -318,7 +362,7 @@ function buildEmailHtml(facilities, snapshot) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Send the email via Gmail SMTP (App Password)
+// 6. Send the email via Gmail SMTP (App Password)
 // ---------------------------------------------------------------------------
 async function sendEmail(subject, html) {
   const transporter = nodemailer.createTransport({
@@ -340,7 +384,7 @@ async function sendEmail(subject, html) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Main
+// 7. Main
 // ---------------------------------------------------------------------------
 (async () => {
   try {
@@ -352,28 +396,33 @@ async function sendEmail(subject, html) {
     const snapshot = await fetchStatusSnapshot();
     console.log(`Network total: ${snapshot.length} facilities.`);
 
+    console.log('💬 Fetching open messages count...');
+    const openMessages = await fetchOpenMessagesCount();
+    console.log(`Open messages: ${openMessages}`);
+
     const total = facilities.length;
     const dateStr = new Date().toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago',
     });
 
-    // Source counts for subject line
     const bySrc = { manual: 0, bulk_import: 0, n8n_submission: 0 };
     for (const f of facilities) {
       const s = f.source_method || 'manual';
       bySrc[s] = (bySrc[s] || 0) + 1;
     }
     const srcParts = [
-      bySrc.manual         > 0 ? `${bySrc.manual} Manual`           : '',
-      bySrc.bulk_import    > 0 ? `${bySrc.bulk_import} Bulk`         : '',
+      bySrc.manual         > 0 ? `${bySrc.manual} Manual`            : '',
+      bySrc.bulk_import    > 0 ? `${bySrc.bulk_import} Bulk`          : '',
       bySrc.n8n_submission > 0 ? `${bySrc.n8n_submission} Submission` : '',
     ].filter(Boolean).join(' · ');
 
-    const subject = total === 0
-      ? `SRN Daily Report — No New Facilities (${dateStr})`
-      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}`;
+    const msgAlert = openMessages > 0 ? ` · 💬 ${openMessages} Open` : '';
 
-    const html = buildEmailHtml(facilities, snapshot);
+    const subject = total === 0
+      ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}`
+      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}`;
+
+    const html = buildEmailHtml(facilities, snapshot, openMessages);
 
     console.log('📧 Sending email...');
     await sendEmail(subject, html);
