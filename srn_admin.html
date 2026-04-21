@@ -77,6 +77,30 @@ td.nm:hover{text-decoration:underline}
 .b-oth{background:#f0f9ff;color:#1e40af;border:1px solid #93c5fd}
 .b-nrv{background:#fdf4ff;color:#7e22ce;border:1px solid #d8b4fe}
 .b-bl{background:#1c0707;color:#ff6b6b;border:1px solid #7f1d1d;font-weight:800;letter-spacing:.06em}
+/* ── Chain Domain Manager ───────────────────────────────── */
+.chain-ov{display:none;position:fixed;inset:0;background:rgba(10,20,40,.5);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.chain-ov.open{display:flex}
+.chain-box{background:#fff;border-radius:10px;width:100%;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden}
+.chain-head{background:#1a3a6b;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+.chain-head h3{font-size:15px;font-weight:600;flex:1;margin:0}
+.chain-body{padding:20px}
+.chain-desc{font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5}
+.chain-add-row{display:flex;gap:8px;margin-bottom:14px}
+.chain-add-row input{flex:1;font-family:inherit;font-size:13px;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;outline:none}
+.chain-add-row input:focus{border-color:var(--blue);background:#fff}
+.chain-add-row button{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.chain-add-row button:hover{background:var(--navy)}
+.chain-list{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;background:var(--bg)}
+.chain-empty{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+.chain-item{display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);gap:10px}
+.chain-item:last-child{border-bottom:none}
+.chain-item-domain{flex:1;font-family:monospace;font-size:13px;color:var(--navy)}
+.chain-item-del{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:15px;padding:2px 5px;border-radius:4px;line-height:1}
+.chain-item-del:hover{background:var(--red-bg)}
+.chain-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+/* ── Dismiss Duplicate button ───────────────────────────── */
+.btn-dismiss-dup{background:#2d8a4e;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;margin-bottom:12px;width:100%}
+.btn-dismiss-dup:hover{background:#1e6b3a}
 .src-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
 .src-manual{background:#e8f0fc;color:#1a5fb4;border:1px solid #93c5fd}
 .src-bulk{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
@@ -426,6 +450,9 @@ td.nm:hover{text-decoration:underline}
         <button class="nav-dd-item" onclick="closeAllDDs();findDuplicates()">
           <span class="dd-icon">&#x1F50D;</span> Find Duplicates
         </button>
+        <button class="nav-dd-item" onclick="closeAllDDs();openChainManager()">
+          <span class="dd-icon">&#x1F517;</span> Chain Domain Manager
+        </button>
       </div>
     </div>
   </div>
@@ -595,6 +622,7 @@ td.nm:hover{text-decoration:underline}
   </div>
   <div class="pfoot">
     <button class="btn btn-del" id="del-btn" onclick="confirmDel()" style="display:none">Delete</button>
+    <button class="btn btn-dismiss-dup" id="dismiss-dup-btn" onclick="dismissDuplicate()" style="display:none">✅ Not a Duplicate — Promote to PRF</button>
     <div class="sp"></div>
     <button class="btn btn-ghost" onclick="closePanel()">Cancel</button>
     <button class="btn btn-save" id="save-btn" onclick="saveFac()">Save Changes</button>
@@ -608,6 +636,32 @@ td.nm:hover{text-decoration:underline}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAIN DOMAIN MANAGER MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="chain-ov" id="chain-ov">
+  <div class="chain-box">
+    <div class="chain-head">
+      <span style="font-size:18px">🔗</span>
+      <h3>Chain Domain Manager</h3>
+      <button class="pclose" onclick="closeChainManager()">&#x2715;</button>
+    </div>
+    <div class="chain-body">
+      <p class="chain-desc">Email domains listed here will <strong>never trigger duplicate flagging</strong>. Use this for national chains (Midas, Jiffy Lube, Firestone, etc.) that share a corporate email domain across hundreds of locations.</p>
+      <div class="chain-add-row">
+        <input id="chain-domain-input" type="text" placeholder="e.g. midasstores.com" onkeydown="if(event.key==='Enter')addChainDomain()">
+        <button onclick="addChainDomain()">+ Add Domain</button>
+      </div>
+      <div class="chain-list" id="chain-list">
+        <div class="chain-empty" id="chain-empty">No exempt domains yet. Add one above.</div>
+      </div>
+    </div>
+    <div class="chain-foot">
+      <button class="btn btn-ghost" onclick="closeChainManager()">Done</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SUPABASE_URL  = 'https://amfawopeshfzuxusruyq.supabase.co';
@@ -680,8 +734,8 @@ function pgRender(){const total=Math.ceil(filtered.length/PG),pg=document.getEle
 function pgRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);if(c<=4)return[1,2,3,4,5,'…',t];if(c>=t-3)return[1,'…',t-4,t-3,t-2,t-1,t];return[1,'…',c-1,c,c+1,'…',t];}
 function goPage(p){const t=Math.ceil(filtered.length/PG);if(p<1||p>t)return;page=p;render();pgRender();document.querySelector('.tbl-wrap').scrollTop=0;}
 function clr(){['f-name','f-phone','f-contact','f-cemail','f-addr','f-city','f-zip','f-web','f-email','f-lat','f-lng','f-labor','f-offer-url','f-notes'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});const lk=document.getElementById('f-offer-link');lk.style.display='none';lk.href='#';document.getElementById('f-country').value='USA';document.getElementById('f-state-i').value='';document.getElementById('f-status-i').value='PRF';['f-type-i','f-sw','f-lg'].forEach(i=>document.getElementById(i).value='');document.getElementById('f-ft').value='Web';document.getElementById('f-ev').checked=false;document.getElementById('f-shipped').checked=false;}
-function openAdd(){editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';document.getElementById('del-btn').style.display='none';document.getElementById('ptabs').style.display='none';document.getElementById('save-btn').style.display='';document.getElementById('src-info-row').style.display='none';switchTab('details');document.getElementById('ov').classList.add('open');}
-function openEdit(id){const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr();document.getElementById('ptitle').textContent=f.name||'Edit Facility';const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';document.getElementById('del-btn').style.display='';const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);s('f-status-i',f.status);s('f-type-i',f.shop_type);s('f-sw',f.software);s('f-lg',f.labor_guide);s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}const srcRow=document.getElementById('src-info-row');if(f.source_method||f.added_at||f.added_by){srcRow.style.display='flex';document.getElementById('src-info-badge').innerHTML=f.source_method?srcBadgeHtml(f.source_method):'';document.getElementById('src-info-date').textContent=f.added_at?'Added '+new Date(f.added_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):(f.added_on?'Added '+f.added_on:'');document.getElementById('src-info-by').textContent=f.added_by?'by '+f.added_by:'';}else{srcRow.style.display='none';}document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';document.getElementById('msgs-tab-count').style.display='none';document.getElementById('msgs-list').style.display='none';document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';const openCount=msgCounts[id]||0;if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}switchTab('details');document.getElementById('ov').classList.add('open');}
+function openAdd(){editId=null;clr();document.getElementById('ptitle').textContent='Add Facility';document.getElementById('pbadge').style.display='none';document.getElementById('del-btn').style.display='none';document.getElementById('dismiss-dup-btn').style.display='none';document.getElementById('ptabs').style.display='none';document.getElementById('save-btn').style.display='';document.getElementById('src-info-row').style.display='none';switchTab('details');document.getElementById('ov').classList.add('open');}
+function openEdit(id){const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr();document.getElementById('ptitle').textContent=f.name||'Edit Facility';const b=document.getElementById('pbadge');b.textContent=`ID: ${f.numeric_id||f.id}`;b.style.display='';document.getElementById('del-btn').style.display='';const s=(i,v)=>{const e=document.getElementById(i);if(e&&v!=null)e.value=v;};s('f-name',f.name);s('f-phone',f.phone);s('f-contact',f.contact);s('f-cemail',f.contact_email);s('f-addr',f.address);s('f-city',f.city);s('f-state-i',f.state);s('f-zip',f.zip);s('f-country',f.country||'USA');s('f-web',f.website);s('f-email',f.email1);s('f-lat',f.lat);s('f-lng',f.lng);s('f-labor',f.labor);s('f-status-i',f.status);s('f-type-i',f.shop_type);s('f-sw',f.software);s('f-lg',f.labor_guide);s('f-ft',f.form_type||'Web');s('f-offer-url',f.offer_url||'');s('f-notes',f.notes||'');document.getElementById('f-ev').checked=!!f.ev_certified;document.getElementById('f-shipped').checked=!!f.accepts_shipped;const lk=document.getElementById('f-offer-link');if(f.offer_url&&f.offer_url.startsWith('http')){lk.href=f.offer_url;lk.style.display='inline-block';}const srcRow=document.getElementById('src-info-row');if(f.source_method||f.added_at||f.added_by){srcRow.style.display='flex';document.getElementById('src-info-badge').innerHTML=f.source_method?srcBadgeHtml(f.source_method):'';document.getElementById('src-info-date').textContent=f.added_at?'Added '+new Date(f.added_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):(f.added_on?'Added '+f.added_on:'');document.getElementById('src-info-by').textContent=f.added_by?'by '+f.added_by:'';}else{srcRow.style.display='none';}updateDismissDupBtn(f.status,f.notes||'');document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';document.getElementById('msgs-tab-count').style.display='none';document.getElementById('msgs-list').style.display='none';document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';const openCount=msgCounts[id]||0;if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}switchTab('details');document.getElementById('ov').classList.add('open');}
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
 function switchTab(tab){['details','history','messages'].forEach(t=>{document.getElementById('tab-btn-'+t)?.classList.remove('on');document.getElementById('tab-'+t).style.display='none';});document.getElementById('tab-btn-'+tab)?.classList.add('on');document.getElementById('tab-'+tab).style.display='';document.getElementById('save-btn').style.display=tab==='details'?'':'none';if(tab==='history'&&editId)loadHistory(editId);if(tab==='messages'&&editId)loadFacilityMessages(editId);}
 async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL',source_method:'Source Method'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
@@ -728,7 +782,7 @@ function normAddr(a){if(!a)return'';let s=String(a).toLowerCase().trim();s=s.rep
 function normStreetName(a){if(!a)return'';return normAddr(a).replace(/^\d+\s*/,'').trim();}
 function extractStreetNum(a){if(!a)return'';const m=String(a).trim().match(/^(\d+)/);return m?m[1]:'';}
 function similarity(a,b){if(!a||!b)return 0;if(a===b)return 1;const aNS=a.replace(/\s/g,''),bNS=b.replace(/\s/g,'');if(aNS===bNS)return 1;const la=a.length,lb=b.length,max=Math.max(la,lb);if(max===0)return 1;if(Math.abs(la-lb)/max>0.6)return 0;const dp=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=la;i++)for(let j=1;j<=lb;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);const levSim=1-dp[la][lb]/max;const laNS=aNS.length,lbNS=bNS.length,maxNS=Math.max(laNS,lbNS);if(maxNS===0)return levSim;const dp2=Array.from({length:laNS+1},(_,i)=>Array.from({length:lbNS+1},(_,j)=>i===0?j:j===0?i:0));for(let i=1;i<=laNS;i++)for(let j=1;j<=lbNS;j++)dp2[i][j]=aNS[i-1]===bNS[j-1]?dp2[i-1][j-1]:1+Math.min(dp2[i-1][j],dp2[i][j-1],dp2[i-1][j-1]);return Math.max(levSim,1-dp2[laNS][lbNS]/maxNS);}
-function findDupesFor(rec,candidates,excludeId=null){const recPhone=normPhone(rec.phone),recAddr=normAddr(rec.address),recStreet=normStreetName(rec.address),recName=(rec.name||'').toLowerCase().trim(),recZip=(rec.zip||'').trim(),recCity=(rec.city||'').toLowerCase().trim(),matches=[];for(const c of candidates){if(c.id&&c.id===excludeId)continue;if(c===rec)continue;const reasons=[],cPhone=normPhone(c.phone);let confidence=0;const cEmails=[c.email1,c.email2,c.email3,c.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const recEmails=[rec.email1,rec.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const emailMatch=recEmails.length>0&&cEmails.length>0&&recEmails.some(e=>cEmails.includes(e));if(emailMatch){reasons.push('email match');confidence+=65;}if(recPhone&&cPhone&&recPhone===cPhone&&recPhone.length>=7){reasons.push('phone match');confidence+=60;}const cAddr=normAddr(c.address),cStreet=normStreetName(c.address),cZip=(c.zip||'').trim(),cCity=(c.city||'').toLowerCase().trim(),sameState=rec.state===c.state,sameZip=recZip&&cZip&&recZip===cZip,sameCity=recCity&&cCity&&recCity===cCity;if(recAddr&&cAddr&&sameState&&(sameZip||(sameCity&&!recZip))){const recNum=extractStreetNum(rec.address),cNum=extractStreetNum(c.address),sameNum=recNum&&cNum&&recNum===cNum;if(!sameNum&&recNum&&cNum){}else{const addrSim=similarity(recAddr,cAddr),streetSim=similarity(recStreet,cStreet),bestSim=Math.max(addrSim,streetSim);if(sameZip&&bestSim>=0.80){reasons.push(`address match (${Math.round(bestSim*100)}%)`);confidence+=50;}else if(sameZip&&streetSim>=0.70){reasons.push(`address match (zip+street ${Math.round(streetSim*100)}%)`);confidence+=45;}}}if(sameZip||sameCity){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.85&&confidence===0){reasons.push(`name match (${Math.round(nameSim*100)}%)`);confidence+=40;}else if(nameSim>=0.75)confidence+=15;}if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});}return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);}
+function findDupesFor(rec,candidates,excludeId=null){const recPhone=normPhone(rec.phone),recAddr=normAddr(rec.address),recStreet=normStreetName(rec.address),recName=(rec.name||'').toLowerCase().trim(),recZip=(rec.zip||'').trim(),recCity=(rec.city||'').toLowerCase().trim(),matches=[];for(const c of candidates){if(c.id&&c.id===excludeId)continue;if(c===rec)continue;const reasons=[],cPhone=normPhone(c.phone);let confidence=0;const cEmails=[c.email1,c.email2,c.email3,c.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const recEmails=[rec.email1,rec.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const emailMatch=recEmails.length>0&&cEmails.length>0&&recEmails.some(e=>cEmails.includes(e))&&!recEmails.some(e=>isChainDomain(e))&&!cEmails.some(e=>isChainDomain(e));if(emailMatch){reasons.push('email match');confidence+=65;}if(recPhone&&cPhone&&recPhone===cPhone&&recPhone.length>=7){reasons.push('phone match');confidence+=60;}const cAddr=normAddr(c.address),cStreet=normStreetName(c.address),cZip=(c.zip||'').trim(),cCity=(c.city||'').toLowerCase().trim(),sameState=rec.state===c.state,sameZip=recZip&&cZip&&recZip===cZip,sameCity=recCity&&cCity&&recCity===cCity;if(recAddr&&cAddr&&sameState&&(sameZip||(sameCity&&!recZip))){const recNum=extractStreetNum(rec.address),cNum=extractStreetNum(c.address),sameNum=recNum&&cNum&&recNum===cNum;if(!sameNum&&recNum&&cNum){}else{const addrSim=similarity(recAddr,cAddr),streetSim=similarity(recStreet,cStreet),bestSim=Math.max(addrSim,streetSim);if(sameZip&&bestSim>=0.80){reasons.push(`address match (${Math.round(bestSim*100)}%)`);confidence+=50;}else if(sameZip&&streetSim>=0.70){reasons.push(`address match (zip+street ${Math.round(streetSim*100)}%)`);confidence+=45;}}}if(sameZip||sameCity){const cName=(c.name||'').toLowerCase().trim(),nameSim=similarity(recName,cName);if(nameSim>=0.85&&confidence===0){reasons.push(`name match (${Math.round(nameSim*100)}%)`);confidence+=40;}else if(nameSim>=0.75)confidence+=15;}if(reasons.length>0&&confidence>=45)matches.push({facility:c,reasons,confidence});}return matches.sort((a,b)=>b.confidence-a.confidence).slice(0,3);}
 let dupPending=null;
 async function checkDupesAndSave(rec,existing){const excludeId=rec.id||null,sameState=data.filter(f=>f.state===rec.state);const recEmails=[rec.email1,rec.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());const emailCandidates=recEmails.length>0?data.filter(f=>{const fEmails=[f.email1,f.email2,f.email3,f.contact_email].filter(v=>v&&String(v).trim()).map(e=>e.toLowerCase().trim());return fEmails.some(e=>recEmails.includes(e))&&f.id!==excludeId;}):[];const allCandidates=[...new Map([...sameState,...emailCandidates].map(f=>[f.id,f])).values()];const matches=findDupesFor(rec,allCandidates,excludeId);if(matches.length===0){await validateAndSave(rec,existing);return;}const blMatch=matches.find(m=>m.facility.status==='BL');if(blMatch){const f=blMatch.facility;dupPending={rec,existing,matches};const container=document.getElementById('dup-matches');container.innerHTML=`<div class="dup-match" style="border-color:#fca5a5;background:#fff1f2"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason" style="background:#fee2e2;color:#b91c1c">⛔ Already Blacklisted</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone)+'<br>':''}<strong style="color:#b91c1c">This shop is already in the database as BL. Saving a new record would create a duplicate.</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open existing BL record</a></div></div>`+matches.filter(m=>m.facility.status!=='BL').map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;&middot;&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');document.getElementById('dup-ov-msg').textContent='A matching facility already exists with BL status. Creating a duplicate is not recommended.';document.getElementById('dup-save-anyway-btn').style.display='none';document.getElementById('dup-flag-btn').style.display='none';document.getElementById('dup-open-bl-btn').style.display='';document.getElementById('dup-open-bl-btn').onclick=()=>{document.getElementById('dup-ov').classList.remove('open');dupPending=null;openEdit(f.id);};document.getElementById('dup-ov').classList.add('open');return;}dupPending={rec,existing,matches};const container=document.getElementById('dup-matches');container.innerHTML=matches.map(m=>{const f=m.facility;return`<div class="dup-match"><div class="dup-match-head"><span class="dup-match-name">${esc(f.name)}</span><span class="dup-match-reason">${m.reasons.join(' + ')}</span></div><div class="dup-match-detail">${esc(f.address||'')}${f.city?', '+esc(f.city):''} ${esc(f.state||'')} ${esc(f.zip||'')}<br>${f.phone?'&#x1F4DE; '+esc(f.phone):''}${f.phone&&f.numeric_id?' &nbsp;&middot;&nbsp; ':''} ${f.numeric_id?'ID: '+f.numeric_id:''}<br>Status: <strong>${esc(f.status||'—')}</strong><br><a href="#" onclick="event.preventDefault();closeAllOverlays();openEdit('${f.id}')" style="font-size:11px;color:var(--blue)">↗ Open this record</a></div></div>`;}).join('');document.getElementById('dup-save-anyway-btn').style.display='';document.getElementById('dup-flag-btn').style.display='';document.getElementById('dup-open-bl-btn').style.display='none';document.getElementById('dup-ov').classList.add('open');}
 function dupGoBack(){document.getElementById('dup-ov').classList.remove('open');dupPending=null;document.getElementById('dup-save-anyway-btn').style.display='';document.getElementById('dup-flag-btn').style.display='';document.getElementById('dup-open-bl-btn').style.display='none';}
@@ -747,6 +801,112 @@ function findBLMatches(blRec,existingFacilities){const recPhone=normPhone(blRec.
 async function geocodeBLRecord(blRec){if(!blRec.address||!blRec.city||!blRec.state||!blRec.zip){blRec._addrFlag='Address incomplete — could not geocode';return blRec;}try{await loadGoogleMaps();const full=`${blRec.address}, ${blRec.city}, ${blRec.state} ${blRec.zip}, ${blRec.country||'USA'}`;return new Promise(resolve=>{const geocoder=new google.maps.Geocoder();geocoder.geocode({address:full},(results,status)=>{if(status!=='OK'||!results?.length){blRec._addrFlag='Address unverified — not found in Google Maps';resolve(blRec);return;}const parsed=parseGeoResult(results[0]);blRec.address=parsed.address||blRec.address;blRec.city=parsed.city||blRec.city;blRec.state=parsed.state||blRec.state;blRec.zip=parsed.zip||blRec.zip;blRec.lat=String(parsed.lat);blRec.lng=String(parsed.lng);resolve(blRec);});});}catch(e){blRec._addrFlag='Address unverified — geocoding error';return blRec;}}
 async function importBLFile(e){const f=e.target.files[0];if(!f)return;e.target.value='';const ext=f.name.split('.').pop().toLowerCase();if(!['xlsx','xls','csv'].includes(ext)){toast('BL import requires .xlsx, .xls, or .csv','err');return;}if((ext==='xlsx'||ext==='xls')&&typeof XLSX==='undefined'){toast('Loading Excel parser…','',5000);await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});}showDbl('Reading BL file…');let blRows=[];try{if(ext==='xlsx'||ext==='xls'){const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rawRows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});const headers=rawRows[0].map(h=>String(h).trim());blRows=rawRows.slice(1).map(row=>parseBLRow(headers,row)).filter(r=>r.name);}else{const text=await f.text();const pcsv=l=>{const o=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c='';}else c+=ch;}o.push(c);return o;};const lines=text.split(/\r?\n/).filter(l=>l.trim());const headers=pcsv(lines[0]).map(h=>String(h).trim());blRows=lines.slice(1).map(l=>parseBLRow(headers,pcsv(l))).filter(r=>r.name);}}catch(err){hideDbl();toast('Could not read BL file: '+err.message,'err',6000);return;}const total=blRows.length;if(!total){hideDbl();toast('No valid BL records found in file.','warn');return;}showDbl(`Geocoding 0 / ${total.toLocaleString()}…`);await loadGoogleMaps().catch(()=>{});const GEO_THROTTLE=50;for(let i=0;i<blRows.length;i++){if(i%20===0)showDbl(`Geocoding ${i.toLocaleString()} / ${total.toLocaleString()}…`);blRows[i]=await geocodeBLRecord(blRows[i]);await new Promise(r=>setTimeout(r,GEO_THROTTLE));}showDbl(`Matching ${total.toLocaleString()} BL records against database…`);let countUpdated=0,countMerged=0,countInserted=0;const patchOps=[],insertRecs=[];const blImportTimestamp=new Date().toISOString();for(let i=0;i<blRows.length;i++){if(i%50===0)showDbl(`Matching ${i.toLocaleString()} / ${total.toLocaleString()}…`);await new Promise(r=>setTimeout(r,0));const blRec=blRows[i];const allMatches=findBLMatches(blRec,data);if(allMatches.length===0){const rec={name:blRec.name,address:blRec.address,city:blRec.city,state:blRec.state,zip:blRec.zip,country:blRec.country||'USA',phone:blRec.phone,contact:blRec.contact,contact_email:blRec.contact_email,email1:blRec.email1,email2:blRec.email2,email3:blRec.email3,website:blRec.website,lat:blRec.lat,lng:blRec.lng,labor:blRec.labor,shop_type:blRec.shop_type,software:blRec.software,labor_guide:blRec.labor_guide,form_type:blRec.form_type||'Web',ev_certified:blRec.ev_certified||false,accepts_shipped:blRec.accepts_shipped||false,status:'BL',source_method:'bulk_import',added_at:blImportTimestamp,added_by:userEmail+' (BL Import)',added_on:today(),edited_on:today(),edited_by:userEmail,notes:(()=>{const parts=['Imported from BL list'];if(blRec._helperRepairID)parts.push('Helper ID: '+blRec._helperRepairID);if(blRec._addrFlag)parts.push(blRec._addrFlag);return parts.join(' · ');})(),};insertRecs.push(rec);countInserted++;}else{const best=allMatches[0].facility;const extras=allMatches.slice(1).map(m=>m.facility);const oldStatus=best.status;const changes={};if(oldStatus!=='BL')changes.status={from:oldStatus,to:'BL'};if(blRec._addrFlag)changes.notes={from:best.notes||null,to:(best.notes?best.notes+' · '+blRec._addrFlag:blRec._addrFlag)};patchOps.push({id:best.id,fields:{status:'BL',edited_on:today(),edited_by:userEmail,lat:blRec.lat||best.lat,lng:blRec.lng||best.lng,email1:best.email1||blRec.email1,email2:best.email2||blRec.email2,email3:best.email3||blRec.email3,notes:blRec._addrFlag?(best.notes?best.notes+' · '+blRec._addrFlag:blRec._addrFlag):best.notes,},changes,facilityName:best.name,extraIds:extras.map(x=>x.id),});countUpdated++;countMerged+=extras.length;}}showDbl(`Updating ${countUpdated.toLocaleString()} existing facilities to BL…`);let patchDone=0;for(const op of patchOps){try{await withAuthRetry(()=>api.patch(op.id,op.fields));if(op.changes&&Object.keys(op.changes).length>0){await withAuthRetry(()=>api.logHistory({facility_id:op.id,facility_name:op.facilityName,changed_by:userEmail+' (BL Import)',changes:op.changes})).catch(()=>{});}for(const xid of op.extraIds){await withAuthRetry(()=>api.del(xid)).catch(()=>{});}}catch(err){console.warn('BL patch failed for',op.id,err.message);}patchDone++;if(patchDone%50===0)showDbl(`Patching… ${patchDone} / ${patchOps.length}`);await new Promise(r=>setTimeout(r,0));}if(insertRecs.length>0){showDbl(`Inserting ${insertRecs.length.toLocaleString()} new BL records…`);const BATCH=200;for(let i=0;i<insertRecs.length;i+=BATCH){const batch=insertRecs.slice(i,i+BATCH);await withAuthRetry(()=>api.upsertBatch(batch)).catch(err=>{console.warn('BL batch insert error:',err.message);});showDbl(`Inserting… ${Math.min(i+BATCH,insertRecs.length)} / ${insertRecs.length}`);await new Promise(r=>setTimeout(r,0));}}await loadData();hideDbl();showBLSummary(countUpdated,countMerged,countInserted,total);}
 function showBLSummary(updated,merged,inserted,total){const grid=document.getElementById('bl-stat-grid');grid.innerHTML=`<div class="bl-stat updated"><div class="bl-stat-num">${updated.toLocaleString()}</div><div class="bl-stat-lbl">⚠ Existing → BL</div></div><div class="bl-stat merged"><div class="bl-stat-num">${merged.toLocaleString()}</div><div class="bl-stat-lbl">🗑 Duplicates Removed</div></div><div class="bl-stat inserted"><div class="bl-stat-num">${inserted.toLocaleString()}</div><div class="bl-stat-lbl">+ New BL Records</div></div><div class="bl-stat total"><div class="bl-stat-num">${total.toLocaleString()}</div><div class="bl-stat-lbl">Total Processed</div></div>`;const noteLines=[];if(updated>0)noteLines.push(`${updated.toLocaleString()} existing facilit${updated===1?'y was':'ies were'} already in the SRN — their status has been set to BL.`);if(merged>0)noteLines.push(`${merged.toLocaleString()} duplicate record${merged===1?' was':' were'} removed.`);if(inserted>0)noteLines.push(`${inserted.toLocaleString()} new BL record${inserted===1?' was':' were'} added.`);noteLines.push('BL status overrides all other statuses. None of these shops will be referred to customers.');document.getElementById('bl-summary-note').innerHTML=noteLines.map(l=>`<p style="margin-bottom:6px">${l}</p>`).join('');document.getElementById('bl-summary-ov').classList.add('open');}
+
+// ============================================================
+// CHAIN DOMAIN MANAGER
+// ============================================================
+const CHAIN_DOMAINS_KEY = 'srn_chain_domains';
+
+function getChainDomains(){
+  try{const raw=localStorage.getItem(CHAIN_DOMAINS_KEY);return raw?JSON.parse(raw):[];}
+  catch(e){return[];}
+}
+function saveChainDomains(domains){
+  try{localStorage.setItem(CHAIN_DOMAINS_KEY,JSON.stringify(domains));}
+  catch(e){console.warn('Could not save chain domains',e);}
+}
+function isChainDomain(email){
+  if(!email)return false;
+  const domain=String(email).toLowerCase().trim().split('@')[1];
+  if(!domain)return false;
+  return getChainDomains().some(d=>d.toLowerCase()===domain);
+}
+function openChainManager(){
+  renderChainList();
+  document.getElementById('chain-domain-input').value='';
+  document.getElementById('chain-ov').classList.add('open');
+  setTimeout(()=>document.getElementById('chain-domain-input').focus(),100);
+}
+function closeChainManager(){
+  document.getElementById('chain-ov').classList.remove('open');
+}
+function renderChainList(){
+  const domains=getChainDomains();
+  const list=document.getElementById('chain-list');
+  const empty=document.getElementById('chain-empty');
+  if(domains.length===0){
+    empty.style.display='';
+    list.querySelectorAll('.chain-item').forEach(el=>el.remove());
+    return;
+  }
+  empty.style.display='none';
+  list.querySelectorAll('.chain-item').forEach(el=>el.remove());
+  domains.forEach((d,i)=>{
+    const item=document.createElement('div');
+    item.className='chain-item';
+    item.innerHTML=`<span class="chain-item-domain">@${esc(d)}</span><button class="chain-item-del" title="Remove" onclick="removeChainDomain(${i})">&#x2715;</button>`;
+    list.appendChild(item);
+  });
+}
+function addChainDomain(){
+  const input=document.getElementById('chain-domain-input');
+  let val=input.value.trim().toLowerCase().replace(/^@/,'').replace(/^https?:\/\//,'').split('/')[0];
+  if(!val){toast('Enter a domain name.','warn');return;}
+  if(!/^[\w.-]+\.[a-z]{2,}$/.test(val)){toast('Enter a valid domain (e.g. midasstores.com).','warn');return;}
+  const domains=getChainDomains();
+  if(domains.includes(val)){toast(`"${val}" is already in the list.`,'warn');return;}
+  domains.push(val);
+  saveChainDomains(domains);
+  input.value='';
+  renderChainList();
+  toast(`Added: @${val}`,'ok',2500);
+}
+function removeChainDomain(index){
+  const domains=getChainDomains();
+  const removed=domains.splice(index,1)[0];
+  saveChainDomains(domains);
+  renderChainList();
+  toast(`Removed: @${removed}`,'',2000);
+}
+
+// ============================================================
+// DISMISS DUPLICATE — promote NRV to PRF, clear dup note
+// ============================================================
+async function dismissDuplicate(){
+  if(!editId)return;
+  const rec=data.find(f=>f.id===editId);
+  if(!rec)return;
+  const oldStatus=rec.status;
+  const oldNotes=document.getElementById('f-notes').value;
+  // Strip the "Possible duplicate of:..." sentence from notes
+  const cleanedNotes=oldNotes.replace(/\s*[\|·]\s*Possible duplicate of:[^|·\n]*/gi,'').replace(/^Possible duplicate of:[^|·\n]*/gi,'').replace(/\s*\|\s*$/,'').trim();
+  // Set status to PRF and update notes in the form
+  document.getElementById('f-status-i').value='PRF';
+  document.getElementById('f-notes').value=cleanedNotes;
+  // Save immediately
+  const changes={};
+  if(oldStatus!=='PRF')changes.status={from:oldStatus,to:'PRF'};
+  if(oldNotes!==cleanedNotes)changes.notes={from:oldNotes,to:cleanedNotes||null};
+  try{
+    await withAuthRetry(()=>api.patch(editId,{status:'PRF',notes:cleanedNotes||null,edited_on:today(),edited_by:userEmail}));
+    if(Object.keys(changes).length>0){
+      await withAuthRetry(()=>api.logHistory({facility_id:editId,facility_name:rec.name,changed_by:userEmail,changes})).catch(()=>{});
+    }
+    await loadData();
+    closePanel();
+    toast(`${rec.name} promoted to PRF ✅`,'ok',3000);
+  }catch(err){
+    toast('Save failed: '+err.message,'err');
+  }
+}
+
+// Show/hide the dismiss button when editing an NRV record that has a dup note
+function updateDismissDupBtn(status, notes){
+  const btn=document.getElementById('dismiss-dup-btn');
+  if(!btn)return;
+  const isDupNote=notes&&/possible duplicate of:/i.test(notes);
+  btn.style.display=(status==='NRV'&&isDupNote)?'flex':'none';
+}
 </script>
 </body>
 </html>
