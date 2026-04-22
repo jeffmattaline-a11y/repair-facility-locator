@@ -32,7 +32,7 @@ nav{flex-shrink:0;height:52px;background:var(--navy);display:flex;align-items:ce
 .nb.primary:hover{background:var(--blue)}
 .nb.metrics-btn{background:rgba(29,176,209,.2);border-color:rgba(29,176,209,.5);color:#7de8f8}
 .nb.metrics-btn:hover{background:rgba(29,176,209,.35)}
-/* ── Nav dropdowns ─────────────────────────────────────── */
+/* ── Nav dropdowns ─────────────────────────────────────────── */
 .nav-dd{position:relative;flex-shrink:0}
 .nav-dd-menu{display:none;position:absolute;top:calc(100% + 8px);left:0;background:#fff;border:1px solid var(--border2);border-radius:8px;min-width:190px;z-index:600;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden}
 .nav-dd-menu.right{left:auto;right:0}
@@ -45,7 +45,7 @@ nav{flex-shrink:0;height:52px;background:var(--navy);display:flex;align-items:ce
 .nav-dd-item .dd-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0;opacity:.65}
 .nav-dd-caret{font-size:9px;opacity:.5;margin-left:1px;transition:transform .15s;display:inline-block}
 .nav-dd.open .nav-dd-caret{transform:rotate(180deg)}
-/* ── User badge ────────────────────────────────────────── */
+/* ── User badge ────────────────────────────────────────────── */
 .ubadge{font-size:11px;color:#c8d8f0;cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:5px;border:1px solid rgba(255,255,255,.18);white-space:nowrap}
 .ubadge:hover{background:rgba(255,255,255,.1)}
 .ubadge-email{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -78,7 +78,7 @@ td.nm:hover{text-decoration:underline}
 .b-oth{background:#f0f9ff;color:#1e40af;border:1px solid #93c5fd}
 .b-nrv{background:#fdf4ff;color:#7e22ce;border:1px solid #d8b4fe}
 .b-bl{background:#1c0707;color:#ff6b6b;border:1px solid #7f1d1d;font-weight:800;letter-spacing:.06em}
-/* ── Chain Domain Manager ───────────────────────────────── */
+/* ── Chain Domain Manager ───────────────────────────────────── */
 .chain-ov{display:none;position:fixed;inset:0;background:rgba(10,20,40,.5);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .chain-ov.open{display:flex}
 .chain-box{background:#fff;border-radius:10px;width:100%;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden}
@@ -99,7 +99,7 @@ td.nm:hover{text-decoration:underline}
 .chain-item-del{background:none;border:none;color:#b91c1c;cursor:pointer;font-size:15px;padding:2px 5px;border-radius:4px;line-height:1}
 .chain-item-del:hover{background:var(--red-bg)}
 .chain-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
-/* ── Dismiss Duplicate button ───────────────────────────── */
+/* ── Dismiss Duplicate button ───────────────────────────────── */
 .btn-dismiss-dup{background:#2d8a4e;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;margin-bottom:12px;width:100%}
 .btn-dismiss-dup:hover{background:#1e6b3a}
 .src-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
@@ -296,6 +296,72 @@ td.nm:hover{text-decoration:underline}
 .pct-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .4s}
 .metrics-foot{padding:14px 24px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .metrics-updated{font-size:11px;color:var(--text3)}
+/* ── Customer Inquiries ─────────────────────────────────── */
+.inq-ov{position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(2px)}
+.inq-ov.open{display:flex}
+.inq-box{background:#fff;border-radius:12px;width:100%;max-width:900px;box-shadow:0 20px 60px rgba(0,0,0,.28);overflow:hidden;margin:auto}
+.inq-head{background:#1a3a6b;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+.inq-head h2{font-size:15px;font-weight:600;flex:1}
+.inq-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#f4f6f9;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.inq-toolbar input,.inq-toolbar select{font-size:12px;border:1px solid var(--border2);border-radius:5px;padding:5px 9px;background:#fff;color:var(--text);outline:none;font-family:inherit}
+.inq-toolbar input:focus,.inq-toolbar select:focus{border-color:var(--blue)}
+.inq-toolbar input{width:200px}
+.inq-stat{font-size:11px;color:var(--text3);font-family:monospace;margin-left:auto}
+.inq-list{max-height:60vh;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.inq-empty{text-align:center;padding:48px;color:var(--text3);font-size:14px}
+.inq-card{border:1px solid var(--border);border-radius:8px;background:#fff;overflow:hidden;transition:box-shadow .15s}
+.inq-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.inq-card.resolved{opacity:.55}
+.inq-card-head{display:flex;align-items:flex-start;gap:10px;padding:11px 14px 8px;cursor:pointer}
+.inq-card-chevron{font-size:11px;color:var(--text3);margin-top:2px;transition:transform .15s;flex-shrink:0}
+.inq-card.expanded .inq-card-chevron{transform:rotate(90deg)}
+.inq-card-meta{flex:1;min-width:0}
+.inq-card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.inq-card-sender{font-size:13px;font-weight:600;color:#233348}
+.inq-card-email{font-size:12px;color:#3782A4}
+.inq-card-subject{font-size:12px;color:var(--text2);margin-top:1px}
+.inq-card-time{font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.inq-card-body{padding:0 14px 0 38px;display:none}
+.inq-card.expanded .inq-card-body{display:block}
+.inq-msg-text{font-size:13px;color:#374151;line-height:1.55;border-left:3px solid #3782A4;padding:8px 12px;background:#f9fafb;border-radius:0 5px 5px 0;margin-bottom:10px}
+.inq-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0 12px}
+.inq-actions label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.inq-select{font-family:inherit;font-size:12px;border:1px solid var(--border2);border-radius:5px;padding:5px 9px;background:#fff;color:var(--text);outline:none;cursor:pointer}
+.inq-select:focus{border-color:var(--blue)}
+.btn-inq-route{background:var(--blue);color:#fff;border:none;border-radius:5px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-inq-route:hover{background:var(--navy)}
+.btn-inq-link{background:#1DB0D1;color:#fff;border:none;border-radius:5px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-inq-link:hover{background:#1890aa}
+.inq-resolved-tag{font-size:11px;color:#065f46;background:#d1fae5;padding:2px 9px;border-radius:10px;font-weight:600;display:inline-block;margin-bottom:12px}
+.inq-card-footer{display:flex;align-items:center;gap:6px;padding:0 14px 10px 38px;flex-wrap:wrap}
+.badge-inq-cat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:monospace}
+.bic-customer{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.bic-shop{background:#fef3c7;color:#92400e;border:1px solid #fcd38a}
+.bic-unknown{background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db}
+.badge-inq-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:monospace}
+.bis-new{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+.bis-review{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.bis-resolved{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.inq-linked-badge{font-size:10px;font-weight:600;background:#e8f0fc;color:#1a5fb4;border:1px solid #93c5fd;padding:2px 8px;border-radius:10px;cursor:pointer}
+.inq-linked-badge:hover{background:#c7d9f9}
+.inq-new-badge{display:inline-flex;align-items:center;justify-content:center;background:#CA383B;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;padding:0 4px;margin-left:4px;vertical-align:middle}
+/* Link-to-shop modal */
+.link-shop-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:8500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.link-shop-ov.open{display:flex}
+.link-shop-box{background:#fff;border-radius:10px;width:100%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
+.link-shop-head{background:#1a3a6b;color:#fff;padding:13px 18px;display:flex;align-items:center;gap:8px}
+.link-shop-head h3{font-size:14px;font-weight:600;flex:1}
+.link-shop-body{padding:16px}
+.link-shop-search{width:100%;font-family:inherit;font-size:13px;border:1px solid var(--border2);border-radius:6px;padding:7px 11px;outline:none;background:var(--bg);margin-bottom:10px}
+.link-shop-search:focus{border-color:var(--blue);background:#fff}
+.link-shop-results{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:var(--bg)}
+.link-shop-row{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px}
+.link-shop-row:last-child{border-bottom:none}
+.link-shop-row:hover{background:var(--blue-lt);color:var(--blue)}
+.link-shop-row strong{display:block;font-weight:600}
+.link-shop-row span{font-size:11px;color:var(--text3)}
+.link-shop-empty{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+.link-shop-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 </style>
 </head>
 <body>
@@ -400,14 +466,72 @@ td.nm:hover{text-decoration:underline}
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     NAV — Metrics | Import/Export ▾ | Tools ▾ | + Add Facility | user ▾
+     CUSTOMER INQUIRIES OVERLAY
+     ═══════════════════════════════════════════════════════════ -->
+<div class="inq-ov" id="inq-ov">
+  <div class="inq-box">
+    <div class="inq-head">
+      <span style="font-size:18px">&#x1F4E9;</span>
+      <h2>Customer Inquiries <span style="font-size:12px;font-weight:400;opacity:.7">— Unmatched B2C Contact Form Emails</span></h2>
+      <button class="pclose" onclick="closeInquiries()">&#x2715;</button>
+    </div>
+    <div class="inq-toolbar">
+      <input id="inq-search" placeholder="Search name, email, subject, message…" oninput="renderInquiries()">
+      <label>Status</label>
+      <select id="inq-f-status" onchange="renderInquiries()">
+        <option value="">All</option>
+        <option value="New">New</option>
+        <option value="In Review">In Review</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+      <label>Category</label>
+      <select id="inq-f-cat" onchange="renderInquiries()">
+        <option value="">All</option>
+        <option value="Customer">Customer</option>
+        <option value="Shop">Shop</option>
+        <option value="Unknown">Unknown</option>
+      </select>
+      <span class="inq-stat" id="inq-stat"></span>
+    </div>
+    <div class="inq-list" id="inq-list">
+      <div class="inq-empty">Loading inquiries…</div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:#f4f6f9;display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeInquiries()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link-to-Shop Modal -->
+<div class="link-shop-ov" id="link-shop-ov">
+  <div class="link-shop-box">
+    <div class="link-shop-head">
+      <span>&#x1F517;</span>
+      <h3>Link to Shop</h3>
+      <button class="pclose" onclick="closeLinkShop()">&#x2715;</button>
+    </div>
+    <div class="link-shop-body">
+      <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Search for the shop this inquiry belongs to. Once linked, it will appear in that facility&#x27;s Messages tab.</p>
+      <input class="link-shop-search" id="link-shop-search" placeholder="Search by name, city, phone…" oninput="searchLinkShop()">
+      <div class="link-shop-results" id="link-shop-results">
+        <div class="link-shop-empty">Type to search facilities…</div>
+      </div>
+    </div>
+    <div class="link-shop-foot">
+      <button class="btn btn-ghost" onclick="closeLinkShop()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NAV
      ═══════════════════════════════════════════════════════════ -->
 <nav>
   <div class="brand">SRN <span>Facility</span> Manager</div>
   <span class="pill" id="nav-count">0 Facilities</span>
   <div class="sp"></div>
 
-  <!-- Metrics — standalone, always visible -->
+  <!-- Metrics -->
   <button class="nb metrics-btn" onclick="openMetrics()" title="View network metrics &amp; source tracking">&#x1F4CA; Metrics</button>
 
   <!-- Import / Export dropdown -->
@@ -457,6 +581,11 @@ td.nm:hover{text-decoration:underline}
       </div>
     </div>
   </div>
+
+  <!-- Inquiries button -->
+  <button class="nb" onclick="openInquiries()" title="Review unmatched B2C contact form emails" style="background:rgba(202,56,59,.2);border-color:rgba(202,56,59,.5);color:#f9a8a8">
+    &#x1F4E9; Inquiries <span class="inq-new-badge" id="inq-nav-badge" style="display:none">0</span>
+  </button>
 
   <!-- Primary CTA -->
   <button class="nb primary" onclick="openAdd()">+ Add Facility</button>
@@ -639,9 +768,7 @@ td.nm:hover{text-decoration:underline}
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CHAIN DOMAIN MANAGER MODAL
-     ═══════════════════════════════════════════════════════════ -->
+<!-- CHAIN DOMAIN MANAGER MODAL -->
 <div class="chain-ov" id="chain-ov">
   <div class="chain-box">
     <div class="chain-head">
@@ -717,8 +844,8 @@ const api={
 (function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
 async function setPassword(){const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}if(pass!==pass2){err.textContent='Passwords do not match.';return;}if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}try{const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();}catch(e){err.textContent='Connection error. Please try again.';}}
 async function signIn(){const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}catch(e){err.textContent='Connection error — check Supabase URL.';}}
-async function signOut(){if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
-async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const rows=await api.getOpenMsgCounts();msgCounts={};rows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};}hideDbl();rebuild();go();}
+async function signOut(){if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};inqData=[];document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
+async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const rows=await api.getOpenMsgCounts();msgCounts={};rows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};}hideDbl();rebuild();go();loadInqBadgeCount();}
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); const formatPhone=p=>{if(!p)return'—';const d=String(p).replace(/\D/g,'');if(d.length!==10)return'—';return`${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;};
@@ -808,106 +935,221 @@ function showBLSummary(updated,merged,inserted,total){const grid=document.getEle
 // CHAIN DOMAIN MANAGER
 // ============================================================
 const CHAIN_DOMAINS_KEY = 'srn_chain_domains';
+function getChainDomains(){try{const raw=localStorage.getItem(CHAIN_DOMAINS_KEY);return raw?JSON.parse(raw):[];}catch(e){return[];}}
+function saveChainDomains(domains){try{localStorage.setItem(CHAIN_DOMAINS_KEY,JSON.stringify(domains));}catch(e){console.warn('Could not save chain domains',e);}}
+function isChainDomain(email){if(!email)return false;const domain=String(email).toLowerCase().trim().split('@')[1];if(!domain)return false;return getChainDomains().some(d=>d.toLowerCase()===domain);}
+function openChainManager(){renderChainList();document.getElementById('chain-domain-input').value='';document.getElementById('chain-ov').classList.add('open');setTimeout(()=>document.getElementById('chain-domain-input').focus(),100);}
+function closeChainManager(){document.getElementById('chain-ov').classList.remove('open');}
+function renderChainList(){const domains=getChainDomains();const list=document.getElementById('chain-list');const empty=document.getElementById('chain-empty');if(domains.length===0){empty.style.display='';list.querySelectorAll('.chain-item').forEach(el=>el.remove());return;}empty.style.display='none';list.querySelectorAll('.chain-item').forEach(el=>el.remove());domains.forEach((d,i)=>{const item=document.createElement('div');item.className='chain-item';item.innerHTML=`<span class="chain-item-domain">@${esc(d)}</span><button class="chain-item-del" title="Remove" onclick="removeChainDomain(${i})">&#x2715;</button>`;list.appendChild(item);});}
+function addChainDomain(){const input=document.getElementById('chain-domain-input');let val=input.value.trim().toLowerCase().replace(/^@/,'').replace(/^https?:\/\//,'').split('/')[0];if(!val){toast('Enter a domain name.','warn');return;}if(!/^[\w.-]+\.[a-z]{2,}$/.test(val)){toast('Enter a valid domain (e.g. midasstores.com).','warn');return;}const domains=getChainDomains();if(domains.includes(val)){toast(`"${val}" is already in the list.`,'warn');return;}domains.push(val);saveChainDomains(domains);input.value='';renderChainList();toast(`Added: @${val}`,'ok',2500);}
+function removeChainDomain(index){const domains=getChainDomains();const removed=domains.splice(index,1)[0];saveChainDomains(domains);renderChainList();toast(`Removed: @${removed}`,'',2000);}
 
-function getChainDomains(){
-  try{const raw=localStorage.getItem(CHAIN_DOMAINS_KEY);return raw?JSON.parse(raw):[];}
-  catch(e){return[];}
-}
-function saveChainDomains(domains){
-  try{localStorage.setItem(CHAIN_DOMAINS_KEY,JSON.stringify(domains));}
-  catch(e){console.warn('Could not save chain domains',e);}
-}
-function isChainDomain(email){
-  if(!email)return false;
-  const domain=String(email).toLowerCase().trim().split('@')[1];
-  if(!domain)return false;
-  return getChainDomains().some(d=>d.toLowerCase()===domain);
-}
-function openChainManager(){
-  renderChainList();
-  document.getElementById('chain-domain-input').value='';
-  document.getElementById('chain-ov').classList.add('open');
-  setTimeout(()=>document.getElementById('chain-domain-input').focus(),100);
-}
-function closeChainManager(){
-  document.getElementById('chain-ov').classList.remove('open');
-}
-function renderChainList(){
-  const domains=getChainDomains();
-  const list=document.getElementById('chain-list');
-  const empty=document.getElementById('chain-empty');
-  if(domains.length===0){
-    empty.style.display='';
-    list.querySelectorAll('.chain-item').forEach(el=>el.remove());
+// ============================================================
+// DISMISS DUPLICATE
+// ============================================================
+async function dismissDuplicate(){if(!editId)return;const rec=data.find(f=>f.id===editId);if(!rec)return;const oldStatus=rec.status;const oldNotes=document.getElementById('f-notes').value;const cleanedNotes=oldNotes.replace(/\s*[\|·]\s*Possible duplicate of:[^|·\n]*/gi,'').replace(/^Possible duplicate of:[^|·\n]*/gi,'').replace(/\s*\|\s*$/,'').trim();document.getElementById('f-status-i').value='PRF';document.getElementById('f-notes').value=cleanedNotes;const changes={};if(oldStatus!=='PRF')changes.status={from:oldStatus,to:'PRF'};if(oldNotes!==cleanedNotes)changes.notes={from:oldNotes,to:cleanedNotes||null};try{await withAuthRetry(()=>api.patch(editId,{status:'PRF',notes:cleanedNotes||null,edited_on:today(),edited_by:userEmail}));if(Object.keys(changes).length>0){await withAuthRetry(()=>api.logHistory({facility_id:editId,facility_name:rec.name,changed_by:userEmail,changes})).catch(()=>{});}await loadData();closePanel();toast(`${rec.name} promoted to PRF ✅`,'ok',3000);}catch(err){toast('Save failed: '+err.message,'err');}}
+function updateDismissDupBtn(status,notes){const btn=document.getElementById('dismiss-dup-btn');if(!btn)return;const isDupNote=notes&&/possible duplicate of:/i.test(notes);btn.style.display=(status==='NRV'&&isDupNote)?'flex':'none';}
+
+// ============================================================
+// CUSTOMER INQUIRIES
+// ============================================================
+let inqData = [], inqFiltered = [], inqLinkTarget = null;
+
+const inqApi = {
+  async getAll() {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_inquiries?order=received_at.desc&limit=500`, { headers: hdrs() });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async patch(id, fields) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_inquiries?id=eq.${id}`, { method: 'PATCH', headers: hdrs(), body: JSON.stringify(fields) });
+    if (!r.ok) throw new Error(await r.text());
+  },
+  async getNewCount() {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_inquiries?status=eq.New&select=id`, { headers: { ...hdrs(), 'Prefer': 'count=exact', 'Range': '0-0' } });
+    return parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10);
+  }
+};
+
+async function openInquiries() {
+  document.getElementById('inq-ov').classList.add('open');
+  document.getElementById('inq-list').innerHTML = '<div class="inq-empty">Loading…</div>';
+  try {
+    inqData = await withAuthRetry(() => inqApi.getAll());
+  } catch (e) {
+    document.getElementById('inq-list').innerHTML = `<div class="inq-empty">Error: ${esc(e.message)}</div>`;
     return;
   }
-  empty.style.display='none';
-  list.querySelectorAll('.chain-item').forEach(el=>el.remove());
-  domains.forEach((d,i)=>{
-    const item=document.createElement('div');
-    item.className='chain-item';
-    item.innerHTML=`<span class="chain-item-domain">@${esc(d)}</span><button class="chain-item-del" title="Remove" onclick="removeChainDomain(${i})">&#x2715;</button>`;
-    list.appendChild(item);
-  });
-}
-function addChainDomain(){
-  const input=document.getElementById('chain-domain-input');
-  let val=input.value.trim().toLowerCase().replace(/^@/,'').replace(/^https?:\/\//,'').split('/')[0];
-  if(!val){toast('Enter a domain name.','warn');return;}
-  if(!/^[\w.-]+\.[a-z]{2,}$/.test(val)){toast('Enter a valid domain (e.g. midasstores.com).','warn');return;}
-  const domains=getChainDomains();
-  if(domains.includes(val)){toast(`"${val}" is already in the list.`,'warn');return;}
-  domains.push(val);
-  saveChainDomains(domains);
-  input.value='';
-  renderChainList();
-  toast(`Added: @${val}`,'ok',2500);
-}
-function removeChainDomain(index){
-  const domains=getChainDomains();
-  const removed=domains.splice(index,1)[0];
-  saveChainDomains(domains);
-  renderChainList();
-  toast(`Removed: @${removed}`,'',2000);
+  renderInquiries();
 }
 
-// ============================================================
-// DISMISS DUPLICATE — promote NRV to PRF, clear dup note
-// ============================================================
-async function dismissDuplicate(){
-  if(!editId)return;
-  const rec=data.find(f=>f.id===editId);
-  if(!rec)return;
-  const oldStatus=rec.status;
-  const oldNotes=document.getElementById('f-notes').value;
-  // Strip the "Possible duplicate of:..." sentence from notes
-  const cleanedNotes=oldNotes.replace(/\s*[\|·]\s*Possible duplicate of:[^|·\n]*/gi,'').replace(/^Possible duplicate of:[^|·\n]*/gi,'').replace(/\s*\|\s*$/,'').trim();
-  // Set status to PRF and update notes in the form
-  document.getElementById('f-status-i').value='PRF';
-  document.getElementById('f-notes').value=cleanedNotes;
-  // Save immediately
-  const changes={};
-  if(oldStatus!=='PRF')changes.status={from:oldStatus,to:'PRF'};
-  if(oldNotes!==cleanedNotes)changes.notes={from:oldNotes,to:cleanedNotes||null};
-  try{
-    await withAuthRetry(()=>api.patch(editId,{status:'PRF',notes:cleanedNotes||null,edited_on:today(),edited_by:userEmail}));
-    if(Object.keys(changes).length>0){
-      await withAuthRetry(()=>api.logHistory({facility_id:editId,facility_name:rec.name,changed_by:userEmail,changes})).catch(()=>{});
+function closeInquiries() {
+  document.getElementById('inq-ov').classList.remove('open');
+}
+
+function renderInquiries() {
+  const q = (document.getElementById('inq-search')?.value || '').toLowerCase();
+  const fStatus = document.getElementById('inq-f-status')?.value || '';
+  const fCat = document.getElementById('inq-f-cat')?.value || '';
+  inqFiltered = inqData.filter(i => {
+    if (fStatus && i.status !== fStatus) return false;
+    if (fCat && i.category !== fCat) return false;
+    if (q && !`${i.sender_name} ${i.sender_email} ${i.subject} ${i.message_body}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const newCount = inqFiltered.filter(i => i.status === 'New').length;
+  document.getElementById('inq-stat').textContent = `${inqFiltered.length} inquir${inqFiltered.length !== 1 ? 'ies' : 'y'}${newCount > 0 ? ` · ${newCount} new` : ''}`;
+  const list = document.getElementById('inq-list');
+  if (!inqFiltered.length) { list.innerHTML = '<div class="inq-empty">No inquiries match the current filters.</div>'; return; }
+  list.innerHTML = inqFiltered.map(i => renderInqCard(i)).join('');
+  updateNavInqBadge();
+}
+
+function renderInqCard(i) {
+  const timeStr = i.received_at ? new Date(i.received_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+  const catCls = { Customer: 'bic-customer', Shop: 'bic-shop' }[i.category] || 'bic-unknown';
+  const stCls = { New: 'bis-new', 'In Review': 'bis-review', Resolved: 'bis-resolved' }[i.status] || 'bis-new';
+  const linkedBadge = i.linked_facility_id ? `<span class="inq-linked-badge" onclick="openEditFromInquiry('${i.linked_facility_id}')">🔗 Linked to Shop</span>` : '';
+  const resolvedSection = i.status === 'Resolved'
+    ? `<span class="inq-resolved-tag">✓ Resolved${i.department ? ' → ' + esc(i.department) : ''}</span>`
+    : `<div class="inq-actions">
+        <label>Category</label>
+        <select class="inq-select" id="inq-cat-${i.id}" onchange="inqSetCategory('${i.id}',this.value)">
+          <option value="Unknown"${i.category==='Unknown'?' selected':''}>Unknown</option>
+          <option value="Customer"${i.category==='Customer'?' selected':''}>Customer</option>
+          <option value="Shop"${i.category==='Shop'?' selected':''}>Shop</option>
+        </select>
+        <label style="margin-left:6px">Route to</label>
+        <select class="inq-select" id="inq-dept-${i.id}">
+          <option value="">— Dept —</option>
+          <option value="Customer Service"${i.department==='Customer Service'?' selected':''}>Customer Service</option>
+          <option value="Billing"${i.department==='Billing'?' selected':''}>Billing</option>
+          <option value="Coverage"${i.department==='Coverage'?' selected':''}>Coverage</option>
+          <option value="Contracts"${i.department==='Contracts'?' selected':''}>Contracts</option>
+          <option value="Claims"${i.department==='Claims'?' selected':''}>Claims</option>
+          <option value="Other"${i.department==='Other'?' selected':''}>Other</option>
+        </select>
+        <button class="btn-inq-link" onclick="openLinkShop('${i.id}')">🔗 Link to Shop</button>
+        <button class="btn-inq-route" onclick="resolveInquiry('${i.id}')">✓ Resolve</button>
+      </div>`;
+  const noteText = i.resolution_note ? `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;background:#f4f6f9;border-radius:5px;padding:6px 10px">📝 ${esc(i.resolution_note)}</div>` : '';
+  return `<div class="inq-card${i.status==='Resolved'?' resolved':''}" id="inq-${i.id}">
+    <div class="inq-card-head" onclick="toggleInqCard('${i.id}')">
+      <span class="inq-card-chevron">▶</span>
+      <div class="inq-card-meta">
+        <div class="inq-card-top">
+          <span class="inq-card-sender">${esc(i.sender_name||'Unknown')}</span>
+          <span class="inq-card-email">&lt;${esc(i.sender_email||'')}&gt;</span>
+        </div>
+        <div class="inq-card-subject">${esc(i.subject||'(no subject)')}</div>
+      </div>
+      <span class="inq-card-time">${timeStr}</span>
+    </div>
+    <div class="inq-card-footer">
+      <span class="badge-inq-cat ${catCls}">${esc(i.category||'Unknown')}</span>
+      <span class="badge-inq-status ${stCls}">${esc(i.status||'New')}</span>
+      ${linkedBadge}
+    </div>
+    <div class="inq-card-body" id="inq-body-${i.id}">
+      <div class="inq-msg-text">${esc(i.message_body||'').replace(/\n/g,'<br>')}</div>
+      ${noteText}
+      ${resolvedSection}
+    </div>
+  </div>`;
+}
+
+function toggleInqCard(id) {
+  const card = document.getElementById('inq-' + id);
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.inq-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) {
+    card.classList.add('expanded');
+    const item = inqData.find(x => x.id === id);
+    if (item && item.status === 'New') {
+      inqApi.patch(id, { status: 'In Review' }).then(() => {
+        item.status = 'In Review';
+        const badge = card.querySelector('.badge-inq-status');
+        if (badge) { badge.className = 'badge-inq-status bis-review'; badge.textContent = 'In Review'; }
+        updateNavInqBadge();
+      }).catch(() => {});
     }
-    await loadData();
-    closePanel();
-    toast(`${rec.name} promoted to PRF ✅`,'ok',3000);
-  }catch(err){
-    toast('Save failed: '+err.message,'err');
   }
 }
 
-// Show/hide the dismiss button when editing an NRV record that has a dup note
-function updateDismissDupBtn(status, notes){
-  const btn=document.getElementById('dismiss-dup-btn');
-  if(!btn)return;
-  const isDupNote=notes&&/possible duplicate of:/i.test(notes);
-  btn.style.display=(status==='NRV'&&isDupNote)?'flex':'none';
+async function inqSetCategory(id, val) {
+  const item = inqData.find(x => x.id === id);
+  if (item) item.category = val;
+  try {
+    await withAuthRetry(() => inqApi.patch(id, { category: val }));
+    const card = document.getElementById('inq-' + id);
+    const catBadge = card?.querySelector('.badge-inq-cat');
+    if (catBadge) { const cls = { Customer: 'bic-customer', Shop: 'bic-shop' }[val] || 'bic-unknown'; catBadge.className = 'badge-inq-cat ' + cls; catBadge.textContent = val; }
+  } catch (e) { toast('Save failed: ' + e.message, 'err'); }
+}
+
+async function resolveInquiry(id) {
+  const dept = document.getElementById('inq-dept-' + id)?.value || '';
+  const cat = document.getElementById('inq-cat-' + id)?.value || 'Unknown';
+  const fields = { status: 'Resolved', department: dept || null, category: cat, resolved_at: new Date().toISOString() };
+  try {
+    await withAuthRetry(() => inqApi.patch(id, fields));
+    const item = inqData.find(x => x.id === id);
+    if (item) Object.assign(item, fields);
+    const card = document.getElementById('inq-' + id);
+    if (card) card.outerHTML = renderInqCard({ ...item, ...fields });
+    toast('Inquiry resolved.', 'ok');
+    updateNavInqBadge();
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+
+function openLinkShop(inquiryId) {
+  inqLinkTarget = inquiryId;
+  document.getElementById('link-shop-search').value = '';
+  document.getElementById('link-shop-results').innerHTML = '<div class="link-shop-empty">Type to search facilities…</div>';
+  document.getElementById('link-shop-ov').classList.add('open');
+  setTimeout(() => document.getElementById('link-shop-search').focus(), 100);
+}
+function closeLinkShop() {
+  document.getElementById('link-shop-ov').classList.remove('open');
+  inqLinkTarget = null;
+}
+function searchLinkShop() {
+  const q = document.getElementById('link-shop-search').value.toLowerCase().trim();
+  const results = document.getElementById('link-shop-results');
+  if (q.length < 2) { results.innerHTML = '<div class="link-shop-empty">Type at least 2 characters…</div>'; return; }
+  const hits = data.filter(f => `${f.name} ${f.city} ${f.state} ${f.phone}`.toLowerCase().includes(q)).slice(0, 12);
+  if (!hits.length) { results.innerHTML = '<div class="link-shop-empty">No facilities found.</div>'; return; }
+  results.innerHTML = hits.map(f => `<div class="link-shop-row" onclick="confirmLinkShop('${f.id}','${esc(f.name)}')"><strong>${esc(f.name)}</strong><span>${esc(f.city||'')}, ${esc(f.state||'')} · ${f.phone||'—'} · <span class="badge ${bc(f.status)}">${f.status}</span></span></div>`).join('');
+}
+async function confirmLinkShop(facilityId, facilityName) {
+  if (!inqLinkTarget) return;
+  const id = inqLinkTarget;
+  closeLinkShop();
+  try {
+    await withAuthRetry(() => inqApi.patch(id, { linked_facility_id: facilityId, category: 'Shop', status: 'In Review' }));
+    const item = inqData.find(x => x.id === id);
+    if (item) { item.linked_facility_id = facilityId; item.category = 'Shop'; item.status = 'In Review'; }
+    const card = document.getElementById('inq-' + id);
+    if (card) card.outerHTML = renderInqCard(item);
+    toast(`Linked to ${facilityName}`, 'ok', 3000);
+  } catch (e) { toast('Link failed: ' + e.message, 'err'); }
+}
+function openEditFromInquiry(facilityId) {
+  closeInquiries();
+  setTimeout(() => openEdit(facilityId), 150);
+}
+
+async function updateNavInqBadge() {
+  const newCount = inqData.filter(i => i.status === 'New').length;
+  const badge = document.getElementById('inq-nav-badge');
+  if (badge) { badge.textContent = newCount; badge.style.display = newCount > 0 ? 'inline-flex' : 'none'; }
+}
+async function loadInqBadgeCount() {
+  try {
+    const count = await inqApi.getNewCount();
+    const badge = document.getElementById('inq-nav-badge');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+  } catch (e) {}
 }
 </script>
 </body>
