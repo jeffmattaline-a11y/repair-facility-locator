@@ -19,8 +19,8 @@ const SUPABASE_URL        = process.env.SUPABASE_URL;
 const SUPABASE_KEY        = process.env.SUPABASE_ANON_KEY;
 const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
-const BATCH_SIZE          = 500;  // Places API calls per run (bumped for bulk initial sync)
-const STALE_DAYS          = 7;    // Re-fetch if older than 7 days
+const BATCH_SIZE          = 4000; // Full rotation every ~5 nightly runs
+const STALE_DAYS          = 5;    // Re-fetch if older than 5 days
 const DELAY_MS            = 100;  // Polite delay between API calls (ms)
 
 // ─── Helpers ───────────────────────────────────────────────────
