@@ -16,7 +16,7 @@
  */
 
 const SUPABASE_URL        = process.env.SUPABASE_URL;
-const SUPABASE_KEY        = process.env.SUPABASE_KEY;
+const SUPABASE_KEY        = process.env.SUPABASE_ANON_KEY;
 const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
 const BATCH_SIZE          = 500;  // Places API calls per run (bumped for bulk initial sync)
@@ -41,17 +41,25 @@ async function supabaseGet(path) {
 }
 
 async function supabasePatch(table, id, body) {
+  // Cast id explicitly as uuid in the filter
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
     method: 'PATCH',
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+      'Prefer': 'return=representation',
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Supabase PATCH failed for ${id}: ${res.status} ${await res.text()}`);
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Supabase PATCH failed for ${id}: ${res.status} ${text}`);
+  // Verify at least one row was actually updated
+  let rows = [];
+  try { rows = JSON.parse(text); } catch(e) {}
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error(`PATCH matched 0 rows for id=${id} — check RLS policies or id format`);
+  }
 }
 
 // ─── Google Places helpers ──────────────────────────────────────
@@ -115,7 +123,7 @@ async function main() {
   console.log(`Started: ${new Date().toISOString()}\n`);
 
   if (!SUPABASE_URL || !SUPABASE_KEY || !GOOGLE_KEY) {
-    console.error('❌ Missing required env vars. Check SUPABASE_URL, SUPABASE_KEY, GOOGLE_GEOCODING_KEY.');
+    console.error('❌ Missing required env vars. Check SUPABASE_URL, SUPABASE_ANON_KEY, GOOGLE_GEOCODING_KEY.');
     process.exit(1);
   }
 
