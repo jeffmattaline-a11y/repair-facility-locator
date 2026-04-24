@@ -839,10 +839,10 @@ async function doSearch() {
     // Filter by distance
     const radiusMeters = radius * 1609.34;
     const nearby = facilities
-      .filter(f => f.latitude && f.longitude)
+      .filter(f => f.Lat && f.lng)
       .map(f => ({
         ...f,
-        distanceMiles: haversine(loc.lat, loc.lng, parseFloat(f.latitude), parseFloat(f.longitude))
+        distanceMiles: haversine(loc.lat, loc.lng, parseFloat(f.Lat), parseFloat(f.lng))
       }))
       .filter(f => f.distanceMiles <= radius)
       .sort((a, b) => sortFn(a, b));
@@ -860,7 +860,7 @@ async function fetchFacilities() {
   let all = [], offset = 0, limit = 1000;
   while (true) {
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/facilities?status=eq.PRF&select=id,name,address,city,state,zip,phone,latitude,longitude,hours_of_operation,notes,google_rating,google_review_count,accepts_parts,added_at&limit=${limit}&offset=${offset}`,
+      `${SUPABASE_URL}/rest/v1/facilities?status=eq.PRF&select=id,name,address,city,state,zip,phone,Lat,lng,hours_of_operation,notes,google_rating,google_review_count,accepts_shipped,added_at&limit=${limit}&offset=${offset}`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     const data = await resp.json();
@@ -919,8 +919,8 @@ function buildCard(shop, index) {
   card.onclick = () => focusShop(shop);
 
   const fullAddress = `${shop.address}, ${shop.city}, ${shop.state} ${shop.zip}`;
-  const streetImgUrl = shop.latitude && shop.longitude
-    ? `https://maps.googleapis.com/maps/api/streetview?size=420x110&location=${shop.latitude},${shop.longitude}&fov=90&pitch=0&key=${GOOGLE_MAPS_KEY}`
+  const streetImgUrl = shop.Lat && shop.lng
+    ? `https://maps.googleapis.com/maps/api/streetview?size=420x110&location=${shop.Lat},${shop.lng}&fov=90&pitch=0&key=${GOOGLE_MAPS_KEY}`
     : null;
 
   const rating = shop.google_rating ? parseFloat(shop.google_rating).toFixed(1) : null;
@@ -940,7 +940,7 @@ function buildCard(shop, index) {
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-preferred">PRF</span>
-        ${shop.accepts_parts ? '<span class="tag tag-parts">Accepts Parts</span>' : ''}
+        ${shop.accepts_shipped ? '<span class="tag tag-parts">Accepts Parts</span>' : ''}
       </div>
       <div class="card-name">${escHtml(shop.name)}</div>
       <div class="card-address">${escHtml(fullAddress)}</div>
@@ -1032,8 +1032,8 @@ function renderMarkers(results) {
   const infoWindow = new google.maps.InfoWindow();
 
   results.forEach((shop, i) => {
-    const lat = parseFloat(shop.latitude);
-    const lng = parseFloat(shop.longitude);
+    const lat = parseFloat(shop.Lat);
+    const lng = parseFloat(shop.lng);
     if (isNaN(lat) || isNaN(lng)) return;
 
     const pos = { lat, lng };
