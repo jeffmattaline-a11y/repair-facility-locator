@@ -190,7 +190,7 @@
     flex-direction: column;
     overflow: hidden;
     border-right: 1px solid var(--border);
-    min-height: 0;
+    height: 100%;
   }
   .results-header {
     padding: 10px 14px 8px;
@@ -215,6 +215,7 @@
     flex-direction: column;
     gap: 8px;
     min-height: 0;
+    height: 0; /* force flex child to respect parent bounds */
   }
   .results-scroll::-webkit-scrollbar { width: 5px; }
   .results-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
