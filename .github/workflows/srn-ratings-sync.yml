@@ -1,0 +1,27 @@
+name: SRN Nightly Ratings Sync
+
+on:
+  schedule:
+    # Runs at 2:00 AM Central (8:00 UTC) — before the daily report at 8am Central
+    - cron: '0 8 * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  sync-ratings:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Ratings Sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_GEOCODING_KEY }}
+        run: node scripts/srn-ratings-sync.js
