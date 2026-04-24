@@ -785,9 +785,10 @@
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────
-const SUPABASE_URL = 'https://amfawopeshfzuxusruyq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8'; // replace with your anon key
-const GOOGLE_MAPS_KEY = 'AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0'; // your Maps API key
+const SUPABASE_URL       = 'https://amfawopeshfzuxusruyq.supabase.co';
+const SUPABASE_KEY       = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
+const GOOGLE_MAPS_KEY    = 'AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0'; // Maps JS + Street View (HTTP referrer restricted)
+const GOOGLE_GEOCODING_KEY = 'AIzaSyA_dZ6DHViMGA72WUqsX0jj_I9F9iXan4k'; // Geocoding only (unrestricted)
 
 // ── STATE ─────────────────────────────────────────────────
 let allResults = [];
@@ -823,7 +824,7 @@ async function doSearch() {
   try {
     // Geocode the search query
     const geoResp = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_KEY}`
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_GEOCODING_KEY}`
     );
     const geoData = await geoResp.json();
     if (!geoData.results?.length) { showEmpty('Location not found', 'Try a different ZIP code or city.'); return; }
