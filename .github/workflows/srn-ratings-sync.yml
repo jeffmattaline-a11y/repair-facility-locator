@@ -22,6 +22,6 @@ jobs:
       - name: Run Ratings Sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_GEOCODING_KEY }}
         run: node scripts/srn-ratings-sync.js
