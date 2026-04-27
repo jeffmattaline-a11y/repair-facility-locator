@@ -89,6 +89,32 @@ header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--nav
 .dpbtn-email{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
 .dpbtn-email:hover{background:#ddd6fe}
 .dpbtn-offer{background:var(--gold-bg);color:var(--gold);border:1px solid #fcd38a}
+/* Contact modal */
+.cm-modal{display:none;position:fixed;inset:0;z-index:3000;align-items:center;justify-content:center}
+.cm-modal.open{display:flex}
+.cm-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.cm-box{position:relative;background:#fff;border-radius:12px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden}
+.cm-head{background:#1a3a6b;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.cm-title{font-size:15px;font-weight:600}
+.cm-x{background:rgba(255,255,255,.2);border:none;color:#fff;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.cm-x:hover{background:rgba(255,255,255,.35)}
+.cm-body{padding:16px}
+.cm-shop{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5}
+.cm-shop strong{color:var(--text);font-size:13px;display:block;margin-bottom:2px}
+.cm-field{margin-bottom:12px}
+.cm-field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.cm-field input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+.cm-field input:focus{border-color:var(--blue)}
+.cm-status{font-size:12px;margin-top:2px;min-height:18px}
+.cm-status.ok{color:var(--green)}
+.cm-status.err{color:var(--red)}
+.cm-foot{padding:12px 16px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.cm-cancel{background:#fff;border:1.5px solid var(--border);color:var(--text2);padding:7px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit}
+.cm-cancel:hover{background:var(--bg)}
+.cm-submit{border:none;color:#fff;padding:7px 20px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:background .15s}
+.cm-submit.sms{background:#1DB0D1}.cm-submit.sms:hover{background:#178fa6}
+.cm-submit.email{background:var(--blue)}.cm-submit.email:hover{background:var(--navy)}
+.cm-submit:disabled{opacity:.55;cursor:not-allowed}
 .pin-marker{width:28px;height:28px;border-radius:50% 50% 50% 0;background:var(--blue);border:2.5px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;transition:transform .15s}
 .pin-marker.prm{background:var(--green)}
 .pin-marker.std{background:var(--gold)}
@@ -170,6 +196,37 @@ header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--nav
 </div>
 <div class="geobar" id="geobar"></div>
 
+<!-- Contact Modal -->
+<div class="cm-modal" id="cm-modal">
+  <div class="cm-backdrop" onclick="closeCM()"></div>
+  <div class="cm-box">
+    <div class="cm-head">
+      <div class="cm-title" id="cm-title">Send Shop Info</div>
+      <button class="cm-x" onclick="closeCM()">✕</button>
+    </div>
+    <div class="cm-body">
+      <div class="cm-shop" id="cm-shop"></div>
+      <div class="cm-field">
+        <label>Customer Name</label>
+        <input type="text" id="cm-name" placeholder="e.g. John Smith">
+      </div>
+      <div class="cm-field" id="cm-phone-wrap">
+        <label>Customer Cell Number</label>
+        <input type="tel" id="cm-cphone" placeholder="e.g. (555) 123-4567">
+      </div>
+      <div class="cm-field" id="cm-email-wrap" style="display:none">
+        <label>Customer Email</label>
+        <input type="email" id="cm-cemail" placeholder="e.g. customer@email.com">
+      </div>
+      <div class="cm-status" id="cm-status"></div>
+    </div>
+    <div class="cm-foot">
+      <button class="cm-cancel" onclick="closeCM()">Cancel</button>
+      <button class="cm-submit" id="cm-submit" onclick="submitCM()">Send</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
@@ -188,7 +245,11 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // ══════════════════════════════════════════════════════════════════════════════
 const GOOGLE_MAPS_KEY = '';
 // ══════════════════════════════════════════════════════════════════════════════
+const SMS_WEBHOOK   = 'https://carshield-srn.app.n8n.cloud/webhook/srn-send-sms';
+const EMAIL_WEBHOOK = 'https://carshield-srn.app.n8n.cloud/webhook/srn-send-email';
+// ══════════════════════════════════════════════════════════════════════════════
 let uLat=null, uLng=null, activeId=null;
+let _activeShop=null;
 let all=[], disp=[], mkrs={}, map, ml;
 const gcache={};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -335,6 +396,7 @@ function renderMarkers(){
 function sel(id){
   activeId=id;
   const f=all.find(x=>x.id===id);if(!f)return;
+  _activeShop=f;
   document.querySelectorAll('.fcard').forEach(c=>c.classList.remove('active'));
   const card=document.getElementById(`card-${id}`);
   if(card){card.classList.add('active');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
@@ -357,8 +419,8 @@ function sel(id){
   const shopEmail=f.email1||f.contact_email||'';
   let btns=`<a class="dpbtn dpbtn-dir" href="${murl}" target="_blank">Get Directions</a>`;
   if(f.phone)btns+=`<a class="dpbtn dpbtn-call" href="tel:${f.phone}">Call</a>`;
-  if(f.phone)btns+=`<a class="dpbtn dpbtn-sms" href="sms:${f.phone}">Text</a>`;
-  if(shopEmail)btns+=`<a class="dpbtn dpbtn-email" href="mailto:${esc(shopEmail)}">Email</a>`;
+  if(f.phone)btns+=`<button class="dpbtn dpbtn-sms" onclick="openCM('sms')">Text</button>`;
+  btns+=`<button class="dpbtn dpbtn-email" onclick="openCM('email')">Email</button>`;
   if(f.offer_url)btns+=`<a class="dpbtn dpbtn-offer" href="${f.offer_url}" target="_blank">Offers</a>`;
   document.getElementById('dpfoot').innerHTML=btns;
 
@@ -465,6 +527,56 @@ function locateMe(){
     document.getElementById('sort').value='dist';
     filter();
   },()=>alert('Could not get your location.'));
+}
+
+// ── Contact Modal ─────────────────────────────────────────────────────────────
+let _cmMode='';
+function openCM(mode){
+  if(!_activeShop)return;
+  _cmMode=mode;
+  const f=_activeShop;
+  document.getElementById('cm-title').textContent=mode==='sms'?'Text Shop Info to Customer':'Email Shop Info to Customer';
+  document.getElementById('cm-shop').innerHTML=`<strong>${esc(f.name)}</strong>${esc(f.address)}, ${esc(f.city)}, ${esc(f.state)} ${esc(f.zip)}${f.phone?'<br>Phone: '+fmtP(f.phone):''}`;
+  document.getElementById('cm-phone-wrap').style.display=mode==='sms'?'':'none';
+  document.getElementById('cm-email-wrap').style.display=mode==='email'?'':'none';
+  document.getElementById('cm-name').value='';
+  document.getElementById('cm-cphone').value='';
+  document.getElementById('cm-cemail').value='';
+  const st=document.getElementById('cm-status');st.textContent='';st.className='cm-status';
+  const btn=document.getElementById('cm-submit');
+  btn.textContent=mode==='sms'?'Send Text':'Send Email';
+  btn.className='cm-submit '+(mode==='sms'?'sms':'email');
+  btn.disabled=false;
+  document.getElementById('cm-modal').classList.add('open');
+  setTimeout(()=>{document.getElementById(mode==='sms'?'cm-cphone':'cm-cemail').focus();},100);
+}
+function closeCM(){document.getElementById('cm-modal').classList.remove('open');}
+async function submitCM(){
+  const name=document.getElementById('cm-name').value.trim();
+  const phone=document.getElementById('cm-cphone').value.trim();
+  const email=document.getElementById('cm-cemail').value.trim();
+  const st=document.getElementById('cm-status');
+  const btn=document.getElementById('cm-submit');
+  const f=_activeShop;
+  if(_cmMode==='sms'&&!phone){st.textContent='Please enter a phone number.';st.className='cm-status err';return;}
+  if(_cmMode==='email'&&!email){st.textContent='Please enter an email address.';st.className='cm-status err';return;}
+  btn.disabled=true;btn.textContent='Sending…';st.textContent='';st.className='cm-status';
+  const payload={
+    customer_name:name,customer_phone:phone,customer_email:email,
+    shop_name:f.name,shop_address:f.address,shop_city:f.city,
+    shop_state:f.state,shop_zip:f.zip,shop_phone:f.phone||''
+  };
+  try{
+    const r=await fetch(_cmMode==='sms'?SMS_WEBHOOK:EMAIL_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.ok){
+      st.textContent=_cmMode==='sms'?'✓ Text sent!':'✓ Email sent!';st.className='cm-status ok';
+      btn.textContent='Sent!';
+      setTimeout(closeCM,1800);
+    } else {throw new Error();}
+  }catch(e){
+    st.textContent='Something went wrong. Please try again.';st.className='cm-status err';
+    btn.disabled=false;btn.textContent=_cmMode==='sms'?'Send Text':'Send Email';
+  }
 }
 </script>
 </body>
