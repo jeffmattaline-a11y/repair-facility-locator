@@ -1159,21 +1159,53 @@ function updateCharCount() {
   document.getElementById('charCount').textContent = txt.length;
 }
 
-function confirmSend() {
+async function confirmSend() {
   const recipient = document.getElementById('recipientInput').value.trim();
   const message   = document.getElementById('messageBody').value.trim();
   const isText    = currentModal.type === 'text';
+  const shop      = currentModal.shop;
+  const btn       = document.querySelector('.btn-send-confirm');
 
   if (!recipient) {
     showToast(`Enter the CH's ${isText ? 'phone number' : 'email address'}.`, 'error');
     return;
   }
 
-  // In production this would hit an n8n webhook or Twilio/sendgrid endpoint
-  console.log('Send', currentModal.type, 'to', recipient, ':', message);
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
 
-  closeModal();
-  showToast(`${isText ? 'Text' : 'Email'} sent to ${recipient}`, 'success');
+  const SMS_WEBHOOK   = 'https://carshield-srn.app.n8n.cloud/webhook/srn-send-sms';
+  const EMAIL_WEBHOOK = 'https://carshield-srn.app.n8n.cloud/webhook/srn-send-email';
+
+  const payload = {
+    customer_phone: isText ? recipient : '',
+    customer_email: isText ? '' : recipient,
+    customer_name: '',
+    shop_name:    shop.name,
+    shop_address: shop.address,
+    shop_city:    shop.city,
+    shop_state:   shop.state,
+    shop_zip:     shop.zip,
+    shop_phone:   shop.phone || ''
+  };
+
+  try {
+    const r = await fetch(isText ? SMS_WEBHOOK : EMAIL_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      closeModal();
+      showToast(`${isText ? 'Text' : 'Email'} sent to ${recipient}`, 'success');
+    } else {
+      throw new Error('Request failed');
+    }
+  } catch(e) {
+    showToast('Something went wrong. Please try again.', 'error');
+    btn.disabled = false;
+    btn.textContent = isText ? 'Send Text' : 'Send Email';
+  }
 }
 
 // ── HELPERS ───────────────────────────────────────────────
