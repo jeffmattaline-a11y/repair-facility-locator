@@ -419,7 +419,7 @@ function sel(id){
   const shopEmail=f.email1||f.contact_email||'';
   let btns=`<a class="dpbtn dpbtn-dir" href="${murl}" target="_blank">Get Directions</a>`;
   if(f.phone)btns+=`<a class="dpbtn dpbtn-call" href="tel:${f.phone}">Call</a>`;
-  if(f.phone)btns+=`<button class="dpbtn dpbtn-sms" onclick="openCM('sms')">Text</button>`;
+  btns+=`<button class="dpbtn dpbtn-sms" onclick="openCM('sms')">Text</button>`;
   btns+=`<button class="dpbtn dpbtn-email" onclick="openCM('email')">Email</button>`;
   if(f.offer_url)btns+=`<a class="dpbtn dpbtn-offer" href="${f.offer_url}" target="_blank">Offers</a>`;
   document.getElementById('dpfoot').innerHTML=btns;
