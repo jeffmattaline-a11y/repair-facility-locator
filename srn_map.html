@@ -78,11 +78,16 @@ header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--nav
 .dprow a{color:var(--blue);text-decoration:none}
 .dprow a:hover{text-decoration:underline}
 .dpbadges{display:flex;gap:5px;flex-wrap:wrap}
-.dpfoot{padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px}
-.dpbtn{flex:1;padding:7px;border-radius:6px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
+.dpfoot{padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+.dpbtn{flex:1;min-width:70px;padding:7px;border-radius:6px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
 .dpbtn-dir{background:var(--blue);color:#fff}
 .dpbtn-dir:hover{background:var(--navy)}
 .dpbtn-call{background:var(--green-bg);color:var(--green);border:1px solid #a3d9b4}
+.dpbtn-call:hover{background:#d1f0de}
+.dpbtn-sms{background:#1DB0D1;color:#fff}
+.dpbtn-sms:hover{background:#178fa6}
+.dpbtn-email{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
+.dpbtn-email:hover{background:#ddd6fe}
 .dpbtn-offer{background:var(--gold-bg);color:var(--gold);border:1px solid #fcd38a}
 .pin-marker{width:28px;height:28px;border-radius:50% 50% 50% 0;background:var(--blue);border:2.5px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;transition:transform .15s}
 .pin-marker.prm{background:var(--green)}
@@ -215,7 +220,7 @@ map.on('click',closeDP);
     while (!done) {
       const to = from + PAGE - 1;
       const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/facilities?select=id,name,address,city,state,zip,phone,status,shop_type,lat,lng,ev_certified,accepts_shipped,offer_url&order=numeric_id.desc`,
+        `${SUPABASE_URL}/rest/v1/facilities?select=id,name,address,city,state,zip,phone,status,shop_type,lat,lng,ev_certified,accepts_shipped,offer_url,email1,contact_email&order=numeric_id.desc`,
         { headers: {
           'apikey': SUPABASE_ANON,
           'Authorization': `Bearer ${SUPABASE_ANON}`,
@@ -349,8 +354,11 @@ function sel(id){
   const orow=document.getElementById('dpoffer');
   if(f.offer_url){document.getElementById('dpofferlink').href=f.offer_url;orow.style.display='flex';}else orow.style.display='none';
   const murl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${f.address}, ${f.city}, ${f.state} ${f.zip}`)}`;
+  const shopEmail=f.email1||f.contact_email||'';
   let btns=`<a class="dpbtn dpbtn-dir" href="${murl}" target="_blank">Get Directions</a>`;
   if(f.phone)btns+=`<a class="dpbtn dpbtn-call" href="tel:${f.phone}">Call</a>`;
+  if(f.phone)btns+=`<a class="dpbtn dpbtn-sms" href="sms:${f.phone}">Text</a>`;
+  if(shopEmail)btns+=`<a class="dpbtn dpbtn-email" href="mailto:${esc(shopEmail)}">Email</a>`;
   if(f.offer_url)btns+=`<a class="dpbtn dpbtn-offer" href="${f.offer_url}" target="_blank">Offers</a>`;
   document.getElementById('dpfoot').innerHTML=btns;
 
