@@ -764,6 +764,10 @@
         <strong id="modalShopName">—</strong>
         <span id="modalShopAddress">—</span>
       </div>
+      <div class="form-group" id="customerNameGroup">
+        <label>Customer Name (Optional)</label>
+        <input type="text" id="customerNameInput" placeholder="e.g. John Smith" />
+      </div>
       <div class="form-group" id="recipientGroup">
         <label id="recipientLabel">CH Phone Number</label>
         <input type="text" id="recipientInput" placeholder="(555) 555-5555" />
@@ -771,7 +775,7 @@
       <div class="form-group">
         <label>Message</label>
         <textarea id="messageBody" rows="4" oninput="updateCharCount()"></textarea>
-        <div class="char-count"><span id="charCount">0</span> / 160 chars</div>
+        <div class="char-count" id="charCountWrap"><span id="charCount">0</span> chars <span id="smsSegments" style="color:var(--muted)"></span></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1131,6 +1135,7 @@ function openSendModal(type, shop) {
   document.getElementById('recipientInput').placeholder = isText ? '(555) 555-5555' : 'customer@email.com';
   document.getElementById('recipientInput').type = isText ? 'tel' : 'email';
   document.getElementById('recipientInput').value = '';
+  document.getElementById('customerNameInput').value = '';
 
   const rating = shop.google_rating ? ` | Google: ${parseFloat(shop.google_rating).toFixed(1)}★` : '';
   const defaultMsg = isText
@@ -1156,18 +1161,33 @@ function closeModal() {
 
 function updateCharCount() {
   const txt = document.getElementById('messageBody').value;
-  document.getElementById('charCount').textContent = txt.length;
+  const len = txt.length;
+  document.getElementById('charCount').textContent = len;
+  const seg = document.getElementById('smsSegments');
+  const isText = currentModal && currentModal.type === 'text';
+  if (isText && seg) {
+    const segments = len <= 160 ? 1 : Math.ceil(len / 153);
+    seg.textContent = `· ${segments} SMS segment${segments > 1 ? 's' : ''}`;
+    seg.style.color = len > 160 ? 'var(--gold)' : 'var(--muted)';
+  } else if (seg) {
+    seg.textContent = '';
+  }
 }
 
 async function confirmSend() {
-  const recipient = document.getElementById('recipientInput').value.trim();
-  const message   = document.getElementById('messageBody').value.trim();
-  const isText    = currentModal.type === 'text';
-  const shop      = currentModal.shop;
-  const btn       = document.querySelector('.btn-send-confirm');
+  const recipient     = document.getElementById('recipientInput').value.trim();
+  const message       = document.getElementById('messageBody').value.trim();
+  const customerName  = document.getElementById('customerNameInput').value.trim();
+  const isText        = currentModal.type === 'text';
+  const shop          = currentModal.shop;
+  const btn           = document.querySelector('.btn-send-confirm');
 
   if (!recipient) {
     showToast(`Enter the CH's ${isText ? 'phone number' : 'email address'}.`, 'error');
+    return;
+  }
+  if (!message) {
+    showToast('Message cannot be empty.', 'error');
     return;
   }
 
@@ -1180,13 +1200,14 @@ async function confirmSend() {
   const payload = {
     customer_phone: isText ? recipient : '',
     customer_email: isText ? '' : recipient,
-    customer_name: '',
-    shop_name:    shop.name,
-    shop_address: shop.address,
-    shop_city:    shop.city,
-    shop_state:   shop.state,
-    shop_zip:     shop.zip,
-    shop_phone:   shop.phone || ''
+    customer_name:  customerName,
+    message:        message,
+    shop_name:      shop.name,
+    shop_address:   shop.address,
+    shop_city:      shop.city,
+    shop_state:     shop.state,
+    shop_zip:       shop.zip,
+    shop_phone:     shop.phone || ''
   };
 
   try {
