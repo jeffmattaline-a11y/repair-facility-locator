@@ -83,6 +83,28 @@ async function fetchOpenMessagesCount() {
 }
 
 // ---------------------------------------------------------------------------
+// 3b. Query rep reports received in the last 24 hours
+// ---------------------------------------------------------------------------
+async function fetchRepReportsCount() {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/facility_messages?source=eq.rep_report&received_at=gte.${since}&select=id`,
+    {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      },
+    }
+  );
+  if (!res.ok) return 0;
+  const range = res.headers.get('content-range');
+  return parseInt(range?.split('/')[1] || '0', 10);
+}
+
+// ---------------------------------------------------------------------------
 // 4. Source method display helpers
 // ---------------------------------------------------------------------------
 const SOURCE_LABELS = {
@@ -99,7 +121,7 @@ function sourceChip(method) {
 // ---------------------------------------------------------------------------
 // 5. Build the HTML email body
 // ---------------------------------------------------------------------------
-function buildEmailHtml(facilities, snapshot, openMessages) {
+function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
   const reportDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Chicago',
@@ -250,6 +272,20 @@ function buildEmailHtml(facilities, snapshot, openMessages) {
         </td>
       </tr>` : '';
 
+  const repReportsBanner = repReports > 0 ? `
+      <!-- Rep Reports Alert -->
+      <tr>
+        <td style="padding:${openMessages > 0 ? '0' : '16px'} 32px 16px;">
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:22px;">🔧</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#c2410c;">${repReports} Rep Report${repReports === 1 ? '' : 's'} Submitted Today</div>
+              <div style="font-size:12px;color:#ea580c;margin-top:2px;">Field reps submitted facility issue reports in the last 24 hours. <a href="https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html" style="color:#ea580c;font-weight:600;">Review in Admin Tool →</a></div>
+            </div>
+          </div>
+        </td>
+      </tr>` : '';
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -277,6 +313,8 @@ function buildEmailHtml(facilities, snapshot, openMessages) {
       </tr>
 
       ${messagesBanner}
+
+      ${repReportsBanner}
 
       ${total > 0 ? `
       <!-- Source Breakdown Banner -->
@@ -400,6 +438,10 @@ async function sendEmail(subject, html) {
     const openMessages = await fetchOpenMessagesCount();
     console.log(`Open messages: ${openMessages}`);
 
+    console.log('🔧 Fetching rep reports (last 24h)...');
+    const repReports = await fetchRepReportsCount();
+    console.log(`Rep reports today: ${repReports}`);
+
     const total = facilities.length;
     const dateStr = new Date().toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago',
@@ -417,12 +459,13 @@ async function sendEmail(subject, html) {
     ].filter(Boolean).join(' · ');
 
     const msgAlert = openMessages > 0 ? ` · 💬 ${openMessages} Open` : '';
+    const repAlert = repReports > 0 ? ` · 🔧 ${repReports} Rep Report${repReports === 1 ? '' : 's'}` : '';
 
     const subject = total === 0
-      ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}`
-      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}`;
+      ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}${repAlert}`
+      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}${repAlert}`;
 
-    const html = buildEmailHtml(facilities, snapshot, openMessages);
+    const html = buildEmailHtml(facilities, snapshot, openMessages, repReports);
 
     console.log('📧 Sending email...');
     await sendEmail(subject, html);
