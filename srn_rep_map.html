@@ -961,7 +961,7 @@
   </button>
   <span class="sort-label">Sort by:</span>
   <select class="sort-select" id="sortSelect" onchange="resortResults()">
-    <option value="google_rating">⭐ Google Rating</option>
+    <option value="google_rating">Google Rating</option>
     <option value="distance">Distance</option>
     <option value="combined" disabled title="Coming soon — requires SRN Score column">SRN Score + Rating (coming soon)</option>
   </select>
@@ -1218,7 +1218,7 @@ async function doSearch() {
 }
 
 async function fetchFacilities() {
-  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,notes,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp,vip';
+  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,notes,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp';
   let all = [], offset = 0, limit = 1000;
 
   // Fetch PRF facilities
@@ -1256,7 +1256,7 @@ function tierPriority(shop) {
   // Pilot always tier 1 regardless of arrival mode
   if (shop.pilot_ocp) return 1;
   // VIP tier 2
-  if (shop.status === 'VIP' || shop.vip) return 2;
+  if (shop.status === 'VIP') return 2;
   // PRF tier 3
   return 3;
 }
@@ -1301,8 +1301,8 @@ function renderCards(results) {
   shopIndex = {};
 
   const pilotShops = results.filter(s => s.pilot_ocp);
-  const vipShops   = results.filter(s => !s.pilot_ocp && (s.status === 'VIP' || s.vip));
-  const prfShops   = results.filter(s => !s.pilot_ocp && s.status !== 'VIP' && !s.vip);
+  const vipShops   = results.filter(s => !s.pilot_ocp && s.status === 'VIP');
+  const prfShops   = results.filter(s => !s.pilot_ocp && s.status !== 'VIP');
 
   let idx = 0;
 
@@ -1332,7 +1332,7 @@ function renderCards(results) {
     if (pilotShops.length > 0 || vipShops.length > 0) {
       const div = document.createElement('div');
       div.className = 'other-section-divider';
-      div.innerHTML = '⭐ Preferred';
+      div.innerHTML = '🛡️ Preferred';
       container.appendChild(div);
     }
     prfShops.forEach(shop => {
@@ -1490,7 +1490,7 @@ function renderMarkers(results) {
 
     const rating = shop.google_rating ? parseFloat(shop.google_rating) : null;
     const isPilot = !!shop.pilot_ocp;
-    const isVip   = !isPilot && (shop.status === 'VIP' || !!shop.vip);
+    const isVip   = !isPilot && shop.status === 'VIP';
 
     let markerColor, strokeColor, scale, zIndexBoost;
 
