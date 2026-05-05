@@ -357,6 +357,9 @@ td.nm:hover{text-decoration:underline}
 .inq-linked-badge{font-size:10px;font-weight:600;background:#e8f0fc;color:#1a5fb4;border:1px solid #93c5fd;padding:2px 8px;border-radius:10px;cursor:pointer}
 .inq-linked-badge:hover{background:#c7d9f9}
 .inq-new-badge{display:inline-flex;align-items:center;justify-content:center;background:#CA383B;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;padding:0 4px;margin-left:4px;vertical-align:middle}
+.btn-inq-delete{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:4px;color:#b91c1c;opacity:0;transition:opacity .15s;flex-shrink:0;line-height:1}
+.inq-card:hover .btn-inq-delete{opacity:.45}
+.btn-inq-delete:hover{opacity:1 !important;background:var(--red-bg)}
 /* Link-to-shop modal */
 .link-shop-ov{position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:8500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .link-shop-ov.open{display:flex}
@@ -1022,6 +1025,10 @@ const inqApi = {
   async getNewCount() {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_inquiries?status=eq.New&select=id`, { headers: { ...hdrs(), 'Prefer': 'count=exact', 'Range': '0-0' } });
     return parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10);
+  },
+  async del(id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_inquiries?id=eq.${id}`, { method: 'DELETE', headers: hdrs() });
+    if (!r.ok) throw new Error(await r.text());
   }
 };
 
@@ -1098,6 +1105,7 @@ function renderInqCard(i) {
         <div class="inq-card-subject">${esc(i.subject||'(no subject)')}</div>
       </div>
       <span class="inq-card-time">${timeStr}</span>
+      <button class="btn-inq-delete" onclick="event.stopPropagation();deleteInquiry('${i.id}')" title="Delete inquiry">🗑</button>
     </div>
     <div class="inq-card-footer">
       <span class="badge-inq-cat ${catCls}">${esc(i.category||'Unknown')}</span>
@@ -1154,6 +1162,30 @@ async function resolveInquiry(id) {
     toast('Inquiry resolved.', 'ok');
     updateNavInqBadge();
   } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+
+async function deleteInquiry(id) {
+  if (!confirm('Delete this inquiry? This cannot be undone.')) return;
+  try {
+    await withAuthRetry(() => inqApi.del(id));
+    inqData = inqData.filter(x => x.id !== id);
+    const card = document.getElementById('inq-' + id);
+    if (card) card.remove();
+    const q = (document.getElementById('inq-search')?.value || '').toLowerCase();
+    const fStatus = document.getElementById('inq-f-status')?.value || '';
+    const fCat = document.getElementById('inq-f-cat')?.value || '';
+    const remaining = inqData.filter(i => {
+      if (fStatus && i.status !== fStatus) return false;
+      if (fCat && i.category !== fCat) return false;
+      if (q && !`${i.sender_name} ${i.sender_email} ${i.subject} ${i.message_body}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const newCount = remaining.filter(i => i.status === 'New').length;
+    document.getElementById('inq-stat').textContent = `${remaining.length} inquir${remaining.length !== 1 ? 'ies' : 'y'}${newCount > 0 ? ` · ${newCount} new` : ''}`;
+    if (!remaining.length) document.getElementById('inq-list').innerHTML = '<div class="inq-empty">No inquiries match the current filters.</div>';
+    updateNavInqBadge();
+    toast('Inquiry deleted.', 'ok', 2500);
+  } catch (e) { toast('Delete failed: ' + e.message, 'err'); }
 }
 
 function openLinkShop(inquiryId) {
