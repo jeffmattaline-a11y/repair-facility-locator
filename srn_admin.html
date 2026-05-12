@@ -593,6 +593,9 @@ td.nm:hover{text-decoration:underline}
         <button class="nav-dd-item" onclick="closeAllDDs();openChainManager()">
           <span class="dd-icon">&#x1F517;</span> Chain Domain Manager
         </button>
+        <button class="nav-dd-item" onclick="closeAllDDs();openUnmatchedSurveys()">
+          <span class="dd-icon">&#x1F4CB;</span> Unmatched Surveys
+        </button>
       </div>
     </div>
   </div>
@@ -681,6 +684,7 @@ td.nm:hover{text-decoration:underline}
       <button class="ptab on" id="tab-btn-details" onclick="switchTab('details')">Details</button>
       <button class="ptab" id="tab-btn-history" onclick="switchTab('history')">Change History</button>
       <button class="ptab" id="tab-btn-messages" onclick="switchTab('messages')">Messages <span class="tab-msg-count" id="msgs-tab-count" style="display:none"></span><span id="msgs-tab-rep" style="display:none;font-size:10px;background:#7e22ce;color:white;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700;">🔧</span></button>
+      <button class="ptab" id="tab-btn-surveys" onclick="switchTab('surveys')">📋 Claims Survey <span id="surveys-tab-count" style="display:none;font-size:10px;background:#1DB0D1;color:white;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:700;"></span></button>
     </div>
     <div id="tab-details">
     <div class="src-info-row" id="src-info-row" style="display:none">
@@ -789,6 +793,14 @@ td.nm:hover{text-decoration:underline}
       <div id="msgs-loading" style="text-align:center;padding:30px;color:#8a93a2;font-size:13px">Loading messages&hellip;</div>
       <div id="msgs-list" class="msg-list" style="display:none"></div>
     </div>
+    <div id="tab-surveys" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:14px;font-weight:700;color:#233348;margin:0">Claims Experience Surveys</h3>
+        <span id="surveys-summary" style="font-size:12px;color:#8a93a2"></span>
+      </div>
+      <div id="surveys-loading" style="text-align:center;padding:30px;color:#8a93a2;font-size:13px">Loading surveys&hellip;</div>
+      <div id="surveys-list" style="display:none"></div>
+    </div>
   </div>
   <div class="pfoot">
     <button class="btn btn-del" id="del-btn" onclick="confirmDel()" style="display:none">Delete</button>
@@ -880,6 +892,7 @@ const api={
   async getOpenRepCounts(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&source=eq.rep_report&select=facility_id`,{headers:hdrs()});if(!r.ok)return[];return r.json();},
   async markMsgAddressed(msgId,adminEmail){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?id=eq.${msgId}`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({is_addressed:true,addressed_by:adminEmail,addressed_at:new Date().toISOString()})});if(!r.ok)throw new Error(await r.text());return r.json();},
   async getMsgMetrics(){const [totalRes,openRes,repRes]=await Promise.all([fetch(`${SUPABASE_URL}/rest/v1/facility_messages?select=id`,{headers:{...hdrs(),'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=id`,{headers:{...hdrs(),'Prefer':'count=exact','Range':'0-0'}}),fetch(`${SUPABASE_URL}/rest/v1/facility_messages?source=eq.rep_report&select=id`,{headers:{...hdrs(),'Prefer':'count=exact','Range':'0-0'}})]);const totalCount=parseInt(totalRes.headers.get('content-range')?.split('/')[1]||'0',10);const openCount=parseInt(openRes.headers.get('content-range')?.split('/')[1]||'0',10);const repCount=parseInt(repRes.headers.get('content-range')?.split('/')[1]||'0',10);return{total:totalCount,open:openCount,repReports:repCount};}
+  async getSurveys(facilityId){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?facility_id=eq.${facilityId}&order=submitted_at.desc&limit=50`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();},
 };
 
 (function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
@@ -923,7 +936,7 @@ function openEdit(id){const f=data.find(x=>x.id===id);if(!f)return;editId=id;clr
     }
   }document.getElementById('ptabs').style.display='flex';document.getElementById('save-btn').style.display='';document.getElementById('msgs-tab-count').style.display='none';document.getElementById('msgs-list').style.display='none';document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';const openCount=msgCounts[id]||0;if(openCount>0){const tc=document.getElementById('msgs-tab-count');tc.textContent=openCount;tc.style.display='inline';}switchTab('details');document.getElementById('ov').classList.add('open');}
 function closePanel(){document.getElementById('ov').classList.remove('open');editId=null;}
-function switchTab(tab){['details','history','messages'].forEach(t=>{document.getElementById('tab-btn-'+t)?.classList.remove('on');document.getElementById('tab-'+t).style.display='none';});document.getElementById('tab-btn-'+tab)?.classList.add('on');document.getElementById('tab-'+tab).style.display='';document.getElementById('save-btn').style.display=tab==='details'?'':'none';if(tab==='history'&&editId)loadHistory(editId);if(tab==='messages'&&editId)loadFacilityMessages(editId);}
+function switchTab(tab){['details','history','messages','surveys'].forEach(t=>{document.getElementById('tab-btn-'+t)?.classList.remove('on');document.getElementById('tab-'+t).style.display='none';});document.getElementById('tab-btn-'+tab)?.classList.add('on');document.getElementById('tab-'+tab).style.display='';document.getElementById('save-btn').style.display=tab==='details'?'':'none';if(tab==='history'&&editId)loadHistory(editId);if(tab==='messages'&&editId)loadFacilityMessages(editId);if(tab==='surveys'&&editId)loadFacilitySurveys(editId);}
 async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_phone:'Contact Phone',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL',source_method:'Source Method'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
 async function loadFacilityMessages(facilityId){document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';document.getElementById('msgs-list').style.display='none';try{const messages=await api.getMessages(facilityId);document.getElementById('msgs-loading').style.display='none';const list=document.getElementById('msgs-list');list.style.display='block';const open=messages.filter(m=>!m.is_addressed).length;const total=messages.length;const repCount=messages.filter(m=>m.source==='rep_report'&&!m.is_addressed).length;const tabCount=document.getElementById('msgs-tab-count');if(open>0){tabCount.textContent=open;tabCount.style.display='inline';tabCount.style.background=repCount>0?'#7e22ce':'#CA383B';}else{tabCount.style.display='none';}const repIndicator=document.getElementById('msgs-tab-rep');if(repIndicator)repIndicator.style.display=repCount>0?'inline':'none';document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open${repCount>0?` · 🔧 ${repCount} rep report${repCount!==1?'s':''}`:''}`:'';if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">&#x1F4AC;</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');}catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}}
 function renderMsgCard(m){const isRep=m.source==='rep_report';const matchBadge=isRep?`<span class="msg-match-badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;">🔧 Rep Report</span>`:{email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';const repLine=isRep&&m.rep_name?`<div style="font-size:11px;color:#6b21a8;font-weight:600;margin-top:2px;">Rep: ${esc(m.rep_name)}</div>`:'';const senderLine=isRep?`<div class="msg-from">${esc(m.rep_name||m.sender_name||'Unknown Rep')}</div>`:`<div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div>`;const addressedSection=m.is_addressed?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`:`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;const cardBorderStyle=isRep?'border-left:3px solid #a855f7;':'';return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}" style="${cardBorderStyle}"><div class="msg-card-head"><div class="msg-meta">${senderLine}<div class="msg-sub">${esc(m.subject||'')}${repLine}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;}
@@ -954,6 +967,48 @@ function downloadTemplate(){const headers=['Name *','Address *','City *','State 
 
 // ─── Metrics ───────────────────────────────────────────────────────
 function openMetrics(){const body=document.getElementById('metrics-body');body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)"><div class="spin" style="margin:0 auto 12px"></div>Building metrics…</div>';document.getElementById('metrics-ov').classList.add('open');setTimeout(()=>renderMetrics(),50);}
+async function loadFacilitySurveys(facilityId){
+  const loading=document.getElementById('surveys-loading');
+  const list=document.getElementById('surveys-list');
+  const summary=document.getElementById('surveys-summary');
+  const tabCount=document.getElementById('surveys-tab-count');
+  loading.style.display='block';
+  loading.textContent='Loading surveys…';
+  list.style.display='none';
+  try{
+    const surveys=await api.getSurveys(facilityId);
+    loading.style.display='none';
+    list.style.display='block';
+    const total=surveys.length;
+    summary.textContent=total>0?`${total} survey${total!==1?'s':''} received`:'';
+    if(tabCount){tabCount.textContent=total>0?total:'';tabCount.style.display=total>0?'inline':'none';}
+    if(total===0){
+      list.innerHTML='<div style="text-align:center;padding:40px;color:#8a93a2;font-size:13px"><div style="font-size:28px;margin-bottom:8px">📋</div><div>No survey responses for this facility yet.</div></div>';
+      return;
+    }
+    const RATING_COLOR={Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
+    const RATING_BG={Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
+    list.innerHTML=surveys.map((s,i)=>{
+      const d=new Date(s.submitted_at);
+      const dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      const r=s.q1_overall_rating||'Unknown';
+      const rColor=RATING_COLOR[r]||'#374151';
+      const rBg=RATING_BG[r]||'#f3f4f6';
+      const q2Icon=s.q2_timely_updates==='Yes'?'✅':s.q2_timely_updates==='Sometimes'?'⚠️':'❌';
+      const q3Icon=s.q3_met_expectations==='Yes'?'✅':s.q3_met_expectations==='Somewhat'?'⚠️':'❌';
+      const detailId='survey-detail-'+i;
+      const q4=s.q4_improvement?`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8a93a2;margin-bottom:4px">How to improve claims</div><div style="font-size:12px;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;line-height:1.5">${esc(s.q4_improvement)}</div></div>`:'';
+      const q5=s.q5_efficiency?`<div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8a93a2;margin-bottom:4px">How to make process more efficient</div><div style="font-size:12px;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;line-height:1.5">${esc(s.q5_efficiency)}</div></div>`:'';
+      return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;user-select:none" onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${rBg};color:${rColor}">${esc(r)}</span><span style="font-size:12px;color:#374151;font-weight:500">${q2Icon} Updates &nbsp;${q3Icon} Expectations</span></div><span style="font-size:11px;color:#8a93a2">${dateStr} ${timeStr}</span></div><div id="${detailId}" style="display:none;padding:14px;border-top:1px solid #e2e8f0"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Timely Updates</span><div style="margin-top:3px;font-weight:500">${esc(s.q2_timely_updates||'—')}</div></div><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Met Expectations</span><div style="margin-top:3px;font-weight:500">${esc(s.q3_met_expectations||'—')}</div></div></div>${q4}${q5}</div></div>`;
+    }).join('');
+  }catch(e){
+    loading.style.display='block';
+    loading.textContent='Error loading surveys: '+e.message;
+    list.style.display='none';
+  }
+}
+
 async function renderMetrics(){const total=data.length;if(!total){document.getElementById('metrics-body').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">No data loaded.</div>';return;}const bySrc={manual:0,bulk_import:0,n8n_submission:0,unknown:0};data.forEach(f=>{const s=f.source_method||'unknown';bySrc[s]=(bySrc[s]||0)+1;});const byStatus={};data.forEach(f=>{const s=f.status||'Unknown';byStatus[s]=(byStatus[s]||0)+1;});const srcStatusMatrix={};Object.keys(bySrc).forEach(src=>{srcStatusMatrix[src]={};});data.forEach(f=>{const src=f.source_method||'unknown';const st=f.status||'Unknown';if(!srcStatusMatrix[src])srcStatusMatrix[src]={};srcStatusMatrix[src][st]=(srcStatusMatrix[src][st]||0)+1;});const now=Date.now();const DAY30=30*24*60*60*1000;const recent30=data.filter(f=>f.added_at&&(now-new Date(f.added_at).getTime())<DAY30).length;let msgTotal=0,msgOpen=0,msgRep=0;try{const msgMetrics=await api.getMsgMetrics();msgTotal=msgMetrics.total;msgOpen=msgMetrics.open;msgRep=msgMetrics.repReports||0;}catch(e){}const srcCardHtml=[{key:'manual',label:'Manually Added',cls:'mc-manual',icon:'✏️'},{key:'bulk_import',label:'Bulk Import',cls:'mc-bulk',icon:'📥'},{key:'n8n_submission',label:'Web/Email',cls:'mc-web',icon:'🌐'}].map(s=>{const cnt=bySrc[s.key]||0;const pct=total>0?Math.round(cnt/total*100):0;return`<div class="metric-card ${s.cls}"><div class="metric-card-num">${cnt.toLocaleString()}</div><div class="metric-card-lbl">${s.icon} ${s.label}</div><div class="metric-card-sub">${pct}% of total</div></div>`;}).join('');const totalCard=`<div class="metric-card mc-total"><div class="metric-card-num">${total.toLocaleString()}</div><div class="metric-card-lbl">🏪 Total Facilities</div><div class="metric-card-sub">+${recent30.toLocaleString()} in last 30 days</div></div>`;const b2cTotal=msgTotal-msgRep;const msgsCard=`<div class="metric-card mc-msgs"><div class="metric-card-num">${msgTotal.toLocaleString()}</div><div class="metric-card-lbl">💬 Facility Messages</div><div class="metric-card-sub">${msgOpen.toLocaleString()} open · ${(msgTotal-msgOpen).toLocaleString()} addressed</div><div style="margin-top:8px;padding-top:8px;border-top:1px solid #e9d5ff;display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;border-radius:10px;padding:2px 8px;font-weight:600;">🔧 ${msgRep} Rep Reports</span><span style="font-size:11px;background:#f0f4f8;color:#374151;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-weight:600;">💬 ${b2cTotal} B2C</span></div></div>`;const statusRows=Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([st,cnt])=>{const pct=Math.round(cnt/total*100);const manCnt=srcStatusMatrix['manual']?.[st]||0;const bulkCnt=srcStatusMatrix['bulk_import']?.[st]||0;const webCnt=srcStatusMatrix['n8n_submission']?.[st]||0;return`<tr><td><span class="badge ${bc(st)}">${esc(st)}</span></td><td style="font-weight:700">${cnt.toLocaleString()}</td><td><div style="font-size:11px;color:var(--text3)">${pct}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div></td><td style="font-size:12px;color:var(--text3)">${manCnt>0?`<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>`:''}${bulkCnt>0?`<span class="src-badge src-bulk" style="margin-right:3px">📥 ${bulkCnt}</span>`:''}${webCnt>0?`<span class="src-badge src-web">🌐 ${webCnt}</span>`:''}</td></tr>`;}).join('');const DAY90=90*24*60*60*1000;const recentSignups=data.filter(f=>f.source_method==='n8n_submission'&&f.added_at&&(now-new Date(f.added_at).getTime())<DAY90).sort((a,b)=>new Date(b.added_at)-new Date(a.added_at)).slice(0,8);const signupRows=recentSignups.length>0?recentSignups.map(f=>`<tr><td style="font-weight:500;color:var(--blue);cursor:pointer" onclick="document.getElementById('metrics-ov').classList.remove('open');openEdit('${f.id}')">${esc(f.name)}</td><td>${esc(f.city||'')}, ${esc(f.state||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td style="font-size:11px;color:var(--text3)">${fmtAddedAt(f.added_at)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No web/email submission records in last 90 days</td></tr>`;document.getElementById('metrics-body').innerHTML=`<div class="metrics-section"><div class="metrics-section-title">Network Overview</div><div class="metrics-grid">${totalCard}${srcCardHtml}${msgsCard}</div></div><div class="metrics-section"><div class="metrics-section-title">Status Breakdown — by Source</div><table class="status-table"><thead><tr><th>Status</th><th>Count</th><th>% of Total</th><th>Source Breakdown</th></tr></thead><tbody>${statusRows}</tbody></table></div><div class="metrics-section"><div class="metrics-section-title">Recent Web/Email Submissions — Last 90 Days</div><table class="status-table"><thead><tr><th>Facility</th><th>Location</th><th>Status</th><th>Added</th></tr></thead><tbody>${signupRows}</tbody></table></div>`;document.getElementById('metrics-updated').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;}
 
 const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact phone':'contact_phone','contact_phone':'contact_phone','contact phone':'contact_phone','contact_phone':'contact_phone','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes','source method':'source_method','source_method':'source_method','added at':'added_at','added_at':'added_at'};
@@ -1237,6 +1292,94 @@ async function loadInqBadgeCount() {
     if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
   } catch (e) {}
 }
+
+// ── Unmatched Surveys ─────────────────────────────────────────
+let unmatchedSurveyData = [];
+
+async function openUnmatchedSurveys() {
+  document.getElementById('unmatched-surveys-ov').classList.add('open');
+  document.getElementById('usrv-list').innerHTML = '<div class="inq-empty">Loading…</div>';
+  document.getElementById('usrv-stat').textContent = '';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?matched=eq.false&order=submitted_at.desc&limit=200`, {headers: hdrs()});
+    if (!r.ok) throw new Error(await r.text());
+    unmatchedSurveyData = await r.json();
+    renderUnmatchedSurveys();
+  } catch(e) {
+    document.getElementById('usrv-list').innerHTML = `<div class="inq-empty">Error loading surveys: ${esc(e.message)}</div>`;
+  }
+}
+
+function closeUnmatchedSurveys() {
+  document.getElementById('unmatched-surveys-ov').classList.remove('open');
+}
+
+function renderUnmatchedSurveys() {
+  const q = (document.getElementById('usrv-search').value || '').toLowerCase().trim();
+  const rows = unmatchedSurveyData.filter(s => {
+    if (!q) return true;
+    return (s.shop_name_submitted||'').toLowerCase().includes(q) ||
+           (s.shop_phone_submitted||'').includes(q) ||
+           (s.shop_email_submitted||'').toLowerCase().includes(q);
+  });
+  document.getElementById('usrv-stat').textContent = `${rows.length} of ${unmatchedSurveyData.length}`;
+  if (!rows.length) {
+    document.getElementById('usrv-list').innerHTML = '<div class="inq-empty">No unmatched surveys found.</div>';
+    return;
+  }
+  const RATING_COLOR={Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
+  const RATING_BG={Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
+  document.getElementById('usrv-list').innerHTML = rows.map(s => {
+    const r = s.q1_overall_rating || 'Unknown';
+    const rColor = RATING_COLOR[r] || '#374151';
+    const rBg = RATING_BG[r] || '#f3f4f6';
+    const d = new Date(s.submitted_at);
+    const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    const q2Icon = s.q2_timely_updates==='Yes'?'✅':s.q2_timely_updates==='Sometimes'?'⚠️':'❌';
+    const q3Icon = s.q3_met_expectations==='Yes'?'✅':s.q3_met_expectations==='Somewhat'?'⚠️':'❌';
+    return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;padding:12px 14px;background:#fff">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:13px;color:#233348;margin-bottom:2px">${esc(s.shop_name_submitted||'Unknown Shop')}</div>
+          <div style="font-size:12px;color:#8a93a2">
+            ${s.shop_phone_submitted?'&#x1F4DE; '+esc(s.shop_phone_submitted):''}
+            ${s.shop_phone_submitted&&s.shop_email_submitted?' &nbsp;&middot;&nbsp; ':''}
+            ${s.shop_email_submitted?'&#x2709; '+esc(s.shop_email_submitted):''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${rBg};color:${rColor};display:inline-block;margin-bottom:4px">${esc(r)}</span>
+          <div style="font-size:11px;color:#8a93a2">${dateStr}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#374151;margin-bottom:6px">${q2Icon} Timely Updates &nbsp;&nbsp; ${q3Icon} Met Expectations</div>
+      ${s.q4_improvement?`<div style="font-size:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px;margin-bottom:6px;line-height:1.5;color:#374151"><strong style="color:#8a93a2;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Improve claims: </strong>${esc(s.q4_improvement)}</div>`:''}
+      ${s.q5_efficiency?`<div style="font-size:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px;line-height:1.5;color:#374151"><strong style="color:#8a93a2;font-size:10px;text-transform:uppercase;letter-spacing:.05em">More efficient: </strong>${esc(s.q5_efficiency)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 </script>
+
+<!-- Unmatched Surveys Overlay -->
+<div class="inq-ov" id="unmatched-surveys-ov">
+  <div class="inq-box" style="max-width:780px">
+    <div class="inq-head">
+      <span style="font-size:18px">&#x1F4CB;</span>
+      <h2>Unmatched Surveys <span style="font-size:12px;font-weight:400;opacity:.7">— Claims Experience responses not linked to a facility</span></h2>
+      <button class="pclose" onclick="closeUnmatchedSurveys()">&#x2715;</button>
+    </div>
+    <div class="inq-toolbar">
+      <input id="usrv-search" placeholder="Search shop name, phone, email…" oninput="renderUnmatchedSurveys()">
+      <span class="inq-stat" id="usrv-stat"></span>
+    </div>
+    <div class="inq-list" id="usrv-list">
+      <div class="inq-empty">Loading…</div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:#f4f6f9;display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeUnmatchedSurveys()">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
