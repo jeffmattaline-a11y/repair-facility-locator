@@ -300,6 +300,13 @@ td.nm:hover{text-decoration:underline}
 .mc-web{background:#f0fdf4;border-color:#86efac;color:#15803d}
 .mc-total{background:#1a3a6b;border-color:#1a3a6b;color:#fff}
 .mc-msgs{background:#fdf4ff;border-color:#d8b4fe;color:#7e22ce}
+.mc-surveys{background:#e0f7fc;border-color:#67e8f9;color:#0e7490;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.sv-tab{padding:10px 16px;font-size:12px;font-weight:600;color:var(--text3,#8a93a2);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+.sv-tab:hover{color:var(--text1,#233348)}
+.sv-tab.active{color:var(--blue,#225981);border-bottom-color:var(--blue,#225981)}
+#sv-link-modal.open{display:flex!important}
+.mc-surveys:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(29,176,209,.25)}
+.sv-detail.sv-open{display:block!important}
 .status-table{width:100%;border-collapse:collapse;font-size:12px}
 .status-table th{background:#f4f6f9;padding:7px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
 .status-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
@@ -1011,7 +1018,7 @@ async function loadFacilitySurveys(facilityId){
   }
 }
 
-async function renderMetrics(){const total=data.length;if(!total){document.getElementById('metrics-body').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">No data loaded.</div>';return;}const bySrc={manual:0,bulk_import:0,n8n_submission:0,unknown:0};data.forEach(f=>{const s=f.source_method||'unknown';bySrc[s]=(bySrc[s]||0)+1;});const byStatus={};data.forEach(f=>{const s=f.status||'Unknown';byStatus[s]=(byStatus[s]||0)+1;});const srcStatusMatrix={};Object.keys(bySrc).forEach(src=>{srcStatusMatrix[src]={};});data.forEach(f=>{const src=f.source_method||'unknown';const st=f.status||'Unknown';if(!srcStatusMatrix[src])srcStatusMatrix[src]={};srcStatusMatrix[src][st]=(srcStatusMatrix[src][st]||0)+1;});const now=Date.now();const DAY30=30*24*60*60*1000;const recent30=data.filter(f=>f.added_at&&(now-new Date(f.added_at).getTime())<DAY30).length;let msgTotal=0,msgOpen=0,msgRep=0;try{const msgMetrics=await api.getMsgMetrics();msgTotal=msgMetrics.total;msgOpen=msgMetrics.open;msgRep=msgMetrics.repReports||0;}catch(e){}const srcCardHtml=[{key:'manual',label:'Manually Added',cls:'mc-manual',icon:'✏️'},{key:'bulk_import',label:'Bulk Import',cls:'mc-bulk',icon:'📥'},{key:'n8n_submission',label:'Web/Email',cls:'mc-web',icon:'🌐'}].map(s=>{const cnt=bySrc[s.key]||0;const pct=total>0?Math.round(cnt/total*100):0;return`<div class="metric-card ${s.cls}"><div class="metric-card-num">${cnt.toLocaleString()}</div><div class="metric-card-lbl">${s.icon} ${s.label}</div><div class="metric-card-sub">${pct}% of total</div></div>`;}).join('');const totalCard=`<div class="metric-card mc-total"><div class="metric-card-num">${total.toLocaleString()}</div><div class="metric-card-lbl">🏪 Total Facilities</div><div class="metric-card-sub">+${recent30.toLocaleString()} in last 30 days</div></div>`;const b2cTotal=msgTotal-msgRep;const msgsCard=`<div class="metric-card mc-msgs"><div class="metric-card-num">${msgTotal.toLocaleString()}</div><div class="metric-card-lbl">💬 Facility Messages</div><div class="metric-card-sub">${msgOpen.toLocaleString()} open · ${(msgTotal-msgOpen).toLocaleString()} addressed</div><div style="margin-top:8px;padding-top:8px;border-top:1px solid #e9d5ff;display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;border-radius:10px;padding:2px 8px;font-weight:600;">🔧 ${msgRep} Rep Reports</span><span style="font-size:11px;background:#f0f4f8;color:#374151;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-weight:600;">💬 ${b2cTotal} B2C</span></div></div>`;const statusRows=Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([st,cnt])=>{const pct=Math.round(cnt/total*100);const manCnt=srcStatusMatrix['manual']?.[st]||0;const bulkCnt=srcStatusMatrix['bulk_import']?.[st]||0;const webCnt=srcStatusMatrix['n8n_submission']?.[st]||0;return`<tr><td><span class="badge ${bc(st)}">${esc(st)}</span></td><td style="font-weight:700">${cnt.toLocaleString()}</td><td><div style="font-size:11px;color:var(--text3)">${pct}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div></td><td style="font-size:12px;color:var(--text3)">${manCnt>0?`<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>`:''}${bulkCnt>0?`<span class="src-badge src-bulk" style="margin-right:3px">📥 ${bulkCnt}</span>`:''}${webCnt>0?`<span class="src-badge src-web">🌐 ${webCnt}</span>`:''}</td></tr>`;}).join('');const DAY90=90*24*60*60*1000;const recentSignups=data.filter(f=>f.source_method==='n8n_submission'&&f.added_at&&(now-new Date(f.added_at).getTime())<DAY90).sort((a,b)=>new Date(b.added_at)-new Date(a.added_at)).slice(0,8);const signupRows=recentSignups.length>0?recentSignups.map(f=>`<tr><td style="font-weight:500;color:var(--blue);cursor:pointer" onclick="document.getElementById('metrics-ov').classList.remove('open');openEdit('${f.id}')">${esc(f.name)}</td><td>${esc(f.city||'')}, ${esc(f.state||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td style="font-size:11px;color:var(--text3)">${fmtAddedAt(f.added_at)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No web/email submission records in last 90 days</td></tr>`;document.getElementById('metrics-body').innerHTML=`<div class="metrics-section"><div class="metrics-section-title">Network Overview</div><div class="metrics-grid">${totalCard}${srcCardHtml}${msgsCard}</div></div><div class="metrics-section"><div class="metrics-section-title">Status Breakdown — by Source</div><table class="status-table"><thead><tr><th>Status</th><th>Count</th><th>% of Total</th><th>Source Breakdown</th></tr></thead><tbody>${statusRows}</tbody></table></div><div class="metrics-section"><div class="metrics-section-title">Recent Web/Email Submissions — Last 90 Days</div><table class="status-table"><thead><tr><th>Facility</th><th>Location</th><th>Status</th><th>Added</th></tr></thead><tbody>${signupRows}</tbody></table></div>`;document.getElementById('metrics-updated').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;}
+async function renderMetrics(){const total=data.length;if(!total){document.getElementById('metrics-body').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">No data loaded.</div>';return;}const bySrc={manual:0,bulk_import:0,n8n_submission:0,unknown:0};data.forEach(f=>{const s=f.source_method||'unknown';bySrc[s]=(bySrc[s]||0)+1;});const byStatus={};data.forEach(f=>{const s=f.status||'Unknown';byStatus[s]=(byStatus[s]||0)+1;});const srcStatusMatrix={};Object.keys(bySrc).forEach(src=>{srcStatusMatrix[src]={};});data.forEach(f=>{const src=f.source_method||'unknown';const st=f.status||'Unknown';if(!srcStatusMatrix[src])srcStatusMatrix[src]={};srcStatusMatrix[src][st]=(srcStatusMatrix[src][st]||0)+1;});const now=Date.now();const DAY30=30*24*60*60*1000;const recent30=data.filter(f=>f.added_at&&(now-new Date(f.added_at).getTime())<DAY30).length;let msgTotal=0,msgOpen=0,msgRep=0;try{const msgMetrics=await api.getMsgMetrics();msgTotal=msgMetrics.total;msgOpen=msgMetrics.open;msgRep=msgMetrics.repReports||0;}catch(e){}let svTotal=0,svMatched=0,svUnmatched=0;try{const svRes=await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?select=matched`,{headers:hdrs()});if(svRes.ok){const svData=await svRes.json();svTotal=Array.isArray(svData)?svData.length:0;svMatched=svData.filter(s=>s.matched===true).length;svUnmatched=svData.filter(s=>s.matched!==true).length;}}catch(e){}const srcCardHtml=[{key:'manual',label:'Manually Added',cls:'mc-manual',icon:'✏️'},{key:'bulk_import',label:'Bulk Import',cls:'mc-bulk',icon:'📥'},{key:'n8n_submission',label:'Web/Email',cls:'mc-web',icon:'🌐'}].map(s=>{const cnt=bySrc[s.key]||0;const pct=total>0?Math.round(cnt/total*100):0;return`<div class="metric-card ${s.cls}"><div class="metric-card-num">${cnt.toLocaleString()}</div><div class="metric-card-lbl">${s.icon} ${s.label}</div><div class="metric-card-sub">${pct}% of total</div></div>`;}).join('');const totalCard=`<div class="metric-card mc-total"><div class="metric-card-num">${total.toLocaleString()}</div><div class="metric-card-lbl">🏪 Total Facilities</div><div class="metric-card-sub">+${recent30.toLocaleString()} in last 30 days</div></div>`;const b2cTotal=msgTotal-msgRep;const msgsCard=`<div class="metric-card mc-msgs"><div class="metric-card-num">${msgTotal.toLocaleString()}</div><div class="metric-card-lbl">💬 Facility Messages</div><div class="metric-card-sub">${msgOpen.toLocaleString()} open · ${(msgTotal-msgOpen).toLocaleString()} addressed</div><div style="margin-top:8px;padding-top:8px;border-top:1px solid #e9d5ff;display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;border-radius:10px;padding:2px 8px;font-weight:600;">🔧 ${msgRep} Rep Reports</span><span style="font-size:11px;background:#f0f4f8;color:#374151;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-weight:600;">💬 ${b2cTotal} B2C</span></div></div>`;const surveysCard=`<div class="metric-card mc-surveys" onclick="document.getElementById('metrics-ov').classList.remove('open');openAllSurveysOv()"><div class="metric-card-num">${svTotal.toLocaleString()}</div><div class="metric-card-lbl">📋 Claims Surveys</div><div class="metric-card-sub">${svMatched} matched · <span style="color:#b91c1c;font-weight:700">${svUnmatched} unmatched</span></div></div>`;const statusRows=Object.entries(byStatus).sort((a,b)=>b[1]-a[1]).map(([st,cnt])=>{const pct=Math.round(cnt/total*100);const manCnt=srcStatusMatrix['manual']?.[st]||0;const bulkCnt=srcStatusMatrix['bulk_import']?.[st]||0;const webCnt=srcStatusMatrix['n8n_submission']?.[st]||0;return`<tr><td><span class="badge ${bc(st)}">${esc(st)}</span></td><td style="font-weight:700">${cnt.toLocaleString()}</td><td><div style="font-size:11px;color:var(--text3)">${pct}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div></td><td style="font-size:12px;color:var(--text3)">${manCnt>0?`<span class="src-badge src-manual" style="margin-right:3px">✏️ ${manCnt}</span>`:''}${bulkCnt>0?`<span class="src-badge src-bulk" style="margin-right:3px">📥 ${bulkCnt}</span>`:''}${webCnt>0?`<span class="src-badge src-web">🌐 ${webCnt}</span>`:''}</td></tr>`;}).join('');const DAY90=90*24*60*60*1000;const recentSignups=data.filter(f=>f.source_method==='n8n_submission'&&f.added_at&&(now-new Date(f.added_at).getTime())<DAY90).sort((a,b)=>new Date(b.added_at)-new Date(a.added_at)).slice(0,8);const signupRows=recentSignups.length>0?recentSignups.map(f=>`<tr><td style="font-weight:500;color:var(--blue);cursor:pointer" onclick="document.getElementById('metrics-ov').classList.remove('open');openEdit('${f.id}')">${esc(f.name)}</td><td>${esc(f.city||'')}, ${esc(f.state||'')}</td><td><span class="badge ${bc(f.status)}">${f.status||'—'}</span></td><td style="font-size:11px;color:var(--text3)">${fmtAddedAt(f.added_at)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No web/email submission records in last 90 days</td></tr>`;document.getElementById('metrics-body').innerHTML=`<div class="metrics-section"><div class="metrics-section-title">Network Overview</div><div class="metrics-grid">${totalCard}${srcCardHtml}${msgsCard}${surveysCard}</div></div><div class="metrics-section"><div class="metrics-section-title">Status Breakdown — by Source</div><table class="status-table"><thead><tr><th>Status</th><th>Count</th><th>% of Total</th><th>Source Breakdown</th></tr></thead><tbody>${statusRows}</tbody></table></div><div class="metrics-section"><div class="metrics-section-title">Recent Web/Email Submissions — Last 90 Days</div><table class="status-table"><thead><tr><th>Facility</th><th>Location</th><th>Status</th><th>Added</th></tr></thead><tbody>${signupRows}</tbody></table></div>`;document.getElementById('metrics-updated').textContent=`Last updated: ${new Date().toLocaleTimeString()}`;}
 
 const COL_MAP={'id':'id','numeric_id':'numeric_id','numeric id':'numeric_id','numericid':'numeric_id','name':'name','name *':'name','address':'address','address *':'address','city':'city','city *':'city','state':'state','state *':'state','zip':'zip','zip *':'zip','zipcode':'zip','phone':'phone','status':'status','contact':'contact','contact name':'contact','contact phone':'contact_phone','contact_phone':'contact_phone','contact phone':'contact_phone','contact_phone':'contact_phone','contact email':'contact_email','shop email 1':'email1','shop email 2':'email2','shop email 3':'email3','website':'website','latitude':'lat','lat':'lat','longitude':'lng','lng':'lng','labor $':'labor','labor':'labor','shop type':'shop_type','shoptype':'shop_type','software':'software','form type':'form_type','labor guide':'labor_guide','country':'country','added on':'added_on','added by':'added_by','edited on':'edited_on','edited by':'edited_by','ev certified':'ev_certified','accepts shipped':'accepts_shipped','accepts shipped parts':'accepts_shipped','offer url':'offer_url','offerurl':'offer_url','notes':'notes','source method':'source_method','source_method':'source_method','added at':'added_at','added_at':'added_at'};
 function normDate(v){if(!v)return null;const s=String(v).trim();if(/^\d{2}-\d{2}-\d{4}$/.test(s))return s;const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){const yr=m[3].length===2?'20'+m[3]:m[3];return`${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}-${yr}`;}const mt=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s/);if(mt)return`${mt[1].padStart(2,'0')}-${mt[2].padStart(2,'0')}-${mt[3]}`;if(/^\d{5}$/.test(s)){const d=new Date(Math.round((+s-25569)*86400*1000));return`${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}-${d.getUTCFullYear()}`;}try{const d=new Date(s);if(!isNaN(d)&&d.getFullYear()>1970&&d.getFullYear()<2100)return`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${d.getFullYear()}`;}catch(e){}return null;}
@@ -1296,92 +1303,278 @@ async function loadInqBadgeCount() {
 }
 
 // ── Unmatched Surveys ─────────────────────────────────────────
-let unmatchedSurveyData = [];
+let _svAllData = [];
+let _svActiveTab = 'all';
+let _svLinkId = null;
+let _svLinkFacId = null;
 
-async function openUnmatchedSurveys() {
-  document.getElementById('unmatched-surveys-ov').classList.add('open');
-  document.getElementById('usrv-list').innerHTML = '<div class="inq-empty">Loading…</div>';
-  document.getElementById('usrv-stat').textContent = '';
+// Keep old entry point from Tools menu working
+function openUnmatchedSurveys() { openAllSurveysOv('unmatched'); }
+
+async function openAllSurveysOv(startTab) {
+  _svActiveTab = startTab || 'all';
+  document.getElementById('all-surveys-ov').classList.add('open');
+  document.getElementById('sv-body').innerHTML = '<div class="inq-empty">Loading\u2026</div>';
+  document.getElementById('sv-header-meta').textContent = 'Loading\u2026';
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?matched=eq.false&order=submitted_at.desc&limit=200`, {headers: hdrs()});
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?select=*&order=submitted_at.desc.nullslast&limit=500`, {headers: hdrs()});
     if (!r.ok) throw new Error(await r.text());
-    unmatchedSurveyData = await r.json();
-    renderUnmatchedSurveys();
+    _svAllData = await r.json();
+    if (!Array.isArray(_svAllData)) _svAllData = [];
   } catch(e) {
-    document.getElementById('usrv-list').innerHTML = `<div class="inq-empty">Error loading surveys: ${esc(e.message)}</div>`;
-  }
-}
-
-function closeUnmatchedSurveys() {
-  document.getElementById('unmatched-surveys-ov').classList.remove('open');
-}
-
-function renderUnmatchedSurveys() {
-  const q = (document.getElementById('usrv-search').value || '').toLowerCase().trim();
-  const rows = unmatchedSurveyData.filter(s => {
-    if (!q) return true;
-    return (s.shop_name_submitted||'').toLowerCase().includes(q) ||
-           (s.shop_phone_submitted||'').includes(q) ||
-           (s.shop_email_submitted||'').toLowerCase().includes(q);
-  });
-  document.getElementById('usrv-stat').textContent = `${rows.length} of ${unmatchedSurveyData.length}`;
-  if (!rows.length) {
-    document.getElementById('usrv-list').innerHTML = '<div class="inq-empty">No unmatched surveys found.</div>';
+    document.getElementById('sv-body').innerHTML = `<div class="inq-empty">Error loading: ${esc(e.message)}</div>`;
     return;
   }
-  const RATING_COLOR={Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
-  const RATING_BG={Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
-  document.getElementById('usrv-list').innerHTML = rows.map(s => {
-    const r = s.q1_overall_rating || 'Unknown';
-    const rColor = RATING_COLOR[r] || '#374151';
-    const rBg = RATING_BG[r] || '#f3f4f6';
-    const d = new Date(s.submitted_at);
-    const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-    const q2Icon = s.q2_timely_updates==='Yes'?'✅':s.q2_timely_updates==='Sometimes'?'⚠️':'❌';
-    const q3Icon = s.q3_met_expectations==='Yes'?'✅':s.q3_met_expectations==='Somewhat'?'⚠️':'❌';
-    return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;padding:12px 14px;background:#fff">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
-        <div>
-          <div style="font-weight:700;font-size:13px;color:#233348;margin-bottom:2px">${esc(s.shop_name_submitted||'Unknown Shop')}</div>
-          <div style="font-size:12px;color:#8a93a2">
-            ${s.shop_phone_submitted?'&#x1F4DE; '+esc(s.shop_phone_submitted):''}
-            ${s.shop_phone_submitted&&s.shop_email_submitted?' &nbsp;&middot;&nbsp; ':''}
-            ${s.shop_email_submitted?'&#x2709; '+esc(s.shop_email_submitted):''}
-          </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${rBg};color:${rColor};display:inline-block;margin-bottom:4px">${esc(r)}</span>
-          <div style="font-size:11px;color:#8a93a2">${dateStr}</div>
-        </div>
-      </div>
-      <div style="font-size:12px;color:#374151;margin-bottom:6px">${q2Icon} Timely Updates &nbsp;&nbsp; ${q3Icon} Met Expectations</div>
-      ${s.q4_improvement?`<div style="font-size:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px;margin-bottom:6px;line-height:1.5;color:#374151"><strong style="color:#8a93a2;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Improve claims: </strong>${esc(s.q4_improvement)}</div>`:''}
-      ${s.q5_efficiency?`<div style="font-size:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px;line-height:1.5;color:#374151"><strong style="color:#8a93a2;font-size:10px;text-transform:uppercase;letter-spacing:.05em">More efficient: </strong>${esc(s.q5_efficiency)}</div>`:''}
-    </div>`;
-  }).join('');
+  const matched   = _svAllData.filter(s => s.matched === true).length;
+  const unmatched = _svAllData.filter(s => s.matched !== true).length;
+  document.getElementById('sv-cnt-all').textContent       = _svAllData.length;
+  document.getElementById('sv-cnt-matched').textContent   = matched;
+  document.getElementById('sv-cnt-unmatched').textContent = unmatched;
+  document.getElementById('sv-header-meta').textContent   =
+    `${_svAllData.length} total \u00b7 ${matched} matched \u00b7 ${unmatched} unmatched`;
+  setSvTab(_svActiveTab);
 }
 
+function closeAllSurveysOv() {
+  document.getElementById('all-surveys-ov').classList.remove('open');
+}
+
+function setSvTab(tab) {
+  _svActiveTab = tab;
+  ['all','matched','unmatched'].forEach(t => {
+    document.getElementById('sv-tab-'+t).classList.toggle('active', t === tab);
+  });
+  document.getElementById('sv-search').value = '';
+  renderSvCards();
+}
+
+function renderSvCards() {
+  const q    = (document.getElementById('sv-search').value || '').toLowerCase().trim();
+  const sort = document.getElementById('sv-sort').value;
+  const body = document.getElementById('sv-body');
+
+  const RATING_ORDER = {Excellent:5, Satisfactory:4, Neutral:3, Unsatisfactory:2, Terrible:1};
+
+  let list = _svAllData.filter(s => {
+    if (_svActiveTab === 'matched'   && s.matched !== true)  return false;
+    if (_svActiveTab === 'unmatched' && s.matched === true)  return false;
+    if (q) {
+      const hay = [s.shop_name_submitted, s.shop_phone_submitted, s.shop_email_submitted,
+                   s.q4_improvement, s.q5_efficiency].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  list = list.slice().sort((a, b) => {
+    if (sort === 'oldest')      return new Date(a.submitted_at||0) - new Date(b.submitted_at||0);
+    if (sort === 'rating_high') return (RATING_ORDER[b.q1_overall_rating]||0) - (RATING_ORDER[a.q1_overall_rating]||0);
+    if (sort === 'rating_low')  return (RATING_ORDER[a.q1_overall_rating]||0) - (RATING_ORDER[b.q1_overall_rating]||0);
+    return new Date(b.submitted_at||0) - new Date(a.submitted_at||0);
+  });
+
+  if (!list.length) {
+    body.innerHTML = `<div class="inq-empty">No surveys found${q ? ' for \u201c'+q+'\u201d' : ''}.</div>`;
+    return;
+  }
+  body.innerHTML = list.map(s => buildSvCard(s)).join('');
+}
+
+function buildSvCard(s) {
+  const RATING_COLOR = {Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
+  const RATING_BG    = {Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
+  const r      = s.q1_overall_rating || 'N/A';
+  const rColor = RATING_COLOR[r] || '#374151';
+  const rBg    = RATING_BG[r]    || '#f3f4f6';
+  const dateStr = s.submitted_at
+    ? new Date(s.submitted_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'})
+    : 'Unknown date';
+  const shopName = s.shop_name_submitted || s.shop_phone_submitted || 'Unknown Shop';
+  const q2Icon = s.q2_timely_updates === 'Yes' ? '\u2705' : s.q2_timely_updates === 'Sometimes' ? '\u26A0\uFE0F' : (s.q2_timely_updates ? '\u274C' : '\u2014');
+  const q3Icon = s.q3_met_expectations === 'Yes' ? '\u2705' : s.q3_met_expectations === 'Somewhat' ? '\u26A0\uFE0F' : (s.q3_met_expectations ? '\u274C' : '\u2014');
+  const matchBadge = s.matched === true
+    ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#dcfce7;color:#15803d;border:1px solid #86efac;white-space:nowrap">\u2705 Matched</span>`
+    : `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;white-space:nowrap">\u26A0\uFE0F Unmatched</span>`;
+
+  const linkBtn = s.matched !== true
+    ? `<button onclick="openSvLink('${s.id}','${(shopName).replace(/'/g,"\\'")}')"
+         style="margin-top:10px;padding:6px 13px;background:rgba(34,89,129,.1);border:1px solid #225981;border-radius:6px;color:#225981;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+         \uD83D\uDD17 Link to Facility
+       </button>`
+    : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">\u2705 Linked to facility</div>`;
+
+  return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer" onclick="this.closest('[data-sv]').querySelector('.sv-detail').classList.toggle('sv-open')">
+      <div style="width:52px;text-align:center;flex-shrink:0">
+        <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:${rBg};color:${rColor};display:inline-block">${esc(r)}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px;color:#233348;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(shopName)}</div>
+        <div style="font-size:11px;color:#8a93a2;margin-top:1px">
+          ${s.shop_phone_submitted ? '\uD83D\uDCDE ' + esc(s.shop_phone_submitted) + ' &nbsp;' : ''}
+          ${s.shop_email_submitted ? '\u2709 ' + esc(s.shop_email_submitted) + ' &nbsp;' : ''}
+          ${dateStr}
+        </div>
+      </div>
+      ${matchBadge}
+      <span style="color:#8a93a2;font-size:11px;flex-shrink:0">\u25BC</span>
+    </div>
+    <div class="sv-detail" style="display:none;padding:0 14px 14px;border-top:1px solid #f1f5f9">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px">
+          <div style="font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Q2 \u2014 Timely Updates</div>
+          <div style="font-size:12px;color:#374151">${q2Icon} ${esc(s.q2_timely_updates||'Not answered')}</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px">
+          <div style="font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Q3 \u2014 Met Expectations</div>
+          <div style="font-size:12px;color:#374151">${q3Icon} ${esc(s.q3_met_expectations||'Not answered')}</div>
+        </div>
+      </div>
+      ${s.q4_improvement ? `<div style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px">
+        <div style="font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Q4 \u2014 Improve Claims Experience</div>
+        <div style="font-size:12px;color:#374151;line-height:1.5">${esc(s.q4_improvement)}</div>
+      </div>` : ''}
+      ${s.q5_efficiency ? `<div style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px">
+        <div style="font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Q5 \u2014 Make More Efficient</div>
+        <div style="font-size:12px;color:#374151;line-height:1.5">${esc(s.q5_efficiency)}</div>
+      </div>` : ''}
+      ${linkBtn}
+    </div>
+  </div>`.replace('<div style="border:1px', '<div data-sv="1" style="border:1px');
+}
+
+// ── Link unmatched survey to facility ────────────────────────────────
+function openSvLink(surveyId, shopName) {
+  _svLinkId   = surveyId;
+  _svLinkFacId = null;
+  document.getElementById('sv-link-desc').textContent =
+    `Linking survey from "${shopName}". Search for the matching facility below.`;
+  document.getElementById('sv-link-search').value = shopName || '';
+  document.getElementById('sv-link-results').innerHTML = '';
+  document.getElementById('sv-link-save').disabled = true;
+  document.getElementById('sv-link-save').style.opacity = '.45';
+  document.getElementById('sv-link-modal').classList.add('open');
+  doSvLinkSearch();
+}
+function closeSvLinkModal() {
+  document.getElementById('sv-link-modal').classList.remove('open');
+  _svLinkId = null; _svLinkFacId = null;
+}
+
+function doSvLinkSearch() {
+  const q = (document.getElementById('sv-link-search').value || '').trim().toLowerCase();
+  const box = document.getElementById('sv-link-results');
+  if (q.length < 2) { box.innerHTML = ''; return; }
+  const results = (data || []).filter(f => {
+    const hay = [f.name, f.city, f.state, f.phone].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  }).slice(0, 8);
+  if (!results.length) {
+    box.innerHTML = '<div style="font-size:12px;color:#8a93a2;padding:6px 0">No facilities found</div>';
+    return;
+  }
+  box.innerHTML = results.map(f =>
+    `<div onclick="selectSvFac('${f.id}','${esc(f.name||'')}')"
+       style="padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#374151;border:1px solid transparent;margin-bottom:3px;transition:background .1s"
+       onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background=''">
+       <strong style="color:#233348;display:block;font-size:13px">${esc(f.name||'')}</strong>
+       ${[f.city, f.state, f.phone].filter(Boolean).map(esc).join(' \u00b7 ')}
+     </div>`
+  ).join('');
+}
+
+function selectSvFac(facId, facName) {
+  _svLinkFacId = facId;
+  document.querySelectorAll('#sv-link-results div').forEach(el => {
+    el.style.background = el.textContent.includes(facName) ? '#dbeafe' : '';
+  });
+  document.getElementById('sv-link-save').disabled = false;
+  document.getElementById('sv-link-save').style.opacity = '1';
+}
+
+async function saveSvLink() {
+  if (!_svLinkId || !_svLinkFacId) return;
+  const btn = document.getElementById('sv-link-save');
+  btn.textContent = 'Saving\u2026'; btn.disabled = true;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?id=eq.${_svLinkId}`, {
+      method: 'PATCH',
+      headers: {...hdrs(), 'Content-Type':'application/json', Prefer:'return=minimal'},
+      body: JSON.stringify({facility_id: _svLinkFacId, matched: true})
+    });
+    if (res.ok || res.status === 204) {
+      toast('Survey linked \u2705', 'ok');
+      closeSvLinkModal();
+      await openAllSurveysOv(_svActiveTab);
+    } else {
+      toast('Save failed \u2014 check console', 'err');
+    }
+  } catch(e) { toast('Error: '+e.message,'err'); }
+  finally { btn.textContent='Link Survey'; btn.disabled=false; }
+}
 </script>
 
-<!-- Unmatched Surveys Overlay -->
-<div class="inq-ov" id="unmatched-surveys-ov">
-  <div class="inq-box" style="max-width:780px">
+<!-- All Surveys Overlay -->
+<div class="inq-ov" id="all-surveys-ov" style="z-index:8000">
+  <div class="inq-box" style="max-width:860px;display:flex;flex-direction:column;max-height:90vh">
+
+    <!-- Header -->
     <div class="inq-head">
       <span style="font-size:18px">&#x1F4CB;</span>
-      <h2>Unmatched Surveys <span style="font-size:12px;font-weight:400;opacity:.7">— Claims Experience responses not linked to a facility</span></h2>
-      <button class="pclose" onclick="closeUnmatchedSurveys()">&#x2715;</button>
+      <h2>Claims Experience Surveys <span id="sv-header-meta" style="font-size:12px;font-weight:400;opacity:.6"></span></h2>
+      <button class="pclose" onclick="closeAllSurveysOv()">&#x2715;</button>
     </div>
-    <div class="inq-toolbar">
-      <input id="usrv-search" placeholder="Search shop name, phone, email…" oninput="renderUnmatchedSurveys()">
-      <span class="inq-stat" id="usrv-stat"></span>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:rgba(0,0,0,.03);padding:0 16px;flex-shrink:0">
+      <div id="sv-tab-all" class="sv-tab active" onclick="setSvTab('all')">
+        All &nbsp;<span id="sv-cnt-all" style="background:#e2e8f0;color:#374151;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">0</span>
+      </div>
+      <div id="sv-tab-matched" class="sv-tab" onclick="setSvTab('matched')">
+        &#x2705; Matched &nbsp;<span id="sv-cnt-matched" style="background:#dcfce7;color:#15803d;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">0</span>
+      </div>
+      <div id="sv-tab-unmatched" class="sv-tab" onclick="setSvTab('unmatched')">
+        &#x26A0;&#xFE0F; Unmatched &nbsp;<span id="sv-cnt-unmatched" style="background:#fee2e2;color:#b91c1c;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700">0</span>
+      </div>
     </div>
-    <div class="inq-list" id="usrv-list">
-      <div class="inq-empty">Loading…</div>
+
+    <!-- Toolbar -->
+    <div class="inq-toolbar" style="flex-shrink:0">
+      <input id="sv-search" placeholder="Search shop name, phone, email, comments&#x2026;" oninput="renderSvCards()" style="flex:1">
+      <select id="sv-sort" onchange="renderSvCards()" style="background:var(--bg2,#f4f6f9);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text1,#233348);font-family:inherit;cursor:pointer">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="rating_high">Rating: High &#x2192; Low</option>
+        <option value="rating_low">Rating: Low &#x2192; High</option>
+      </select>
     </div>
-    <div style="padding:12px 16px;border-top:1px solid var(--border);background:#f4f6f9;display:flex;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeUnmatchedSurveys()">Close</button>
+
+    <!-- Card list -->
+    <div id="sv-body" class="inq-list" style="flex:1;overflow-y:auto">
+      <div class="inq-empty">Loading&#x2026;</div>
+    </div>
+
+    <div style="padding:12px 16px;border-top:1px solid var(--border);background:#f4f6f9;display:flex;justify-content:flex-end;flex-shrink:0">
+      <button class="btn btn-ghost" onclick="closeAllSurveysOv()">Close</button>
     </div>
   </div>
 </div>
+
+<!-- Link Survey to Facility Modal -->
+<div id="sv-link-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;padding:22px 24px;width:420px;max-width:95vw;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+    <h3 style="font-size:14px;font-weight:700;color:#233348;margin-bottom:8px">&#x1F517; Link Survey to Facility</h3>
+    <p id="sv-link-desc" style="font-size:12px;color:#8a93a2;margin-bottom:12px"></p>
+    <input id="sv-link-search" type="text" placeholder="Search shop name or city&#x2026;"
+      oninput="doSvLinkSearch()"
+      style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;color:#233348">
+    <div id="sv-link-results" style="max-height:200px;overflow-y:auto;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closeSvLinkModal()" style="padding:7px 14px;background:transparent;border:1px solid #d1d5db;border-radius:6px;color:#374151;font-size:12px;font-family:inherit;cursor:pointer">Cancel</button>
+      <button id="sv-link-save" onclick="saveSvLink()" disabled style="padding:7px 14px;background:#225981;border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;opacity:.45">Link Survey</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
