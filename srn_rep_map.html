@@ -1144,7 +1144,6 @@ let arrivalMode = 'tow'; // 'tow' | 'drive'
 const svLoaded = new Set(); // session cache: shop IDs already fetched
 let svObserver = null;
 function initSvObserver() {
-  const root = document.getElementById('resultsContainer');
   svObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
@@ -1159,7 +1158,7 @@ function initSvObserver() {
       }
       svObserver.unobserve(img);
     });
-  }, { root, rootMargin: '200px 0px', threshold: 0.01 });
+  }, { root: null, rootMargin: '0px', threshold: 0.01 });
 }
 
 function setArrivalMode(mode) {
