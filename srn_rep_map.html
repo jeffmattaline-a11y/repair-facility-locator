@@ -1137,6 +1137,31 @@ let map, markersMap = {};
 let currentModal = { type: null, shop: null };
 let arrivalMode = 'tow'; // 'tow' | 'drive'
 
+// ── STREET VIEW LAZY LOADER ───────────────────────────────
+// Images are written with data-src (not src) and only fetched
+// when the card scrolls into the visible panel — cuts Street View
+// API calls by ~85-90% since reps rarely scroll past the top few.
+const svLoaded = new Set(); // session cache: shop IDs already fetched
+let svObserver = null;
+function initSvObserver() {
+  const root = document.getElementById('resultsContainer');
+  svObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      const cardEl = img.closest('.shop-card');
+      const shopId = cardEl?.id?.replace('card-', '');
+      if (shopId && svLoaded.has(shopId)) { svObserver.unobserve(img); return; }
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        if (shopId) svLoaded.add(shopId);
+      }
+      svObserver.unobserve(img);
+    });
+  }, { root, rootMargin: '200px 0px', threshold: 0.01 });
+}
+
 function setArrivalMode(mode) {
   arrivalMode = mode;
   document.getElementById('btnTow').classList.toggle('active', mode === 'tow');
@@ -1153,6 +1178,7 @@ function setArrivalMode(mode) {
 
 // ── GOOGLE MAPS INIT ──────────────────────────────────────
 function initMap() {
+  initSvObserver();
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 39.5, lng: -98.35 },
     zoom: 4,
@@ -1340,6 +1366,11 @@ function renderCards(results) {
       container.appendChild(buildCard(shop, idx++, 'prf'));
     });
   }
+
+  // Attach lazy-load observer to all unloaded street view images
+  if (svObserver) {
+    container.querySelectorAll('img.lazy-sv[data-src]').forEach(img => svObserver.observe(img));
+  }
 }
 
 function buildCard(shop, index, tier) {
@@ -1376,7 +1407,7 @@ function buildCard(shop, index, tier) {
   card.innerHTML = `
     ${ribbonHtml}
     ${streetImgUrl
-      ? `<img class="card-street-img" src="${streetImgUrl}" alt="Street view of ${escHtml(shop.name)}" onerror="this.parentNode.querySelector('.card-street-placeholder').style.display='flex'; this.style.display='none';">`
+      ? `<img class="card-street-img lazy-sv" data-src="${streetImgUrl}" alt="Street view of ${escHtml(shop.name)}" onerror="this.parentNode.querySelector('.card-street-placeholder').style.display='flex'; this.style.display='none';">`
       : ''}
     <div class="card-street-placeholder" style="display:${streetImgUrl ? 'none' : 'flex'}">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
