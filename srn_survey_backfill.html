@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRN Survey Backfill</title>
+<style>
+  :root {
+    --navy: #233348;
+    --blue: #225981;
+    --cyan: #1DB0D1;
+    --red: #CA383B;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --border: #dde3ea;
+    --text: #1a2332;
+    --muted: #6b7a90;
+    --success: #1a9e5c;
+    --warning: #e07b2a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Calibri', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 3px solid var(--cyan);
+  }
+  header h1 { font-family: 'Barlow', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+  header span { font-size: 12px; color: var(--cyan); font-weight: 400; margin-left: 4px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 32px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; border-bottom: 2px solid var(--cyan); padding-bottom: 8px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field-row.full { grid-template-columns: 1fr; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  input {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+    border-radius: 5px; font-size: 14px; font-family: 'Calibri', sans-serif;
+    color: var(--text); background: #fafbfc;
+    transition: border-color 0.15s;
+  }
+  input:focus { outline: none; border-color: var(--cyan); background: white; }
+  input[type="password"] { font-family: monospace; letter-spacing: 2px; }
+
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 5px; font-size: 13px;
+    font-weight: 700; cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+    font-family: 'Calibri', sans-serif;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--navy); }
+  .btn-cyan { background: var(--cyan); color: white; }
+  .btn-cyan:hover { background: #17a0bf; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #157a47; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  #log {
+    background: #0f1a2a; color: #a8c8e8; font-family: 'Courier New', monospace;
+    font-size: 12px; padding: 16px; border-radius: 6px; height: 280px;
+    overflow-y: auto; line-height: 1.6; border: 1px solid #1a3050;
+  }
+  #log .ok { color: #4ec97b; }
+  #log .warn { color: #f0b429; }
+  #log .err { color: #f46a6a; }
+  #log .info { color: #7ecfef; }
+  #log .dim { color: #556a80; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px;
+  }
+  .stat { text-align: center; padding: 12px; background: #f0f4f8; border-radius: 6px; border: 1px solid var(--border); }
+  .stat .num { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat.green .num { color: var(--success); }
+  .stat.orange .num { color: var(--warning); }
+  .stat.red .num { color: var(--red); }
+  .stat.blue .num { color: var(--cyan); }
+
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin: 12px 0; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--cyan); border-radius: 3px; transition: width 0.3s; width: 0%; }
+
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .note strong { color: var(--navy); }
+
+  .step-indicator { display: flex; gap: 0; margin-bottom: 20px; }
+  .step { flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 600; text-align: center;
+    background: #e8ecf1; color: var(--muted); border-right: 1px solid var(--border);
+    text-transform: uppercase; letter-spacing: 0.4px; }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--navy); color: var(--cyan); }
+  .step.done { background: var(--success); color: white; }
+  .step:first-child { border-radius: 5px 0 0 5px; }
+  .step:last-child { border-radius: 0 5px 5px 0; }
+
+  #authSection, #fetchSection, #insertSection { display: none; }
+  #configSection { display: block; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+  .badge-inserted { background: #d4f5e3; color: #1a6e40; }
+  .badge-skip { background: #fff3cd; color: #7a5500; }
+  .badge-nomatch { background: #fde8e8; color: #8a1c1c; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1DB0D1" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  <h1>SRN Claims Survey Backfill <span>facility_surveys</span></h1>
+</header>
+
+<div class="container">
+
+  <div class="step-indicator">
+    <div class="step active" id="step1">1. Configure</div>
+    <div class="step" id="step2">2. Authorize Gmail</div>
+    <div class="step" id="step3">3. Fetch & Parse</div>
+    <div class="step" id="step4">4. Insert</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="card" id="configSection">
+    <h2>Configuration</h2>
+    <div class="field-row">
+      <div>
+        <label>Supabase URL</label>
+        <input id="sbUrl" type="text" value="https://amfawopeshfzuxusruyq.supabase.co" />
+      </div>
+      <div>
+        <label>Supabase Service Role Key</label>
+        <input id="sbKey" type="password" placeholder="eyJ..." />
+      </div>
+    </div>
+    <div class="field-row">
+      <div>
+        <label>Google OAuth Client ID</label>
+        <input id="gClientId" type="text" placeholder="xxxxx.apps.googleusercontent.com" />
+      </div>
+      <div>
+        <label>Max Emails to Fetch</label>
+        <input id="maxEmails" type="number" value="250" min="1" max="500" />
+      </div>
+    </div>
+    <p class="note">
+      <strong>Google Client ID:</strong> Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a>, find your OAuth 2.0 Client ID (the same project your n8n Gmail OAuth uses). Add <strong>this page's URL</strong> as an authorized JavaScript origin. The service role key is in your Supabase project settings.
+    </p>
+    <br>
+    <button class="btn btn-primary" onclick="startAuth()">Next: Authorize Gmail →</button>
+  </div>
+
+  <!-- AUTH -->
+  <div class="card" id="authSection">
+    <h2>Gmail Authorization</h2>
+    <p style="font-size:14px; margin-bottom:16px; color:var(--muted);">Click below to authorize read access to your Gmail account. This tool only reads emails — it never sends or deletes anything.</p>
+    <div class="btn-row">
+      <button class="btn btn-cyan" onclick="doAuth()">🔐 Authorize with Google</button>
+      <span id="authStatus" style="font-size:13px; color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- FETCH -->
+  <div class="card" id="fetchSection">
+    <h2>Fetch & Parse Emails</h2>
+    <div class="stats">
+      <div class="stat"><div class="num" id="statFetched">0</div><div class="lbl">Fetched</div></div>
+      <div class="stat blue"><div class="num" id="statParsed">0</div><div class="lbl">Parsed</div></div>
+      <div class="stat green"><div class="num" id="statMatched">0</div><div class="lbl">Matched</div></div>
+      <div class="stat orange"><div class="num" id="statNoMatch">0</div><div class="lbl">No Match</div></div>
+      <div class="stat red"><div class="num" id="statError">0</div><div class="lbl">Errors</div></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="btn-row" style="margin-bottom:12px;">
+      <button class="btn btn-cyan" id="btnFetch" onclick="fetchAndParse()">📥 Fetch Emails from Gmail</button>
+      <button class="btn btn-success" id="btnInsert" onclick="insertAll()" disabled>💾 Insert to Supabase</button>
+    </div>
+    <div id="log">Waiting to fetch...</div>
+    <p class="note" style="margin-top:10px;"><strong>Process:</strong> Fetches all emails from <code>label:claims-survey</code>, parses survey fields, matches facilities by phone then email, then inserts to <code>facility_surveys</code>. Duplicates are skipped automatically.</p>
+  </div>
+
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+let SUPABASE_URL = '';
+let SUPABASE_KEY = '';
+let G_CLIENT_ID  = '';
+let MAX_EMAILS   = 250;
+let accessToken  = null;
+let parsedRows   = [];
+
+// ── Step 1: Config ───────────────────────────────────────────────────────────
+function startAuth() {
+  SUPABASE_URL = document.getElementById('sbUrl').value.trim().replace(/\/$/, '');
+  SUPABASE_KEY = document.getElementById('sbKey').value.trim();
+  G_CLIENT_ID  = document.getElementById('gClientId').value.trim();
+  MAX_EMAILS   = parseInt(document.getElementById('maxEmails').value) || 250;
+
+  if (!SUPABASE_KEY || !G_CLIENT_ID) {
+    alert('Please fill in Supabase Service Role Key and Google Client ID.');
+    return;
+  }
+  document.getElementById('configSection').style.display = 'none';
+  document.getElementById('authSection').style.display = 'block';
+  setStep(2);
+}
+
+// ── Step 2: OAuth ─────────────────────────────────────────────────────────────
+function doAuth() {
+  const params = new URLSearchParams({
+    client_id: G_CLIENT_ID,
+    redirect_uri: window.location.href.split('?')[0].split('#')[0],
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/gmail.readonly',
+    prompt: 'consent'
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+}
+
+function checkToken() {
+  const hash = window.location.hash;
+  if (hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    accessToken = params.get('access_token');
+    history.replaceState(null, '', window.location.pathname);
+    document.getElementById('configSection').style.display = 'none';
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('fetchSection').style.display = 'block';
+    setStep(3);
+    log('✅ Gmail authorized successfully.', 'ok');
+  }
+}
+
+// ── Step 3: Fetch & Parse ─────────────────────────────────────────────────────
+function extract(body, afterLabel, beforeLabel) {
+  const start = body.indexOf(afterLabel);
+  if (start === -1) return null;
+  const valueStart = start + afterLabel.length;
+  const end = beforeLabel ? body.indexOf(beforeLabel, valueStart) : body.length;
+  return body.substring(valueStart, end === -1 ? body.length : end).trim();
+}
+
+function parseEmail(text) {
+  const body = text || '';
+  const shopName  = extract(body, 'Shop Name:\n', '\nShop Phone:');
+  const shopPhone = extract(body, 'Shop Phone:\n', '\nShop Email Address:');
+  const shopEmail = extract(body, 'Shop Email Address:\n', '\n1.');
+  const q1 = extract(body, '1. How would you rate your overall experience with American Auto Shield?:\n', '\n2.');
+  const q2 = extract(body, '2. Regarding any claims you\'ve made with AAS, did we provide clear and timely updates?:\n', '\n3.');
+  const q3 = extract(body, '3. Did the claim resolution process meet your initial expectations when you filed the claim?:\n', '\n4.');
+  const q4 = extract(body, '4. What could AAS do to improve the claims process?:\n', '\n5.');
+  const q5 = extract(body, '5. What could AAS implement to make the claims process more efficient for shops like yours?:\n', '\nCONTACT');
+  return {
+    shop_name:  shopName,
+    shop_phone: shopPhone ? shopPhone.replace(/\D/g, '') : null,
+    shop_email: shopEmail ? shopEmail.toLowerCase().trim() : null,
+    q1, q2, q3, q4, q5
+  };
+}
+
+function decodeBody(payload) {
+  // Try to get plain text body recursively
+  if (!payload) return '';
+  if (payload.mimeType === 'text/plain' && payload.body && payload.body.data) {
+    return atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+  }
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      const result = decodeBody(part);
+      if (result) return result;
+    }
+  }
+  return '';
+}
+
+async function gmailGet(url) {
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  if (!res.ok) throw new Error(`Gmail API ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function sbGet(path) {
+  const res = await fetch(SUPABASE_URL + path, {
+    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}`);
+  return res.json();
+}
+
+async function sbPost(path, body) {
+  const res = await fetch(SUPABASE_URL + path, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify(body)
+  });
+  return res;
+}
+
+async function fetchAndParse() {
+  document.getElementById('btnFetch').disabled = true;
+  parsedRows = [];
+  let fetched = 0, parsed = 0, matched = 0, noMatch = 0, errors = 0;
+
+  const updateStats = () => {
+    document.getElementById('statFetched').textContent  = fetched;
+    document.getElementById('statParsed').textContent   = parsed;
+    document.getElementById('statMatched').textContent  = matched;
+    document.getElementById('statNoMatch').textContent  = noMatch;
+    document.getElementById('statError').textContent    = errors;
+    document.getElementById('progressFill').style.width = fetched > 0 ? Math.min(100, (parsed / fetched) * 100) + '%' : '0%';
+  };
+
+  log('🔍 Fetching message list from Gmail label:claims-survey...', 'info');
+
+  try {
+    let messageIds = [];
+    let pageToken = null;
+    do {
+      const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=&q=label:claims-survey&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
+      const data = await gmailGet(url);
+      if (data.messages) messageIds.push(...data.messages.map(m => m.id));
+      pageToken = data.nextPageToken;
+      log(`  → Got ${messageIds.length} message IDs so far...`, 'dim');
+    } while (pageToken && messageIds.length < MAX_EMAILS);
+
+    messageIds = messageIds.slice(0, MAX_EMAILS);
+    fetched = messageIds.length;
+    log(`📬 Found ${fetched} emails. Fetching bodies...`, 'info');
+    updateStats();
+
+    // Fetch existing surveys to detect duplicates
+    log('📋 Loading existing facility_surveys for duplicate detection...', 'dim');
+    let existingKeys = new Set();
+    try {
+      const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone,shop_email&limit=10000');
+      for (const r of existing) {
+        if (r.shop_phone) existingKeys.add('p:' + r.shop_phone.replace(/\D/g, ''));
+      }
+      log(`  → ${existing.length} existing surveys loaded.`, 'dim');
+    } catch(e) {
+      log('⚠️ Could not load existing surveys: ' + e.message, 'warn');
+    }
+
+    for (let i = 0; i < messageIds.length; i++) {
+      const msgId = messageIds[i];
+      try {
+        const msg = await gmailGet(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msgId}?format=full`);
+        const bodyText = decodeBody(msg.payload);
+        const fields = parseEmail(bodyText);
+
+        if (!fields.shop_name && !fields.shop_phone) {
+          log(`  [${i+1}] ⚠️ Could not parse — skipping`, 'warn');
+          errors++;
+          updateStats();
+          continue;
+        }
+
+        parsed++;
+
+        // Match facility by phone
+        let facilityId = null;
+        let matchMethod = null;
+
+        if (fields.shop_phone) {
+          try {
+            const rows = await sbGet(`/rest/v1/facilities?select=id,name&phone=ilike.*${fields.shop_phone}*&limit=1`);
+            if (rows && rows.length > 0) {
+              facilityId = rows[0].id;
+              matchMethod = 'phone';
+            }
+          } catch(e) { /* ignore */ }
+        }
+
+        // Fallback: match by email
+        if (!facilityId && fields.shop_email) {
+          try {
+            const rows = await sbGet(`/rest/v1/facilities?select=id,name&or=(contact_email.ilike.${encodeURIComponent(fields.shop_email)},email1.ilike.${encodeURIComponent(fields.shop_email)},email2.ilike.${encodeURIComponent(fields.shop_email)},email3.ilike.${encodeURIComponent(fields.shop_email)})&limit=1`);
+            if (rows && rows.length > 0) {
+              facilityId = rows[0].id;
+              matchMethod = 'email';
+            }
+          } catch(e) { /* ignore */ }
+        }
+
+        // Get received date
+        const dateHeader = msg.payload.headers?.find(h => h.name === 'Date');
+        const receivedAt = dateHeader ? new Date(dateHeader.value).toISOString() : new Date().toISOString();
+
+        const row = {
+          ...fields,
+          facility_id: facilityId,
+          match_method: matchMethod,
+          received_at: receivedAt,
+          source: 'backfill'
+        };
+
+        parsedRows.push(row);
+
+        if (facilityId) {
+          matched++;
+          log(`  [${i+1}] ✅ <span class="ok">${fields.shop_name || '?'}</span> → matched by ${matchMethod} <span class="dim">(id:${facilityId})</span>`, 'ok');
+        } else {
+          noMatch++;
+          log(`  [${i+1}] ⚠️ <span class="warn">${fields.shop_name || '?'}</span> — no facility match`, 'warn');
+        }
+
+      } catch(e) {
+        errors++;
+        log(`  [${i+1}] ❌ Error: ${e.message}`, 'err');
+      }
+
+      updateStats();
+      document.getElementById('progressFill').style.width = ((i+1) / fetched * 100) + '%';
+
+      // Small delay to avoid rate limits
+      if (i % 10 === 9) await sleep(300);
+    }
+
+    log(`\n✅ Done parsing. ${parsed} parsed, ${matched} matched, ${noMatch} no match, ${errors} errors.`, 'ok');
+    log(`👆 Click "Insert to Supabase" to write ${parsedRows.length} rows.`, 'info');
+    document.getElementById('btnInsert').disabled = false;
+    setStep(4);
+
+  } catch(e) {
+    log('❌ Fatal error: ' + e.message, 'err');
+    document.getElementById('btnFetch').disabled = false;
+  }
+}
+
+// ── Step 4: Insert ────────────────────────────────────────────────────────────
+async function insertAll() {
+  document.getElementById('btnInsert').disabled = true;
+  log('\n💾 Inserting to facility_surveys...', 'info');
+
+  let inserted = 0, skipped = 0, failed = 0;
+
+  // Load existing to check duplicates by phone+date combo
+  let existingSet = new Set();
+  try {
+    const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone,received_at&limit=10000');
+    for (const r of existing) {
+      if (r.shop_phone && r.received_at) {
+        existingSet.add(r.shop_phone.replace(/\D/g,'') + '|' + r.received_at.substring(0,10));
+      }
+    }
+  } catch(e) { log('⚠️ Could not load existing for dedup: ' + e.message, 'warn'); }
+
+  for (let i = 0; i < parsedRows.length; i++) {
+    const row = parsedRows[i];
+
+    // Dedup check
+    const dedupKey = (row.shop_phone || '') + '|' + (row.received_at || '').substring(0,10);
+    if (existingSet.has(dedupKey)) {
+      log(`  [${i+1}] ⏭️ Skip duplicate: ${row.shop_name}`, 'dim');
+      skipped++;
+      continue;
+    }
+
+    // Build insert payload (remove helper fields)
+    const payload = {
+      facility_id: row.facility_id || null,
+      shop_name:   row.shop_name,
+      shop_phone:  row.shop_phone,
+      shop_email:  row.shop_email,
+      q1: row.q1, q2: row.q2, q3: row.q3, q4: row.q4, q5: row.q5,
+      received_at: row.received_at,
+      source: 'backfill'
+    };
+
+    try {
+      const res = await sbPost('/rest/v1/facility_surveys', payload);
+      if (res.ok || res.status === 201) {
+        inserted++;
+        log(`  [${i+1}] ✅ Inserted: ${row.shop_name || row.shop_phone}`, 'ok');
+        existingSet.add(dedupKey);
+      } else {
+        const txt = await res.text();
+        log(`  [${i+1}] ❌ Failed (${res.status}): ${txt.substring(0,120)}`, 'err');
+        failed++;
+      }
+    } catch(e) {
+      log(`  [${i+1}] ❌ Error: ${e.message}`, 'err');
+      failed++;
+    }
+
+    if (i % 20 === 19) await sleep(200);
+  }
+
+  log(`\n🎉 Backfill complete! Inserted: ${inserted} | Skipped (dup): ${skipped} | Failed: ${failed}`, 'ok');
+  document.getElementById('step4').classList.add('done');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.innerHTML = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    if (i < n) el.className = 'step done';
+    else if (i === n) el.className = 'step active';
+    else el.className = 'step';
+  }
+}
+
+// On load, check if returning from OAuth redirect
+window.addEventListener('load', () => {
+  if (window.location.hash.includes('access_token')) {
+    // Restore config from sessionStorage
+    const saved = sessionStorage.getItem('srn_backfill_config');
+    if (saved) {
+      const cfg = JSON.parse(saved);
+      SUPABASE_URL = cfg.sbUrl;
+      SUPABASE_KEY = cfg.sbKey;
+      G_CLIENT_ID  = cfg.gClientId;
+      MAX_EMAILS   = cfg.maxEmails;
+    }
+    checkToken();
+  }
+});
+
+// Save config before OAuth redirect
+function doAuth() {
+  sessionStorage.setItem('srn_backfill_config', JSON.stringify({
+    sbUrl:      document.getElementById('sbUrl').value.trim().replace(/\/$/, ''),
+    sbKey:      document.getElementById('sbKey').value.trim(),
+    gClientId:  document.getElementById('gClientId').value.trim(),
+    maxEmails:  parseInt(document.getElementById('maxEmails').value) || 250
+  }));
+  SUPABASE_URL = JSON.parse(sessionStorage.getItem('srn_backfill_config')).sbUrl;
+  SUPABASE_KEY = JSON.parse(sessionStorage.getItem('srn_backfill_config')).sbKey;
+  G_CLIENT_ID  = JSON.parse(sessionStorage.getItem('srn_backfill_config')).gClientId;
+  MAX_EMAILS   = JSON.parse(sessionStorage.getItem('srn_backfill_config')).maxEmails;
+
+  const params = new URLSearchParams({
+    client_id: G_CLIENT_ID,
+    redirect_uri: window.location.href.split('?')[0].split('#')[0],
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/gmail.readonly',
+    prompt: 'consent'
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+}
+</script>
+</body>
+</html>
