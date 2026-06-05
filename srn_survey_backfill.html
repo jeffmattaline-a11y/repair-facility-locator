@@ -334,7 +334,7 @@ async function fetchAndParse() {
     let messageIds = [];
     let pageToken = null;
     do {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=&q=label:claims-survey&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
+      const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=subject%3A%22SRN+Overall+Claims+Experience+Survey%22&maxResults=500${pageToken ? '&pageToken=' + pageToken : ''}`;
       const data = await gmailGet(url);
       if (data.messages) messageIds.push(...data.messages.map(m => m.id));
       pageToken = data.nextPageToken;
