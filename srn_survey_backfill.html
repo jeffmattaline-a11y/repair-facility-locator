@@ -254,18 +254,25 @@ function extract(body, afterLabel, beforeLabel) {
 }
 
 function parseEmail(text) {
-  const body = text || '';
-  const shopName  = extract(body, 'Shop Name:\n', '\nShop Phone:');
-  const shopPhone = extract(body, 'Shop Phone:\n', '\nShop Email Address:');
-  const shopEmail = extract(body, 'Shop Email Address:\n', '\n1.');
-  const q1 = extract(body, '1. How would you rate your overall experience with American Auto Shield?:\n', '\n2.');
-  const q2 = extract(body, '2. Regarding any claims you\'ve made with AAS, did we provide clear and timely updates?:\n', '\n3.');
-  const q3 = extract(body, '3. Did the claim resolution process meet your initial expectations when you filed the claim?:\n', '\n4.');
-  const q4 = extract(body, '4. What could AAS do to improve the claims process?:\n', '\n5.');
-  const q5 = extract(body, '5. What could AAS implement to make the claims process more efficient for shops like yours?:\n', '\nCONTACT');
+  const body = text || "";
+  function extractInline(b, label) {
+    const idx = b.indexOf(label);
+    if (idx === -1) return null;
+    const valueStart = idx + label.length;
+    const lineEnd = b.indexOf("\n", valueStart);
+    return (lineEnd === -1 ? b.substring(valueStart) : b.substring(valueStart, lineEnd)).replace(/\*\*/g,"").trim() || null;
+  }
+  const shopName  = extractInline(body, "Shop Name: ");
+  const shopPhone = extractInline(body, "Shop Phone: ");
+  const shopEmail = extractInline(body, "Shop Email Address: ");
+  const q1 = extractInline(body, "1. How would you rate your overall experience with American Auto Shield? ");
+  const q2 = extractInline(body, "2. Regarding any claims you've made with AAS, did we provide clear and timely updates? ");
+  const q3 = extractInline(body, "3. Did the claim resolution process meet your initial expectations when you field the claim? ");
+  const q4 = extractInline(body, "4. What could AAS do to improve the claims process? ");
+  const q5 = extractInline(body, "5. What could AAS implement to make the claims process mor efficient for shops like yours? ");
   return {
     shop_name:  shopName,
-    shop_phone: shopPhone ? shopPhone.replace(/\D/g, '') : null,
+    shop_phone: shopPhone ? shopPhone.replace(/\D/g, "") : null,
     shop_email: shopEmail ? shopEmail.toLowerCase().trim() : null,
     q1, q2, q3, q4, q5
   };
