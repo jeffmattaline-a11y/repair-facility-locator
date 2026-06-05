@@ -254,22 +254,45 @@ function extract(body, afterLabel, beforeLabel) {
 }
 
 function parseEmail(text) {
-  const body = text || "";
-  function extractInline(b, label) {
-    const idx = b.indexOf(label);
-    if (idx === -1) return null;
-    const valueStart = idx + label.length;
-    const lineEnd = b.indexOf("\n", valueStart);
-    return (lineEnd === -1 ? b.substring(valueStart) : b.substring(valueStart, lineEnd)).replace(/\*\*/g,"").trim() || null;
+  const body = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Format: "Label:* value\n" for fields, or "Question?*\nAnswer\n" for questions
+  function extractField(b, label) {
+    // Try "Label:* value" (inline after asterisk)
+    const patterns = [label + "* ", label + "*\n", label + " "];
+    for (const pat of patterns) {
+      const idx = b.indexOf(pat);
+      if (idx === -1) continue;
+      const valStart = idx + pat.length;
+      const lineEnd = b.indexOf("\n", valStart);
+      const val = (lineEnd === -1 ? b.substring(valStart) : b.substring(valStart, lineEnd)).replace(/^\*+|\*+$/g,"").trim();
+      if (val) return val;
+    }
+    return null;
   }
-  const shopName  = extractInline(body, "Shop Name: ");
-  const shopPhone = extractInline(body, "Shop Phone: ");
-  const shopEmail = extractInline(body, "Shop Email Address: ");
-  const q1 = extractInline(body, "1. How would you rate your overall experience with American Auto Shield? ");
-  const q2 = extractInline(body, "2. Regarding any claims you've made with AAS, did we provide clear and timely updates? ");
-  const q3 = extractInline(body, "3. Did the claim resolution process meet your initial expectations when you field the claim? ");
-  const q4 = extractInline(body, "4. What could AAS do to improve the claims process? ");
-  const q5 = extractInline(body, "5. What could AAS implement to make the claims process mor efficient for shops like yours? ");
+  function extractQuestion(b, qLabel) {
+    // Format: "N. Question text?*\nAnswer\n"
+    const idx = b.indexOf(qLabel);
+    if (idx === -1) return null;
+    // Find the newline after the question line
+    const lineEnd = b.indexOf("\n", idx);
+    if (lineEnd === -1) return null;
+    // Answer is on next line(s) until next numbered question or end
+    const ansStart = lineEnd + 1;
+    // Find next question marker
+    const nextQ = b.search(new RegExp("\n[2-6]\\. ", ""));
+    const qNum = parseInt(qLabel[0]);
+    const nextQMatch = b.indexOf("\n" + (qNum+1) + ". ", ansStart);
+    const ansEnd = nextQMatch === -1 ? b.length : nextQMatch;
+    return b.substring(ansStart, ansEnd).replace(/^\*+|\*+$/g,"").trim() || null;
+  }
+  const shopName  = extractField(body, "Shop Name:");
+  const shopPhone = extractField(body, "Shop Phone:");
+  const shopEmail = extractField(body, "Shop Email Address:");
+  const q1 = extractQuestion(body, "1. How would you rate");
+  const q2 = extractQuestion(body, "2. Regarding any claims");
+  const q3 = extractQuestion(body, "3. Did the claim resolution");
+  const q4 = extractQuestion(body, "4. What could AAS do");
+  const q5 = extractQuestion(body, "5. What could AAS implement");
   return {
     shop_name:  shopName,
     shop_phone: shopPhone ? shopPhone.replace(/\D/g, "") : null,
