@@ -373,8 +373,12 @@ async function fetchAndParse() {
         const bodyText = decodeBody(msg.payload);
         const fields = parseEmail(bodyText);
 
+        if (i === 0) {
+          log(`  [DEBUG] mimeType: ${msg.payload.mimeType}`, 'info');
+          log(`  [DEBUG] body preview: ${JSON.stringify(bodyText.substring(0,300))}`, 'info');
+        }
         if (!fields.shop_name && !fields.shop_phone) {
-          log(`  [${i+1}] ⚠️ Could not parse — skipping`, 'warn');
+          log(`  [${i+1}] Could not parse — skipping`, 'warn');
           errors++;
           updateStats();
           continue;
