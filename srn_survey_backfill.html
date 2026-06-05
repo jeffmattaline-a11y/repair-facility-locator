@@ -380,9 +380,9 @@ async function fetchAndParse() {
     log('📋 Loading existing facility_surveys for duplicate detection...', 'dim');
     let existingKeys = new Set();
     try {
-      const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone,shop_email&limit=10000');
+      const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone_submitted,submitted_at&limit=10000');
       for (const r of existing) {
-        if (r.shop_phone) existingKeys.add('p:' + r.shop_phone.replace(/\D/g, ''));
+        if (r.shop_phone_submitted) existingKeys.add('p:' + r.shop_phone_submitted.replace(/\D/g, ''));
       }
       log(`  → ${existing.length} existing surveys loaded.`, 'dim');
     } catch(e) {
@@ -489,10 +489,10 @@ async function insertAll() {
   // Load existing to check duplicates by phone+date combo
   let existingSet = new Set();
   try {
-    const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone,received_at&limit=10000');
+    const existing = await sbGet('/rest/v1/facility_surveys?select=shop_phone_submitted,submitted_at&limit=10000');
     for (const r of existing) {
-      if (r.shop_phone && r.received_at) {
-        existingSet.add(r.shop_phone.replace(/\D/g,'') + '|' + r.received_at.substring(0,10));
+      if (r.shop_phone_submitted && r.submitted_at) {
+        existingSet.add(r.shop_phone_submitted.replace(/\D/g,'') + '|' + r.submitted_at.substring(0,10));
       }
     }
   } catch(e) { log('⚠️ Could not load existing for dedup: ' + e.message, 'warn'); }
@@ -510,13 +510,17 @@ async function insertAll() {
 
     // Build insert payload (remove helper fields)
     const payload = {
-      facility_id: row.facility_id || null,
-      shop_name:   row.shop_name,
-      shop_phone:  row.shop_phone,
-      shop_email:  row.shop_email,
-      q1: row.q1, q2: row.q2, q3: row.q3, q4: row.q4, q5: row.q5,
-      received_at: row.received_at,
-      source: 'backfill'
+      facility_id:          row.facility_id || null,
+      shop_name_submitted:  row.shop_name,
+      shop_phone_submitted: row.shop_phone,
+      shop_email_submitted: row.shop_email,
+      q1_overall_rating:    row.q1,
+      q2_timely_updates:    row.q2,
+      q3_met_expectations:  row.q3,
+      q4_improvement:       row.q4,
+      q5_efficiency:        row.q5,
+      submitted_at:         row.received_at,
+      matched:              row.facility_id ? true : false
     };
 
     try {
