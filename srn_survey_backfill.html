@@ -509,16 +509,24 @@ async function insertAll() {
     }
 
     // Build insert payload (remove helper fields)
+    const q1Valid = ['Excellent','Satisfactory','Neutral','Unsatisfactory','Terrible'];
+    const q2Valid = ['Yes','Sometimes','No'];
+    const q3Valid = ['Yes','Somewhat','No'];
+    const matchEnum = (val, allowed) => {
+      if (!val) return null;
+      const v = val.trim();
+      return allowed.find(a => a.toLowerCase() === v.toLowerCase()) || null;
+    };
     const payload = {
       facility_id:          row.facility_id || null,
       shop_name_submitted:  row.shop_name,
       shop_phone_submitted: row.shop_phone,
       shop_email_submitted: row.shop_email,
-      q1_overall_rating:    row.q1,
-      q2_timely_updates:    row.q2,
-      q3_met_expectations:  row.q3,
-      q4_improvement:       row.q4,
-      q5_efficiency:        row.q5,
+      q1_overall_rating:    matchEnum(row.q1, q1Valid),
+      q2_timely_updates:    matchEnum(row.q2, q2Valid),
+      q3_met_expectations:  matchEnum(row.q3, q3Valid),
+      q4_improvement:       row.q4 || null,
+      q5_efficiency:        row.q5 || null,
       submitted_at:         row.received_at,
       matched:              row.facility_id ? true : false
     };
