@@ -1377,7 +1377,7 @@ function renderSvCards() {
     body.innerHTML = `<div class="inq-empty">No surveys found${q ? ' for \u201c'+q+'\u201d' : ''}.</div>`;
     return;
   }
-  body.innerHTML = list.map(s => buildSvCard(s)).join('');
+  body.innerHTML = '<div style="display:block">' + list.map(s => buildSvCard(s)).join('') + '</div>';
 }
 
 function buildSvCard(s) {
@@ -1403,8 +1403,8 @@ function buildSvCard(s) {
        </button>`
     : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">\u2705 Linked to facility</div>`;
 
-  return `<div data-sv="1" style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;background:#fff;min-height:0">
-    <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer" onclick="this.closest('[data-sv]').querySelector('.sv-detail').classList.toggle('sv-open')">
+  return `<div data-sv="1" style="display:block;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;background:#fff">
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:#f8fafc;border-radius:8px" onclick="var d=this.closest('[data-sv]').querySelector('.sv-detail');d.style.display=d.style.display==='none'?'block':'none';this.querySelector('.sv-arrow').textContent=d.style.display==='none'?'▼':'▲';this.style.borderRadius=d.style.display==='none'?'8px':'8px 8px 0 0'">
       <div style="width:72px;text-align:center;flex-shrink:0">
         <div style="font-size:9px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Rating</div>
         <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:${rBg};color:${rColor};display:inline-block;white-space:nowrap">${esc(r)}</span>
@@ -1418,7 +1418,7 @@ function buildSvCard(s) {
         </div>
       </div>
       ${matchBadge}
-      <span style="color:#8a93a2;font-size:11px;flex-shrink:0">\u25BC</span>
+      <span class="sv-arrow" style="color:#8a93a2;font-size:11px;flex-shrink:0">▼</span>
     </div>
     <div class="sv-detail" style="display:none;padding:0 14px 14px;border-top:1px solid #f1f5f9;border-radius:0 0 8px 8px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
