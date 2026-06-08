@@ -602,7 +602,7 @@ td.nm:hover{text-decoration:underline}
           <span class="dd-icon">&#x1F517;</span> Chain Domain Manager
         </button>
         <button class="nav-dd-item" onclick="closeAllDDs();openUnmatchedSurveys()">
-          <span class="dd-icon">&#x1F4CB;</span> Unmatched Surveys
+          <span class="dd-icon">&#x1F4CB;</span> Surveys
         </button>
       </div>
     </div>
@@ -1309,7 +1309,7 @@ let _svLinkId = null;
 let _svLinkFacId = null;
 
 // Keep old entry point from Tools menu working
-function openUnmatchedSurveys() { openAllSurveysOv('unmatched'); }
+function openUnmatchedSurveys() { openAllSurveysOv('all'); }
 
 async function openAllSurveysOv(startTab) {
   _svActiveTab = startTab || 'all';
@@ -1403,7 +1403,7 @@ function buildSvCard(s) {
        </button>`
     : `<div style="margin-top:8px;font-size:11px;color:#16a34a;font-weight:600">\u2705 Linked to facility</div>`;
 
-  return `<div data-sv="1" style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff">
+  return `<div data-sv="1" style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;background:#fff;min-height:0">
     <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer" onclick="this.closest('[data-sv]').querySelector('.sv-detail').classList.toggle('sv-open')">
       <div style="width:52px;text-align:center;flex-shrink:0">
         <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:${rBg};color:${rColor};display:inline-block">${esc(r)}</span>
@@ -1419,7 +1419,7 @@ function buildSvCard(s) {
       ${matchBadge}
       <span style="color:#8a93a2;font-size:11px;flex-shrink:0">\u25BC</span>
     </div>
-    <div class="sv-detail" style="display:none;padding:0 14px 14px;border-top:1px solid #f1f5f9">
+    <div class="sv-detail" style="display:none;padding:0 14px 14px;border-top:1px solid #f1f5f9;border-radius:0 0 8px 8px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px">
           <div style="font-size:10px;font-weight:700;color:#8a93a2;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Q2 \u2014 Timely Updates</div>
