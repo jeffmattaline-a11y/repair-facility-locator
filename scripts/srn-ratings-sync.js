@@ -3,8 +3,16 @@
  * ─────────────────────────────────────────────────────────────
  * Nightly GitHub Actions script. For each PRF facility:
  *   1. Finds its Google Place ID (via Text Search if not cached)
- *   2. Fetches current rating + review count (Place Details)
+ *   2. Fetches current rating + review count (Places API New)
  *   3. Patches the Supabase record
+ *
+ * Cost optimizations vs. prior version:
+ *   - getPlaceDetails() migrated to Places API (New) with strict
+ *     field mask (places.rating, places.userRatingCount only).
+ *     This eliminates the "Atmosphere Data" SKU (~$300/mo) and
+ *     keeps Place Details in the free Basic Data tier.
+ *   - STALE_DAYS increased 5 → 30 (ratings don't change daily)
+ *   - BATCH_SIZE reduced 4000 → 500 (safety cap, ~500 calls/night)
  *
  * Env vars required (GitHub Actions secrets):
  *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
@@ -19,8 +27,8 @@ const SUPABASE_URL        = process.env.SUPABASE_URL;
 const SUPABASE_KEY        = process.env.SUPABASE_ANON_KEY;
 const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
-const BATCH_SIZE          = 4000; // Full rotation every ~5 nightly runs
-const STALE_DAYS          = 5;    // Re-fetch if older than 5 days
+const BATCH_SIZE          = 500;  // ~500 calls/night keeps monthly well under budget
+const STALE_DAYS          = 30;   // Re-fetch once per month (ratings are stable)
 const DELAY_MS            = 100;  // Polite delay between API calls (ms)
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -41,7 +49,6 @@ async function supabaseGet(path) {
 }
 
 async function supabasePatch(table, id, body) {
-  // Cast id explicitly as uuid in the filter
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
     method: 'PATCH',
     headers: {
@@ -54,7 +61,6 @@ async function supabasePatch(table, id, body) {
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`Supabase PATCH failed for ${id}: ${res.status} ${text}`);
-  // Verify at least one row was actually updated
   let rows = [];
   try { rows = JSON.parse(text); } catch(e) {}
   if (!Array.isArray(rows) || rows.length === 0) {
@@ -97,23 +103,38 @@ async function findPlaceId(facility) {
 }
 
 /**
- * Place Details: fetch rating + review count for a known place_id
- * Returns { rating, review_count } or null
+ * Place Details (New): fetch rating + review count for a known place_id.
+ *
+ * Uses the Places API (New) endpoint with a strict X-Goog-FieldMask header
+ * requesting ONLY rating and userRatingCount. This keeps billing in the
+ * free "Basic Data" SKU and avoids the "Atmosphere Data" SKU that the
+ * legacy /place/details/json endpoint triggers even when requesting only
+ * rating fields.
+ *
+ * Returns { rating, review_count } or null.
  */
 async function getPlaceDetails(placeId) {
-  const url = `https://maps.googleapis.com/maps/api/place/details/json` +
-    `?place_id=${placeId}&fields=rating,user_ratings_total&key=${GOOGLE_KEY}`;
+  const url = `https://places.googleapis.com/v1/places/${placeId}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      'X-Goog-Api-Key':   GOOGLE_KEY,
+      'X-Goog-FieldMask': 'rating,userRatingCount',
+    },
+  });
+
+  if (!res.ok) {
+    console.warn(`  ⚠️  Places API (New) error for ${placeId}: ${res.status}`);
+    return null;
+  }
+
   const data = await res.json();
 
-  if (data.status === 'OK' && data.result) {
-    return {
-      rating:       data.result.rating          ?? null,
-      review_count: data.result.user_ratings_total ?? null,
-    };
-  }
-  return null;
+  // Places API (New) returns a top-level object, not data.result
+  return {
+    rating:       data.rating          ?? null,
+    review_count: data.userRatingCount ?? null,
+  };
 }
 
 // ─── Main ───────────────────────────────────────────────────────
@@ -129,16 +150,12 @@ async function main() {
 
   const staleThreshold = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  // ── Fetch facilities that need a ratings refresh ──────────────
-  // Priority 1: PRF facilities with no rating yet
-  // Priority 2: PRF facilities with stale ratings (> 7 days old)
   let facilities = [];
   let offset = 0;
 
   console.log('Fetching facilities needing rating sync...');
 
   while (true) {
-    // Facilities with no google_place_id or stale ratings_updated_at
     const batch = await supabaseGet(
       `facilities?select=id,name,address,city,state,zip,phone,google_place_id,ratings_updated_at` +
       `&status=eq.PRF` +
@@ -160,7 +177,6 @@ async function main() {
     return;
   }
 
-  // ── Process in batches ────────────────────────────────────────
   const toProcess = facilities.slice(0, BATCH_SIZE);
   console.log(`Processing ${toProcess.length} facilities this run (batch limit: ${BATCH_SIZE})...\n`);
 
@@ -173,15 +189,12 @@ async function main() {
     try {
       let placeId = facility.google_place_id;
 
-      // Step 1: Find Place ID if we don't have one
       if (!placeId) {
         await sleep(DELAY_MS);
         placeId = await findPlaceId(facility);
 
         if (!placeId) {
           console.log(`  ⚠️  No Place ID found: ${facility.name} (${facility.city}, ${facility.state})`);
-          // Still update timestamp so we don't retry every night forever
-          // (retry will happen after STALE_DAYS)
           await supabasePatch('facilities', facility.id, {
             ratings_updated_at: new Date().toISOString(),
           });
@@ -192,26 +205,24 @@ async function main() {
         console.log(`  🔍 Found Place ID for ${facility.name}: ${placeId}`);
       }
 
-      // Step 2: Get rating + review count
       await sleep(DELAY_MS);
       const details = await getPlaceDetails(placeId);
 
       if (!details || (details.rating === null && details.review_count === null)) {
         console.log(`  ⚠️  No rating data: ${facility.name}`);
         await supabasePatch('facilities', facility.id, {
-          google_place_id:  placeId,
+          google_place_id:    placeId,
           ratings_updated_at: new Date().toISOString(),
         });
         noRating++;
         continue;
       }
 
-      // Step 3: Patch Supabase
       await supabasePatch('facilities', facility.id, {
-        google_place_id:    placeId,
-        google_rating:      details.rating,
+        google_place_id:     placeId,
+        google_rating:       details.rating,
         google_review_count: details.review_count,
-        ratings_updated_at: new Date().toISOString(),
+        ratings_updated_at:  new Date().toISOString(),
       });
 
       console.log(
@@ -226,7 +237,6 @@ async function main() {
     }
   }
 
-  // ── Summary ───────────────────────────────────────────────────
   console.log('\n━━━ Sync Summary ━━━');
   console.log(`  ✅ Updated:         ${updated}`);
   console.log(`  ⚠️  No Place ID:    ${noPlaceId}`);
