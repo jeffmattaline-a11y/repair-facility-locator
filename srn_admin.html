@@ -976,6 +976,22 @@ function downloadTemplate(){const headers=['Name *','Address *','City *','State 
 
 // ─── Metrics ───────────────────────────────────────────────────────
 function openMetrics(){const body=document.getElementById('metrics-body');body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)"><div class="spin" style="margin:0 auto 12px"></div>Building metrics…</div>';document.getElementById('metrics-ov').classList.add('open');setTimeout(()=>renderMetrics(),50);}
+async function confirmSurveyLink(surveyId, facilityId) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?id=eq.${surveyId}`, {
+      method: 'PATCH',
+      headers: {...hdrs(), 'Content-Type':'application/json', Prefer:'return=minimal'},
+      body: JSON.stringify({facility_id: facilityId, matched: true})
+    });
+    if (res.ok || res.status === 204) {
+      toast('Survey linked to this facility ✅', 'ok');
+      loadFacilitySurveys(facilityId);
+    } else {
+      toast('Link failed — check console', 'err');
+    }
+  } catch(e) { toast('Error: '+e.message, 'err'); }
+}
+
 async function loadFacilitySurveys(facilityId){
   const loading=document.getElementById('surveys-loading');
   const list=document.getElementById('surveys-list');
@@ -985,11 +1001,48 @@ async function loadFacilitySurveys(facilityId){
   loading.textContent='Loading surveys…';
   list.style.display='none';
   try{
-    const surveys=await api.getSurveys(facilityId);
+    // Fetch surveys already hard-linked to this facility
+    const linked = await api.getSurveys(facilityId);
+    const linkedIds = new Set(linked.map(s => s.id));
+
+    // Fetch unlinked surveys and match strictly by email address only.
+    // Email must be an exact match on both sides, and must not be a chain domain
+    // (chain domains like goodyear.com are shared across locations and are not unique identifiers).
+    // Phone and name are never used as matching criteria.
+    const fac = data.find(f => f.id === facilityId);
+    let orphans = [];
+    if (fac) {
+      const facEmails = [fac.contact_email, fac.email1]
+        .filter(e => e && String(e).trim())
+        .map(e => e.toLowerCase().trim())
+        .filter(e => !isChainDomain(e));
+
+      if (facEmails.length > 0) {
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?facility_id=is.null&order=submitted_at.desc&limit=500`, {headers: hdrs()});
+        if (r2.ok) {
+          const pool = await r2.json();
+          orphans = (Array.isArray(pool) ? pool : []).filter(s => {
+            if (linkedIds.has(s.id)) return false;
+            const sEmail = (s.shop_email_submitted || '').toLowerCase().trim();
+            return sEmail && !isChainDomain(sEmail) && facEmails.includes(sEmail);
+          }).map(s => ({...s, _orphan: true, _matchReasons: ['email']}));
+        }
+      }
+    }
+
+    const surveys = [...linked, ...orphans];
     loading.style.display='none';
     list.style.display='block';
     const total=surveys.length;
-    summary.textContent=total>0?`${total} survey${total!==1?'s':''} received`:'';
+    const confirmedCount = linked.length;
+    const orphanCount = orphans.length;
+    if (orphanCount > 0) {
+      summary.textContent = `${confirmedCount} linked · ${orphanCount} pending confirmation`;
+      summary.style.color = '#d97706';
+    } else {
+      summary.textContent=total>0?`${total} survey${total!==1?'s':''} received`:'';
+      summary.style.color = '';
+    }
     if(tabCount){tabCount.textContent=total>0?total:'';tabCount.style.display=total>0?'inline':'none';}
     if(total===0){
       list.innerHTML='<div style="text-align:center;padding:40px;color:#8a93a2;font-size:13px"><div style="font-size:28px;margin-bottom:8px">📋</div><div>No survey responses for this facility yet.</div></div>';
@@ -1009,7 +1062,23 @@ async function loadFacilitySurveys(facilityId){
       const detailId='survey-detail-'+i;
       const q4=s.q4_improvement?`<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8a93a2;margin-bottom:4px">How to improve claims</div><div style="font-size:12px;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;line-height:1.5">${esc(s.q4_improvement)}</div></div>`:'';
       const q5=s.q5_efficiency?`<div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8a93a2;margin-bottom:4px">How to make process more efficient</div><div style="font-size:12px;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;line-height:1.5">${esc(s.q5_efficiency)}</div></div>`:'';
-      return `<div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;user-select:none" onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${rBg};color:${rColor}">${esc(r)}</span><span style="font-size:12px;color:#374151;font-weight:500">${q2Icon} Updates &nbsp;${q3Icon} Expectations</span></div><span style="font-size:11px;color:#8a93a2">${dateStr} ${timeStr}</span></div><div id="${detailId}" style="display:none;padding:14px;border-top:1px solid #e2e8f0"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Timely Updates</span><div style="margin-top:3px;font-weight:500">${esc(s.q2_timely_updates||'—')}</div></div><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Met Expectations</span><div style="margin-top:3px;font-weight:500">${esc(s.q3_met_expectations||'—')}</div></div></div>${q4}${q5}</div></div>`;
+      const orphanBanner = s._orphan ? `
+        <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">⚠️ Survey matched but not yet linked to this facility</div>
+            <div style="font-size:11px;color:#78350f">Matched by: <strong>${(s._matchReasons||[]).join(', ') || 'name'}</strong>
+              ${s.shop_name_submitted ? ' · Submitted as: <em>'+esc(s.shop_name_submitted)+'</em>' : ''}
+              ${s.shop_email_submitted ? ' · '+esc(s.shop_email_submitted) : ''}
+            </div>
+          </div>
+          <button onclick="confirmSurveyLink('${s.id}','${facilityId}')"
+            style="flex-shrink:0;padding:5px 13px;background:#1a5fb4;border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+            🔗 Confirm Link
+          </button>
+        </div>` : '';
+      const cardBorder = s._orphan ? 'border:1px solid #fbbf24' : 'border:1px solid #e2e8f0';
+      const headerBg  = s._orphan ? 'background:#fffdf0' : 'background:#f8fafc';
+      return `<div style="${cardBorder};border-radius:8px;margin-bottom:10px;overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;${headerBg};cursor:pointer;user-select:none" onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;background:${rBg};color:${rColor}">${esc(r)}</span><span style="font-size:12px;color:#374151;font-weight:500">${q2Icon} Updates &nbsp;${q3Icon} Expectations</span>${s._orphan?'<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:#fef3c7;color:#92400e;border:1px solid #fbbf24">Pending</span>':''}</div><span style="font-size:11px;color:#8a93a2">${dateStr} ${timeStr}</span></div><div id="${detailId}" style="display:none;padding:14px;border-top:1px solid #e2e8f0">${orphanBanner}<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Timely Updates</span><div style="margin-top:3px;font-weight:500">${esc(s.q2_timely_updates||'—')}</div></div><div style="font-size:12px"><span style="color:#8a93a2;font-weight:600;text-transform:uppercase;font-size:10px">Met Expectations</span><div style="margin-top:3px;font-weight:500">${esc(s.q3_met_expectations||'—')}</div></div></div>${q4}${q5}</div></div>`;
     }).join('');
   }catch(e){
     loading.style.display='block';
