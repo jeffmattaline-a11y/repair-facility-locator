@@ -601,16 +601,16 @@ td.nm:hover{text-decoration:underline}
         <button class="nav-dd-item" onclick="closeAllDDs();openChainManager()">
           <span class="dd-icon">&#x1F517;</span> Chain Domain Manager
         </button>
-        <button class="nav-dd-item" onclick="closeAllDDs();openUnmatchedSurveys()">
-          <span class="dd-icon">&#x1F4CB;</span> Surveys
+        <button class="nav-dd-item" onclick="closeAllDDs();openInquiries()">
+          <span class="dd-icon">&#x1F4E9;</span> Inquiries <span class="inq-new-badge" id="inq-nav-badge" style="display:none;margin-left:4px">0</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Inquiries button -->
-  <button class="nb" onclick="openInquiries()" title="Review unmatched B2C contact form emails" style="background:rgba(202,56,59,.2);border-color:rgba(202,56,59,.5);color:#f9a8a8">
-    &#x1F4E9; Inquiries <span class="inq-new-badge" id="inq-nav-badge" style="display:none">0</span>
+  <!-- Surveys standalone button -->
+  <button class="nb" onclick="openAllSurveysOv()" title="View all Claims Experience Surveys" style="background:rgba(29,176,209,.15);border-color:rgba(29,176,209,.45);color:#7de8f8">
+    &#x1F4CB; Surveys
   </button>
 
   <!-- Primary CTA -->
@@ -1065,18 +1065,60 @@ async function loadFacilitySurveys(facilityId){
         .filter(e => !isChainDomain(e));
 
       if (facEmails.length > 0) {
-        // Fetch all surveys not yet hard-linked to THIS facility
-        // Use facility_id=is.null OR (matched=true but facility_id pointing elsewhere)
-        // Simplest: fetch all surveys that don't have this facility's id, filter client-side
         const r2 = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?select=*&order=submitted_at.desc&limit=1000`, {headers: hdrs()});
         if (r2.ok) {
           const pool = await r2.json();
-          orphans = (Array.isArray(pool) ? pool : []).filter(s => {
-            if (linkedIds.has(s.id)) return false;          // already in linked list
-            if (s.facility_id === facilityId) return false; // already linked (shouldn't happen but guard)
+          const matched = (Array.isArray(pool) ? pool : []).filter(s => {
+            if (linkedIds.has(s.id)) return false;
+            if (s.facility_id === facilityId) return false;
             const sEmail = (s.shop_email_submitted || '').toLowerCase().trim();
             return sEmail && !isChainDomain(sEmail) && facEmails.includes(sEmail);
-          }).map(s => ({...s, _orphan: true, _matchReasons: ['email']}));
+          });
+
+          // Check ambiguity: does this survey's email also appear on any OTHER facility?
+          // Build a set of emails that belong to more than one facility record.
+          const emailFacilityCounts = {};
+          (data || []).forEach(f => {
+            [f.contact_email, f.email1].forEach(e => {
+              if (!e || !String(e).trim()) return;
+              const norm = e.toLowerCase().trim();
+              if (isChainDomain(norm)) return;
+              if (!emailFacilityCounts[norm]) emailFacilityCounts[norm] = new Set();
+              emailFacilityCounts[norm].add(f.id);
+            });
+          });
+
+          const autoLink = [];
+          const ambiguous = [];
+          for (const s of matched) {
+            const sEmail = (s.shop_email_submitted || '').toLowerCase().trim();
+            const owners = emailFacilityCounts[sEmail];
+            if (owners && owners.size > 1) {
+              ambiguous.push({...s, _orphan: true, _matchReasons: ['email'], _ambiguous: true});
+            } else {
+              autoLink.push(s);
+            }
+          }
+
+          // Auto-confirm unambiguous matches immediately
+          for (const s of autoLink) {
+            try {
+              await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?id=eq.${s.id}`, {
+                method: 'PATCH',
+                headers: {...hdrs(), 'Content-Type':'application/json', Prefer:'return=minimal'},
+                body: JSON.stringify({facility_id: facilityId, matched: true})
+              });
+            } catch(e) { /* best-effort */ }
+          }
+
+          // If we auto-linked anything, re-fetch the linked list so they show as confirmed
+          if (autoLink.length > 0) {
+            const refreshed = await api.getSurveys(facilityId);
+            linked.splice(0, linked.length, ...refreshed);
+            autoLink.forEach(s => linkedIds.add(s.id));
+          }
+
+          orphans = ambiguous; // only truly ambiguous ones need manual confirmation
         }
       }
     }
@@ -1088,7 +1130,7 @@ async function loadFacilitySurveys(facilityId){
     const confirmedCount = linked.length;
     const orphanCount = orphans.length;
     if (orphanCount > 0) {
-      summary.textContent = `${confirmedCount} linked · ${orphanCount} pending confirmation`;
+      summary.textContent = `${confirmedCount} linked · ${orphanCount} need manual confirmation`;
       summary.style.color = '#d97706';
     } else {
       summary.textContent=total>0?`${total} survey${total!==1?'s':''} received`:'';
@@ -1116,10 +1158,10 @@ async function loadFacilitySurveys(facilityId){
       const orphanBanner = s._orphan ? `
         <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:6px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div>
-            <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">⚠️ Survey matched but not yet linked to this facility</div>
-            <div style="font-size:11px;color:#78350f">Matched by: <strong>${(s._matchReasons||[]).join(', ') || 'name'}</strong>
-              ${s.shop_name_submitted ? ' · Submitted as: <em>'+esc(s.shop_name_submitted)+'</em>' : ''}
-              ${s.shop_email_submitted ? ' · '+esc(s.shop_email_submitted) : ''}
+            <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">⚠️ Email matches multiple facilities — manual confirmation required</div>
+            <div style="font-size:11px;color:#78350f">
+              ${s.shop_email_submitted ? esc(s.shop_email_submitted)+' · ' : ''}
+              ${s.shop_name_submitted ? 'Submitted as: <em>'+esc(s.shop_name_submitted)+'</em>' : ''}
             </div>
           </div>
           <button onclick="confirmSurveyLink('${s.id}','${facilityId}')"
