@@ -908,7 +908,55 @@ const api={
 async function setPassword(){const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}if(pass!==pass2){err.textContent='Passwords do not match.';return;}if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}try{const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();}catch(e){err.textContent='Connection error. Please try again.';}}
 async function signIn(){const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}catch(e){err.textContent='Connection error — check Supabase URL.';}}
 async function signOut(){if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};inqData=[];document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
-async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const [msgRows,repRows]=await Promise.all([api.getOpenMsgCounts(),api.getOpenRepCounts()]);msgCounts={};repCounts={};msgRows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});repRows.forEach(r=>{if(r.facility_id)repCounts[r.facility_id]=(repCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};repCounts={};}hideDbl();rebuild();go();loadInqBadgeCount();}
+async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const [msgRows,repRows]=await Promise.all([api.getOpenMsgCounts(),api.getOpenRepCounts()]);msgCounts={};repCounts={};msgRows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});repRows.forEach(r=>{if(r.facility_id)repCounts[r.facility_id]=(repCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};repCounts={};}hideDbl();rebuild();go();loadInqBadgeCount();backfillSurveysByEmail();}
+
+// One-time backfill: match all unlinked surveys to facilities by email and write facility_id.
+// Runs once per browser session after login; skips surveys already linked.
+// Only patches when exactly one facility matches the survey's submitted email.
+async function backfillSurveysByEmail() {
+  const SESSION_KEY = 'srn_survey_backfill_done';
+  if (sessionStorage.getItem(SESSION_KEY)) return;
+  sessionStorage.setItem(SESSION_KEY, '1');
+  try {
+    // Fetch all surveys missing a facility_id
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?facility_id=is.null&select=*&limit=1000`, {headers: hdrs()});
+    if (!r.ok) return;
+    const unlinked = await r.json();
+    if (!Array.isArray(unlinked) || !unlinked.length) return;
+
+    // Build email -> facility map from loaded data (exclude chain domains)
+    const emailToFacility = {};
+    (data || []).forEach(f => {
+      [f.contact_email, f.email1].forEach(e => {
+        if (!e || !String(e).trim()) return;
+        const norm = e.toLowerCase().trim();
+        if (isChainDomain(norm)) return;
+        if (emailToFacility[norm]) {
+          emailToFacility[norm] = 'AMBIGUOUS'; // multiple facilities share this email
+        } else {
+          emailToFacility[norm] = f.id;
+        }
+      });
+    });
+
+    let patched = 0;
+    for (const s of unlinked) {
+      const sEmail = (s.shop_email_submitted || '').toLowerCase().trim();
+      if (!sEmail || isChainDomain(sEmail)) continue;
+      const facId = emailToFacility[sEmail];
+      if (!facId || facId === 'AMBIGUOUS') continue;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?id=eq.${s.id}`, {
+          method: 'PATCH',
+          headers: {...hdrs(), 'Content-Type':'application/json', Prefer:'return=minimal'},
+          body: JSON.stringify({facility_id: facId, matched: true})
+        });
+        if (res.ok || res.status === 204) patched++;
+      } catch(e) { /* skip individual failures */ }
+    }
+    if (patched > 0) toast(`✅ Linked ${patched} existing survey${patched !== 1 ? 's' : ''} to facilities by email.`, 'ok', 4000);
+  } catch(e) { /* silent — backfill is best-effort */ }
+}
 const showDbl=msg=>{document.getElementById('dbl-msg').textContent=msg;document.getElementById('dbl').style.display='flex';};
 const hideDbl=()=>document.getElementById('dbl').style.display='none';
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); const formatPhone=p=>{if(!p)return'—';const d=String(p).replace(/\D/g,'');if(d.length!==10)return'—';return`${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;};
@@ -1006,9 +1054,8 @@ async function loadFacilitySurveys(facilityId){
     const linkedIds = new Set(linked.map(s => s.id));
 
     // Fetch unlinked surveys and match strictly by email address only.
-    // Email must be an exact match on both sides, and must not be a chain domain
-    // (chain domains like goodyear.com are shared across locations and are not unique identifiers).
-    // Phone and name are never used as matching criteria.
+    // Fetches surveys where facility_id is null OR matched=false (never yet linked).
+    // Email must be an exact match on both sides, and must not be a chain domain.
     const fac = data.find(f => f.id === facilityId);
     let orphans = [];
     if (fac) {
@@ -1018,11 +1065,15 @@ async function loadFacilitySurveys(facilityId){
         .filter(e => !isChainDomain(e));
 
       if (facEmails.length > 0) {
-        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?facility_id=is.null&order=submitted_at.desc&limit=500`, {headers: hdrs()});
+        // Fetch all surveys not yet hard-linked to THIS facility
+        // Use facility_id=is.null OR (matched=true but facility_id pointing elsewhere)
+        // Simplest: fetch all surveys that don't have this facility's id, filter client-side
+        const r2 = await fetch(`${SUPABASE_URL}/rest/v1/facility_surveys?select=*&order=submitted_at.desc&limit=1000`, {headers: hdrs()});
         if (r2.ok) {
           const pool = await r2.json();
           orphans = (Array.isArray(pool) ? pool : []).filter(s => {
-            if (linkedIds.has(s.id)) return false;
+            if (linkedIds.has(s.id)) return false;          // already in linked list
+            if (s.facility_id === facilityId) return false; // already linked (shouldn't happen but guard)
             const sEmail = (s.shop_email_submitted || '').toLowerCase().trim();
             return sEmail && !isChainDomain(sEmail) && facEmails.includes(sEmail);
           }).map(s => ({...s, _orphan: true, _matchReasons: ['email']}));
