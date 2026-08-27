@@ -14,9 +14,17 @@
  *   - STALE_DAYS increased 5 → 30 (ratings don't change daily)
  *   - BATCH_SIZE reduced 4000 → 500 (safety cap, ~500 calls/night)
  *
+ * Bug fix (2026-08-27): getPlaceDetails() previously returned `null`
+ * for BOTH an API error (e.g. 403) and a successful call with no
+ * rating data. The caller treated both cases identically and stamped
+ * ratings_updated_at either way — meaning a failing API call would
+ * get marked "checked" and silently skipped for STALE_DAYS. Now
+ * getPlaceDetails() returns a `success` flag so failed calls are
+ * NOT stamped and will be retried on the next run.
+ *
  * Env vars required (GitHub Actions secrets):
  *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
- *   SUPABASE_KEY          – service role or anon key with UPDATE policy
+ *   SUPABASE_ANON_KEY     – anon key with UPDATE policy on facilities
  *   GOOGLE_GEOCODING_KEY  – unrestricted server-side key with Places API enabled
  *
  * Schedule: runs via .github/workflows/srn-ratings-sync.yml
@@ -105,33 +113,40 @@ async function findPlaceId(facility) {
 /**
  * Place Details (New): fetch rating + review count for a known place_id.
  *
- * Uses the Places API (New) endpoint with a strict X-Goog-FieldMask header
- * requesting ONLY rating and userRatingCount. This keeps billing in the
- * free "Basic Data" SKU and avoids the "Atmosphere Data" SKU that the
- * legacy /place/details/json endpoint triggers even when requesting only
- * rating fields.
+ * Returns { success: true, rating, review_count } if the API call
+ * succeeded (rating/review_count may still legitimately be null if
+ * Google has no rating for this place).
  *
- * Returns { rating, review_count } or null.
+ * Returns { success: false } if the API call itself failed (network
+ * error, 403, 404, etc.) — the caller should NOT treat this the same
+ * as "no rating exists" and should NOT stamp ratings_updated_at.
  */
 async function getPlaceDetails(placeId) {
   const url = `https://places.googleapis.com/v1/places/${placeId}`;
 
-  const res = await fetch(url, {
-    headers: {
-      'X-Goog-Api-Key':   GOOGLE_KEY,
-      'X-Goog-FieldMask': 'rating,userRatingCount',
-    },
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: {
+        'X-Goog-Api-Key':   GOOGLE_KEY,
+        'X-Goog-FieldMask': 'rating,userRatingCount',
+      },
+    });
+  } catch (err) {
+    console.warn(`  ⚠️  Places API (New) network error for ${placeId}: ${err.message}`);
+    return { success: false };
+  }
 
   if (!res.ok) {
     console.warn(`  ⚠️  Places API (New) error for ${placeId}: ${res.status}`);
-    return null;
+    return { success: false };
   }
 
   const data = await res.json();
 
   // Places API (New) returns a top-level object, not data.result
   return {
+    success:      true,
     rating:       data.rating          ?? null,
     review_count: data.userRatingCount ?? null,
   };
@@ -208,7 +223,16 @@ async function main() {
       await sleep(DELAY_MS);
       const details = await getPlaceDetails(placeId);
 
-      if (!details || (details.rating === null && details.review_count === null)) {
+      if (!details.success) {
+        // API call itself failed — do NOT stamp ratings_updated_at,
+        // so this facility stays "stale" and gets retried next run.
+        console.log(`  ❌ API call failed, will retry next run: ${facility.name}`);
+        errors++;
+        continue;
+      }
+
+      if (details.rating === null && details.review_count === null) {
+        // Call succeeded, Google genuinely has no rating for this place.
         console.log(`  ⚠️  No rating data: ${facility.name}`);
         await supabasePatch('facilities', facility.id, {
           google_place_id:    placeId,
