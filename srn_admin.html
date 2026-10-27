@@ -1167,7 +1167,8 @@ async function loadFacilitySurveys(facilityId){
     }
     const RATING_COLOR={Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
     const RATING_BG={Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
-    list.innerHTML=surveys.map((s,i)=>{
+    list.innerHTML=surveys.map((s0,i)=>{
+      const s={...s0, q4_improvement: cleanAns(s0.q4_improvement), q5_efficiency: cleanAns(s0.q5_efficiency)};
       const d=new Date(s.submitted_at);
       const dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
@@ -1546,7 +1547,7 @@ function renderSvCards() {
     if (_svActiveTab === 'unmatched' && s.matched === true)  return false;
     if (q) {
       const hay = [s.shop_name_submitted, s.shop_phone_submitted, s.shop_email_submitted,
-                   s.q4_improvement, s.q5_efficiency].filter(Boolean).join(' ').toLowerCase();
+                   cleanAns(s.q4_improvement), cleanAns(s.q5_efficiency)].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -1566,7 +1567,15 @@ function renderSvCards() {
   body.innerHTML = '<div style="display:block">' + list.map(s => buildSvCard(s)).join('') + '</div>';
 }
 
+// Blank survey answers get parsed as the next question's text; treat those as empty
+function cleanAns(v) {
+  if (!v) return null;
+  const t = String(v).trim();
+  return /^\W*\d\.\s.*\?\W*$/s.test(t) ? null : v;
+}
+
 function buildSvCard(s) {
+  s = {...s, q4_improvement: cleanAns(s.q4_improvement), q5_efficiency: cleanAns(s.q5_efficiency)};
   const RATING_COLOR = {Excellent:'#16a34a',Satisfactory:'#2563eb',Neutral:'#d97706',Unsatisfactory:'#dc2626',Terrible:'#7f1d1d'};
   const RATING_BG    = {Excellent:'#dcfce7',Satisfactory:'#dbeafe',Neutral:'#fef3c7',Unsatisfactory:'#fee2e2',Terrible:'#fce7e7'};
   const r      = s.q1_overall_rating || 'N/A';
