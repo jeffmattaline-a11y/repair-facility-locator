@@ -395,6 +395,38 @@ td.nm:hover{text-decoration:underline}
 .link-shop-row span{font-size:11px;color:var(--text3)}
 .link-shop-empty{text-align:center;padding:20px;color:var(--text3);font-size:13px}
 .link-shop-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── Rep report monitor ── */
+.toolbar{flex-wrap:wrap;row-gap:6px}
+.rep-nav-btn{background:rgba(126,34,206,.22);border-color:rgba(192,132,252,.55);color:#f3e8ff}
+.rep-nav-btn.has-open{background:#CA383B;border-color:#ff9a9d;color:#fff;animation:repPulse 2s ease-in-out infinite}
+.rep-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;padding:0 5px;font-size:11px;font-weight:700;background:rgba(255,255,255,.22)}
+.rep-nav-btn.has-open .rep-nav-count{background:#fff;color:#CA383B}
+@keyframes repPulse{0%,100%{box-shadow:0 0 0 0 rgba(202,56,59,.65)}50%{box-shadow:0 0 0 7px rgba(202,56,59,0)}}
+.msgs-toggle.rep.active{background:#7e22ce;border-color:#6b21a8;color:#fff}
+.msgs-toggle.rep.active:hover{background:#6b21a8}
+#rep-alert{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:9500;background:#CA383B;color:#fff;border-radius:10px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 12px 32px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:all .25s;max-width:92vw;font-size:13px}
+#rep-alert.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+#rep-alert button{background:#fff;color:#CA383B;border:0;border-radius:6px;padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+#rep-alert button.x{background:transparent;color:#fff;padding:2px 6px;font-size:15px}
+.rq-box{background:#fff;border-radius:14px;width:100%;max-width:920px;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;margin:auto;max-height:90vh;display:flex;flex-direction:column}
+.rq-head{background:#6b21a8;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:10px}
+.rq-head h2{font-size:16px;font-weight:700;flex:1}
+.rq-body{padding:18px 24px;overflow-y:auto;background:#f8f9fb}
+.rq-foot{padding:12px 24px;background:#f0f2f5;border-top:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text3)}
+.rq-foot a{color:#6b21a8;cursor:pointer;font-weight:600;text-decoration:underline}
+.rq-empty{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+.rq-item{border:1px solid var(--border);border-left:4px solid #a855f7;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff}
+.rq-item.stale{border-left-color:#CA383B;background:#fff7f7}
+.rq-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rq-shop{font-weight:700;font-size:14px;color:#233348;flex:1;min-width:200px}
+.rq-loc{font-weight:400;font-size:12px;color:var(--text3);margin-left:6px}
+.rq-cat{background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700}
+.rq-age{font-size:11px;color:var(--text3);white-space:nowrap}
+.rq-age.stale{color:#CA383B;font-weight:700}
+.rq-notes{margin:8px 0 4px;padding:8px 10px;background:#f8f9fb;border-left:3px solid #c4b5fd;font-size:13px;color:#233348;white-space:pre-wrap;word-break:break-word}
+.rq-meta{font-size:11px;color:#6b21a8;font-weight:600;margin-top:6px}
+.rq-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 </style>
 </head>
 <body>
@@ -618,6 +650,11 @@ td.nm:hover{text-decoration:underline}
     </div>
   </div>
 
+  <!-- Rep Reports (live) -->
+  <button class="nb rep-nav-btn" id="rep-nav-btn" onclick="openRepQueue()" title="Rep reports">
+    &#x1F527; Rep Reports <span class="rep-nav-count" id="rep-nav-count">0</span>
+  </button>
+
   <!-- Surveys standalone button -->
   <button class="nb" onclick="openAllSurveysOv()" title="View all Claims Experience Surveys" style="background:rgba(29,176,209,.15);border-color:rgba(29,176,209,.45);color:#7de8f8">
     &#x1F4CB; Surveys
@@ -669,10 +706,14 @@ td.nm:hover{text-decoration:underline}
     <option value="sent">Sent</option>
     <option value="not">Not Sent</option>
   </select>
-  <button id="msgs-toggle-btn" class="msgs-toggle" onclick="toggleMsgsFilter()" title="Show only facilities with open messages">
+  <button id="msgs-toggle-btn" class="msgs-toggle" onclick="toggleMsgsFilter()" title="Show only facilities with open B2C / contact-form messages (rep reports have their own filter)">
     &#x1F4AC; Has Messages
   </button>
   <input type="checkbox" id="f-has-msgs" onchange="go()" style="display:none">
+  <button id="rep-toggle-btn" class="msgs-toggle rep" onclick="toggleRepFilter()" title="Show only facilities with open rep reports">
+    &#x1F527; Rep Reports
+  </button>
+  <input type="checkbox" id="f-has-rep" onchange="go()" style="display:none">
   <button id="pilot-toggle-btn" class="msgs-toggle" onclick="togglePilotFilter()" title="Show only facilities in a Pilot Program">
     &#x1F9EA; In Pilot
   </button>
@@ -848,6 +889,24 @@ td.nm:hover{text-decoration:underline}
     <div class="btns"><button class="btn btn-ghost" onclick="closeCfm()">Cancel</button><button class="btn btn-del" onclick="doDel()">Delete</button></div>
   </div>
 </div>
+<div id="rep-alert"><span id="rep-alert-text"></span><button onclick="openRepQueue()">Review</button><button class="x" onclick="dismissRepAlert()" title="Dismiss">&#x2715;</button></div>
+
+<div class="metrics-ov" id="rq-ov" style="z-index:7500">
+  <div class="rq-box">
+    <div class="rq-head"><span style="font-size:20px">&#x1F527;</span><h2>Open Rep Reports (<span id="rq-title-count">0</span>)</h2><button class="pclose" onclick="closeRepQueue()">&#x2715;</button></div>
+    <div class="rq-body" id="rq-body"></div>
+    <div class="rq-foot">
+      <span id="rq-live"></span>
+      <span id="rq-updated"></span>
+      <a onclick="refreshRepState(true)">Refresh now</a>
+      <a id="rq-sound" onclick="toggleRepSound()"></a>
+      <a id="rq-notif" onclick="enableRepNotifs()"></a>
+      <div class="sp"></div>
+      <button class="btn btn-ghost" onclick="closeRepQueue()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- CHAIN DOMAIN MANAGER MODAL -->
@@ -903,7 +962,7 @@ function srcBadgeHtml(method) {
 
 function isAuthError(errMsg){if(!errMsg)return false;const s=String(errMsg).toLowerCase();return s.includes('jwt expired')||s.includes('pgrst303')||s.includes('invalid jwt')||s.includes('token is expired')||s.includes('401');}
 async function tryRefreshToken(){if(!refreshToken)return false;try{const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON},body:JSON.stringify({refresh_token:refreshToken})});const res=await r.json();if(res.access_token){token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();return true;}return false;}catch(e){return false;}}
-function scheduleTokenRefresh(){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(async()=>{const ok=await tryRefreshToken();if(ok)toast('Session refreshed.','',2000);else showReAuthOverlay();},45*60*1000);}
+function scheduleTokenRefresh(){if(refreshTimer)clearTimeout(refreshTimer);if(repPollTimer)setTimeout(repConnect,500);refreshTimer=setTimeout(async()=>{const ok=await tryRefreshToken();if(ok)toast('Session refreshed.','',2000);else showReAuthOverlay();},45*60*1000);}
 function showReAuthOverlay(){document.getElementById('re-email').value=userEmail;document.getElementById('re-pass').value='';document.getElementById('re-err').textContent='';document.getElementById('session-expired-ov').classList.add('open');setTimeout(()=>document.getElementById('re-pass').focus(),100);}
 async function reAuth(){const pass=document.getElementById('re-pass').value,err=document.getElementById('re-err');err.textContent='';if(!pass){err.textContent='Password is required.';return;}try{const res=await api.signIn(userEmail,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid password.';return;}token=res.access_token;if(res.refresh_token)refreshToken=res.refresh_token;scheduleTokenRefresh();document.getElementById('session-expired-ov').classList.remove('open');toast('Session restored. You can continue where you left off.','ok',3500);}catch(e){err.textContent='Connection error. Please try again.';}}
 async function withAuthRetry(fn){try{return await fn();}catch(e){if(isAuthError(e.message)){const refreshed=await tryRefreshToken();if(refreshed){try{return await fn();}catch(e2){throw e2;}}else{showReAuthOverlay();throw new Error('Session expired — please sign back in and retry.');}}throw e;}}
@@ -930,8 +989,8 @@ const api={
 (function checkInviteToken(){const hash=window.location.hash;if(!hash)return;const params=new URLSearchParams(hash.replace('#',''));const accessToken=params.get('access_token');const type=params.get('type');if(accessToken&&(type==='invite'||type==='recovery'||type==='signup')){window._inviteToken=accessToken;document.getElementById('login-screen').style.display='none';document.getElementById('set-pass-screen').style.display='flex';setTimeout(()=>document.getElementById('sp-pass').focus(),100);history.replaceState(null,'',window.location.pathname);}})();
 async function setPassword(){const pass=document.getElementById('sp-pass').value,pass2=document.getElementById('sp-pass2').value,err=document.getElementById('sp-err');err.textContent='';if(!pass||pass.length<6){err.textContent='Password must be at least 6 characters.';return;}if(pass!==pass2){err.textContent='Passwords do not match.';return;}if(!window._inviteToken){err.textContent='Invite token missing. Please use the original invite link.';return;}try{const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{method:'PUT',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${window._inviteToken}`},body:JSON.stringify({password:pass})});const res=await r.json();if(res.error){err.textContent=res.error.message||'Could not set password.';return;}userEmail=res.email||'';token=window._inviteToken;refreshToken=null;window._inviteToken=null;document.getElementById('set-pass-screen').style.display='none';document.getElementById('u-email').textContent=userEmail;scheduleTokenRefresh();toast('Password set! Welcome to SRN.','ok',3500);await loadData();}catch(e){err.textContent='Connection error. Please try again.';}}
 async function signIn(){const email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value,err=document.getElementById('l-err');err.textContent='';try{const res=await api.signIn(email,pass);if(res.error||!res.access_token){err.textContent=res.error?.message||'Invalid credentials.';return;}token=res.access_token;refreshToken=res.refresh_token||null;userEmail=email;document.getElementById('login-screen').style.display='none';document.getElementById('u-email').textContent=email;scheduleTokenRefresh();await loadData();}catch(e){err.textContent='Connection error — check Supabase URL.';}}
-async function signOut(){if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};inqData=[];document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
-async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const [msgRows,repRows]=await Promise.all([api.getOpenMsgCounts(),api.getOpenRepCounts()]);msgCounts={};repCounts={};msgRows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});repRows.forEach(r=>{if(r.facility_id)repCounts[r.facility_id]=(repCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};repCounts={};}hideDbl();rebuild();go();loadInqBadgeCount();backfillSurveysByEmail();}
+async function signOut(){stopRepMonitor();if(refreshTimer)clearTimeout(refreshTimer);await api.signOut().catch(()=>{});token=null;refreshToken=null;data=[];filtered=[];msgCounts={};inqData=[];document.getElementById('tbody').innerHTML='';document.getElementById('login-screen').style.display='flex';}
+async function loadData(){showDbl('Loading facilities…');try{data=await api.getAll();}catch(e){toast('Load error: '+e.message,'err',6000);data=[];}try{const [msgRows,repRows]=await Promise.all([api.getOpenMsgCounts(),api.getOpenRepCounts()]);msgCounts={};repCounts={};msgRows.forEach(r=>{if(r.facility_id)msgCounts[r.facility_id]=(msgCounts[r.facility_id]||0)+1;});repRows.forEach(r=>{if(r.facility_id)repCounts[r.facility_id]=(repCounts[r.facility_id]||0)+1;});}catch(e){msgCounts={};repCounts={};}hideDbl();rebuild();go();loadInqBadgeCount();backfillSurveysByEmail();startRepMonitor();}
 
 // One-time backfill: match all unlinked surveys to facilities by email and write facility_id.
 // Runs once per browser session after login; skips surveys already linked.
@@ -991,7 +1050,7 @@ function rebuild(){const mk=(id,vals)=>{const el=document.getElementById(id),cur
 function resetFilters(){document.getElementById('search').value='';document.getElementById('f-state').value='';document.getElementById('f-status').value='';document.getElementById('f-type').value='';document.getElementById('f-source').value='';document.getElementById('f-rating').value='';document.getElementById('f-has-msgs').checked=false;document.getElementById('msgs-toggle-btn').classList.remove('active');document.getElementById('f-pilot').checked=false;document.getElementById('pilot-toggle-btn').classList.remove('active');go();}
 function toggleMsgsFilter(){const cb=document.getElementById('f-has-msgs');const btn=document.getElementById('msgs-toggle-btn');cb.checked=!cb.checked;btn.classList.toggle('active',cb.checked);go();}
 function togglePilotFilter(){const cb=document.getElementById('f-pilot');const btn=document.getElementById('pilot-toggle-btn');cb.checked=!cb.checked;btn.classList.toggle('active',cb.checked);go();}
-function go(){const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fsrc=document.getElementById('f-source').value,fm=document.getElementById('f-has-msgs').checked,fpilot=document.getElementById('f-pilot').checked,frat=document.getElementById('f-rating').value,fwb=document.getElementById('f-wb').value;filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fsrc&&f.source_method!==fsrc)return false;if(fm&&!msgCounts[f.id])return false;if(fpilot&&!f.pilot_ocp)return false;if(fwb==='sent'&&!f.welcome_box_sent)return false;if(fwb==='not'&&f.welcome_box_sent)return false;if(frat==='none'&&f.google_rating)return false;if(frat==='any'&&!f.google_rating)return false;if(frat&&frat!=='any'&&frat!=='none'){const minR=parseFloat(frat);if(!f.google_rating||parseFloat(f.google_rating)<minR)return false;}const qDigits=q.replace(/\D/g,'');const phoneNorm=(f.phone||'').replace(/\D/g,'');if(q&&!`${f.name} ${f.city} ${f.phone} ${phoneNorm} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q)&&!(qDigits.length>=7&&phoneNorm.includes(qDigits)))return false;return true;});filtered.sort((a,b)=>{if(sortKey==='numeric_id')return sortDir*((+a.numeric_id||0)-(+b.numeric_id||0));if(sortKey==='google_rating'){const ra=parseFloat(a.google_rating)||0;const rb=parseFloat(b.google_rating)||0;return sortDir*(ra-rb);}if(sortKey==='added_at'){const da=a.added_at?new Date(a.added_at).getTime():0;const db=b.added_at?new Date(b.added_at).getTime():0;return sortDir*(da-db);}return sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase());});document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;page=1;render();pgRender();}
+function go(){const q=document.getElementById('search').value.toLowerCase(),fs=document.getElementById('f-state').value,fp=document.getElementById('f-status').value,ft=document.getElementById('f-type').value,fsrc=document.getElementById('f-source').value,fm=document.getElementById('f-has-msgs').checked,fr=document.getElementById('f-has-rep').checked,fpilot=document.getElementById('f-pilot').checked,frat=document.getElementById('f-rating').value,fwb=document.getElementById('f-wb').value;filtered=data.filter(f=>{if(fs&&f.state!==fs)return false;if(fp&&f.status!==fp)return false;if(ft&&f.shop_type!==ft)return false;if(fsrc&&f.source_method!==fsrc)return false;if(fm&&((msgCounts[f.id]||0)-(repCounts[f.id]||0))<=0)return false;if(fr&&!repCounts[f.id])return false;if(fpilot&&!f.pilot_ocp)return false;if(fwb==='sent'&&!f.welcome_box_sent)return false;if(fwb==='not'&&f.welcome_box_sent)return false;if(frat==='none'&&f.google_rating)return false;if(frat==='any'&&!f.google_rating)return false;if(frat&&frat!=='any'&&frat!=='none'){const minR=parseFloat(frat);if(!f.google_rating||parseFloat(f.google_rating)<minR)return false;}const qDigits=q.replace(/\D/g,'');const phoneNorm=(f.phone||'').replace(/\D/g,'');if(q&&!`${f.name} ${f.city} ${f.phone} ${phoneNorm} ${f.address} ${f.zip} ${f.email1||''} ${f.email2||''} ${f.email3||''} ${f.contact_email||''}`.toLowerCase().includes(q)&&!(qDigits.length>=7&&phoneNorm.includes(qDigits)))return false;return true;});filtered.sort((a,b)=>{if(sortKey==='numeric_id')return sortDir*((+a.numeric_id||0)-(+b.numeric_id||0));if(sortKey==='google_rating'){const ra=parseFloat(a.google_rating)||0;const rb=parseFloat(b.google_rating)||0;return sortDir*(ra-rb);}if(sortKey==='added_at'){const da=a.added_at?new Date(a.added_at).getTime():0;const db=b.added_at?new Date(b.added_at).getTime():0;return sortDir*(da-db);}return sortDir*(a[sortKey]||'').toString().toLowerCase().localeCompare((b[sortKey]||'').toString().toLowerCase());});document.getElementById('nav-count').textContent=`${data.length.toLocaleString()} Facilities`;document.getElementById('tstat').innerHTML=`Showing <strong>${filtered.length.toLocaleString()}</strong> of <strong>${data.length.toLocaleString()}</strong>`;page=1;render();pgRender();}
 function srt(k){sortDir=sortKey===k?sortDir*-1:-1;sortKey=k;go();}
 function buildRatingBadge(f){if(!f.google_rating)return'<span class="no-rating">—</span>';const r=parseFloat(f.google_rating).toFixed(1);const cnt=f.google_review_count?f.google_review_count.toLocaleString():'0';const stale=f.ratings_updated_at?(Date.now()-new Date(f.ratings_updated_at).getTime())>8*24*60*60*1000:false;return`<span class="rating-badge${stale?' rating-stale':''}"${stale?' title="Rating may be outdated"':''}><span class="star">★</span>${r}<span class="rc">(${cnt})</span></span>`;}
 function buildWbBadge(f){if(!f.welcome_box_sent){return'<span style="color:var(--text3);font-size:11px">&mdash;</span>';}const d=f.welcome_box_last_sent?new Date(f.welcome_box_last_sent).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}):'';const cnt=f.welcome_box_shipment_count||1;const cost=f.welcome_box_total_cost!=null?`$${parseFloat(f.welcome_box_total_cost).toFixed(2)}`:'';const title=`Sent ${d}${cnt>1?` (${cnt} labels, ${cost} total)`:cost?` &middot; ${cost}`:''}`;return`<span class="badge b-prf" title="${title.replace(/"/g,'&quot;')}">&#x2713; ${d}</span>`;}
@@ -1021,7 +1080,135 @@ function switchTab(tab){['details','history','messages','surveys'].forEach(t=>{d
 async function loadHistory(facilityId){const el=document.getElementById('hist-body');el.innerHTML='<div class="hist-loading">Loading history…</div>';try{const rows=await api.getHistory(facilityId);if(!rows.length){el.innerHTML='<div class="hist-empty">No changes recorded yet.</div>';return;}const LABELS={name:'Name',phone:'Phone',contact:'Contact',contact_phone:'Contact Phone',contact_email:'Contact Email',address:'Address',city:'City',state:'State',zip:'Zip',country:'Country',website:'Website',email1:'Email',lat:'Latitude',lng:'Longitude',labor:'Labor $',status:'Status',shop_type:'Shop Type',software:'Software',labor_guide:'Labor Guide',form_type:'Form Type',ev_certified:'EV Certified',accepts_shipped:'Accepts Shipped',offer_url:'Offer URL',source_method:'Source Method'};el.innerHTML=rows.map(r=>{const changes=r.changes||{};const changeLines=Object.entries(changes).map(([k,v])=>`<div class="hist-change"><span class="hist-field">${LABELS[k]||k}</span><span class="hist-old">${v.from===null||v.from===''?'(empty)':esc(String(v.from))}</span><span class="hist-arrow">→</span><span class="hist-new">${v.to===null||v.to===''?'(empty)':esc(String(v.to))}</span></div>`).join('');const when=new Date(r.changed_at).toLocaleString();return`<div class="hist-entry"><div class="hist-meta"><span class="hist-who">${esc(r.changed_by||'Unknown')}</span><span class="hist-when">${when}</span></div><div class="hist-changes">${changeLines||'<span style="color:var(--text3);font-size:11px">New facility added</span>'}</div></div>`;}).join('');}catch(e){el.innerHTML='<div class="hist-empty">Could not load history.</div>';}}
 async function loadFacilityMessages(facilityId){document.getElementById('msgs-loading').style.display='block';document.getElementById('msgs-loading').textContent='Loading messages…';document.getElementById('msgs-list').style.display='none';try{const messages=await api.getMessages(facilityId);document.getElementById('msgs-loading').style.display='none';const list=document.getElementById('msgs-list');list.style.display='block';const open=messages.filter(m=>!m.is_addressed).length;const total=messages.length;const repCount=messages.filter(m=>m.source==='rep_report'&&!m.is_addressed).length;const tabCount=document.getElementById('msgs-tab-count');if(open>0){tabCount.textContent=open;tabCount.style.display='inline';tabCount.style.background=repCount>0?'#7e22ce':'#CA383B';}else{tabCount.style.display='none';}const repIndicator=document.getElementById('msgs-tab-rep');if(repIndicator)repIndicator.style.display=repCount>0?'inline':'none';document.getElementById('msgs-summary').textContent=total>0?`${total} message${total!==1?'s':''} · ${open} open${repCount>0?` · 🔧 ${repCount} rep report${repCount!==1?'s':''}`:''}`:'';if(total===0){list.innerHTML=`<div class="msg-empty"><div class="msg-empty-icon">&#x1F4AC;</div><div>No messages for this facility yet.</div><div style="font-size:12px;margin-top:4px">Messages from SRN-B2C contact forms will appear here automatically.</div></div>`;return;}list.innerHTML=messages.map(m=>renderMsgCard(m)).join('');}catch(e){document.getElementById('msgs-loading').textContent='Error loading messages: '+e.message;}}
 function renderMsgCard(m){const isRep=m.source==='rep_report';const matchBadge=isRep?`<span class="msg-match-badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;">🔧 Rep Report</span>`:{email:`<span class="msg-match-badge msg-match-email">✓ Matched by email</span>`,contact_name:`<span class="msg-match-badge msg-match-name">~ Matched by name</span>`,unmatched:`<span class="msg-match-badge msg-match-unknown">⚠ Unmatched</span>`}[m.matched_by]||'';const timeStr=m.received_at?new Date(m.received_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';const repLine=isRep&&m.rep_name?`<div style="font-size:11px;color:#6b21a8;font-weight:600;margin-top:2px;">Rep: ${esc(m.rep_name)}</div>`:'';const senderLine=isRep?`<div class="msg-from">${esc(m.rep_name||m.sender_name||'Unknown Rep')}</div>`:`<div class="msg-from">${esc(m.sender_name||'Unknown')} <span style="font-weight:400;color:#8a93a2">&lt;${esc(m.sender_email||'')}&gt;</span></div>`;const addressedSection=m.is_addressed?`<span class="msg-addressed-tag">✓ Addressed by ${esc(m.addressed_by||'admin')} · ${m.addressed_at?new Date(m.addressed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>`:`<button class="btn-address" id="addr-btn-${m.id}" onclick="markMsgAddressed('${m.id}')">✓ Mark as Addressed</button>`;const cardBorderStyle=isRep?'border-left:3px solid #a855f7;':'';return`<div class="msg-card${m.is_addressed?' addressed':''}" id="msg-${m.id}" style="${cardBorderStyle}"><div class="msg-card-head"><div class="msg-meta">${senderLine}<div class="msg-sub">${esc(m.subject||'')}${repLine}</div></div><div class="msg-time">${timeStr}</div></div><div class="msg-body">${esc(m.message_body||'').replace(/\n/g,'<br>')}</div><div class="msg-footer"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${matchBadge}</div>${addressedSection}</div></div>`;}
-async function markMsgAddressed(msgId){const btn=document.getElementById('addr-btn-'+msgId);if(btn){btn.disabled=true;btn.textContent='Saving…';}try{await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));const card=document.getElementById('msg-'+msgId);card.classList.add('addressed');const footer=card.querySelector('.msg-footer');const oldBtn=footer.querySelector('.btn-address');if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;const tabCount=document.getElementById('msgs-tab-count');const cur=parseInt(tabCount.textContent||'0',10);if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}const list=document.getElementById('msgs-list');const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;const totalNow=list.querySelectorAll('.msg-card').length;document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';toast('Message marked as addressed.','ok');}catch(e){if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}toast('Error: '+e.message,'err');}}
+async function markMsgAddressed(msgId){const btn=document.getElementById('addr-btn-'+msgId);if(btn){btn.disabled=true;btn.textContent='Saving…';}try{await withAuthRetry(()=>api.markMsgAddressed(msgId,userEmail));const card=document.getElementById('msg-'+msgId);card.classList.add('addressed');const footer=card.querySelector('.msg-footer');const oldBtn=footer.querySelector('.btn-address');if(oldBtn)oldBtn.outerHTML=`<span class="msg-addressed-tag">✓ Addressed by ${esc(userEmail)} · just now</span>`;const tabCount=document.getElementById('msgs-tab-count');const cur=parseInt(tabCount.textContent||'0',10);if(cur<=1)tabCount.style.display='none';else tabCount.textContent=cur-1;if(editId&&msgCounts[editId]){msgCounts[editId]=Math.max(0,msgCounts[editId]-1);if(msgCounts[editId]===0)delete msgCounts[editId];render();}const list=document.getElementById('msgs-list');const openNow=list.querySelectorAll('.msg-card:not(.addressed)').length;const totalNow=list.querySelectorAll('.msg-card').length;document.getElementById('msgs-summary').textContent=totalNow>0?`${totalNow} message${totalNow!==1?'s':''} · ${openNow} open`:'';toast('Message marked as addressed.','ok');refreshRepState();}catch(e){if(btn){btn.disabled=false;btn.textContent='✓ Mark as Addressed';}toast('Error: '+e.message,'err');}}
+
+// ══════════ REP REPORT MONITOR ══════════
+// Header badge + queue + live alerts. Realtime (websocket) triggers an instant refresh;
+// a 60-second poll always runs as the safety net.
+let repQueue=[],repSeen=new Set(),repReady=false,repPollTimer=null,repWs=null,repWsHb=null,repWsRetry=null,repLive=false,repBusy=false,repAgain=false,repUpdatedAt=null;
+const REP_POLL_MS=60000,REP_BASE_TITLE='SRN Facility Manager';
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token&&repPollTimer)refreshRepState();});
+function repSoundOn(){try{return localStorage.getItem('srn_rep_sound')!=='off';}catch(e){return true;}}
+function toggleRepSound(){try{localStorage.setItem('srn_rep_sound',repSoundOn()?'off':'on');}catch(e){}repBeepTest();repPaintFoot();}
+function repBeepTest(){if(repSoundOn())repBeep();}
+function repBeep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C();const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(.25,c.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.55);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.6);setTimeout(()=>{try{c.close();}catch(e){}},900);}catch(e){}}
+function enableRepNotifs(){try{if(!('Notification' in window)){toast('This browser does not support desktop notifications.','err');return;}Notification.requestPermission().then(()=>repPaintFoot());}catch(e){}}
+function toggleRepFilter(){const cb=document.getElementById('f-has-rep');const btn=document.getElementById('rep-toggle-btn');cb.checked=!cb.checked;btn.classList.toggle('active',cb.checked);go();}
+async function fetchOpenRepReports(){const r=await fetch(`${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&source=eq.rep_report&order=received_at.desc&limit=200&select=id,facility_id,facility_name,issue_category,rep_name,subject,message_body,received_at`,{headers:hdrs()});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function refreshRepState(manual){
+  if(!token)return;
+  if(repBusy){repAgain=true;return;}
+  repBusy=true;
+  try{
+    const [msgRows,reports]=await withAuthRetry(()=>Promise.all([api.getOpenMsgCounts(),fetchOpenRepReports()]));
+    const fresh=reports.filter(x=>!repSeen.has(x.id));
+    reports.forEach(x=>repSeen.add(x.id));
+    repQueue=reports;
+    const rc={};reports.forEach(x=>{if(x.facility_id)rc[x.facility_id]=(rc[x.facility_id]||0)+1;});
+    repCounts=rc;
+    if(msgRows.length>=reports.length){const mc={};msgRows.forEach(r=>{if(r.facility_id)mc[r.facility_id]=(mc[r.facility_id]||0)+1;});msgCounts=mc;}
+    repUpdatedAt=new Date();
+    repPaintAll();
+    if(repReady&&fresh.length)announceRep(fresh);
+    repReady=true;
+    if(manual)toast('Rep reports refreshed.','ok',1500);
+  }catch(e){console.warn('Rep report refresh failed:',e);if(manual)toast('Could not refresh: '+e.message,'err');}
+  finally{repBusy=false;if(repAgain){repAgain=false;refreshRepState();}}
+}
+function repPaintBadge(){
+  const n=repQueue.length,btn=document.getElementById('rep-nav-btn');
+  if(btn){btn.classList.toggle('has-open',n>0);document.getElementById('rep-nav-count').textContent=n;btn.title=(n?`${n} open rep report${n!==1?'s':''} — click to review`:'No open rep reports')+(repLive?' · live updates on':' · checking every 60 seconds');}
+  document.title=(n>0?`(${n}) `:'')+REP_BASE_TITLE;
+}
+function repPaintAll(){
+  repPaintBadge();
+  if(document.getElementById('f-has-msgs').checked||document.getElementById('f-has-rep').checked)go();else render();
+  if(document.getElementById('rq-ov').classList.contains('open'))renderRepQueue();
+}
+function repPaintFoot(){
+  const set=(id,t)=>{const el=document.getElementById(id);if(el)el.innerHTML=t;};
+  set('rq-live',repLive?'<span style="color:#15803d;font-weight:700">● Live</span>':'<span>○ Checking every 60 s</span>');
+  set('rq-updated',repUpdatedAt?'Updated '+repUpdatedAt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'');
+  set('rq-sound','Sound: '+(repSoundOn()?'on':'off'));
+  let np='unsupported';try{if('Notification' in window)np=Notification.permission;}catch(e){}
+  const nel=document.getElementById('rq-notif');if(nel){nel.style.display=np==='unsupported'?'none':'';nel.textContent=np==='granted'?'Desktop alerts: on':(np==='denied'?'Desktop alerts: blocked in browser':'Turn on desktop alerts');nel.style.pointerEvents=np==='default'?'':'none';nel.style.textDecoration=np==='default'?'underline':'none';}
+}
+function announceRep(fresh){
+  const a=fresh[0],more=fresh.length>1?` (+${fresh.length-1} more)`:'';
+  document.getElementById('rep-alert-text').innerHTML=`<strong>&#x1F527; New rep report:</strong> ${esc(a.facility_name||'Unknown shop')} &mdash; ${esc(a.issue_category||'Issue')}${more}`;
+  document.getElementById('rep-alert').classList.add('show');
+  if(repSoundOn())repBeep();
+  try{if('Notification' in window&&Notification.permission==='granted'){const nn=new Notification('New SRN rep report',{body:`${a.facility_name||'Shop'} — ${a.issue_category||''}${a.rep_name?' (rep '+a.rep_name+')':''}`,tag:'srn-rep-report'});nn.onclick=()=>{window.focus();openRepQueue();nn.close();};}}catch(e){}
+}
+function dismissRepAlert(){document.getElementById('rep-alert').classList.remove('show');}
+function repAge(ts){const m=Math.max(0,Math.floor((Date.now()-new Date(ts))/60000));if(m<1)return'just now';if(m<60)return m+' min ago';const h=Math.floor(m/60);if(h<24)return h+' hr ago';const d=Math.floor(h/24);return d+' day'+(d!==1?'s':'')+' ago';}
+function renderRepQueue(){
+  document.getElementById('rq-title-count').textContent=repQueue.length;
+  const body=document.getElementById('rq-body');
+  if(!repQueue.length){body.innerHTML='<div class="rq-empty">&#x2705; No open rep reports.</div>';repPaintFoot();return;}
+  body.innerHTML=repQueue.map(r=>{
+    const f=r.facility_id?data.find(x=>x.id===r.facility_id):null;
+    const loc=f?[f.city,f.state].filter(Boolean).join(', '):'';
+    const m=/Notes:\s*([\s\S]*)$/i.exec(r.message_body||'');const notes=m?m[1].trim():'';
+    const stale=(Date.now()-new Date(r.received_at))>864e5;
+    return `<div class="rq-item${stale?' stale':''}" id="rq-${esc(r.id)}">
+      <div class="rq-top"><div class="rq-shop">${esc(r.facility_name||(f&&f.name)||'Unknown shop')}<span class="rq-loc">${esc(loc)}</span></div><span class="rq-cat">${esc(r.issue_category||'Issue')}</span><span class="rq-age${stale?' stale':''}">${esc(repAge(r.received_at))}${stale?' ⚠':''}</span></div>
+      ${notes?`<div class="rq-notes">${esc(notes)}</div>`:''}
+      <div class="rq-meta">Rep: ${esc(r.rep_name||'unknown')}</div>
+      <div class="rq-actions">${f?`<button class="btn btn-ghost" onclick="repOpenFacility('${esc(r.facility_id)}')">Open facility</button>`:''}<button class="btn-address" id="rq-btn-${esc(r.id)}" onclick="repMarkAddressed('${esc(r.id)}')">&#x2713; Mark as Addressed</button></div>
+    </div>`;}).join('');
+  repPaintFoot();
+}
+function openRepQueue(){dismissRepAlert();document.getElementById('rq-ov').classList.add('open');renderRepQueue();refreshRepState();}
+function closeRepQueue(){document.getElementById('rq-ov').classList.remove('open');}
+function repOpenFacility(id){if(!data.find(x=>x.id===id)){toast('Facility not found in loaded data.','err');return;}closeRepQueue();openEdit(id);switchTab('messages');}
+async function repMarkAddressed(id){
+  const b=document.getElementById('rq-btn-'+id);if(b){b.disabled=true;b.textContent='Saving…';}
+  try{await withAuthRetry(()=>api.markMsgAddressed(id,userEmail));toast('Marked as addressed.','ok');await refreshRepState();}
+  catch(e){if(b){b.disabled=false;b.textContent='✓ Mark as Addressed';}toast('Error: '+e.message,'err');}
+}
+function startRepMonitor(){
+  if(repPollTimer)return;
+  refreshRepState();
+  repPollTimer=setInterval(()=>{if(token)refreshRepState();},REP_POLL_MS);
+  repConnect();
+}
+function stopRepMonitor(){
+  if(repPollTimer){clearInterval(repPollTimer);repPollTimer=null;}
+  repDisconnect();repReady=false;repSeen=new Set();repQueue=[];repCounts={};repLive=false;
+  document.title=REP_BASE_TITLE;
+  const btn=document.getElementById('rep-nav-btn');if(btn){btn.classList.remove('has-open');document.getElementById('rep-nav-count').textContent='0';}
+  dismissRepAlert();
+}
+function repDisconnect(){
+  clearInterval(repWsHb);repWsHb=null;clearTimeout(repWsRetry);repWsRetry=null;
+  const ws=repWs;repWs=null;repLive=false;
+  if(ws){try{ws.close();}catch(e){}}
+}
+function repConnect(){
+  repDisconnect();
+  if(!token||!repPollTimer)return;
+  try{
+    const ws=new WebSocket(`${SUPABASE_URL.replace('https://','wss://')}/realtime/v1/websocket?apikey=${SUPABASE_ANON}&vsn=1.0.0`);
+    repWs=ws;let ref=0;
+    const send=(topic,event,payload)=>{if(ws.readyState===1)ws.send(JSON.stringify({topic,event,payload,ref:String(++ref)}));};
+    ws.onopen=()=>{
+      send('realtime:srn-rep-reports','phx_join',{config:{broadcast:{ack:false,self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'facility_messages'}]},access_token:token});
+      repWsHb=setInterval(()=>send('phoenix','heartbeat',{}),25000);
+    };
+    ws.onmessage=ev=>{
+      let m;try{m=JSON.parse(ev.data);}catch(e){return;}
+      if(m.topic==='realtime:srn-rep-reports'){
+        if(m.event==='phx_reply'){repLive=!!(m.payload&&m.payload.status==='ok');console.log('[SRN] Realtime join:',m.payload&&m.payload.status);repPaintBadge();repPaintFoot();}
+        else if(m.event==='system'&&m.payload&&m.payload.status==='error'){repLive=false;console.warn('[SRN] Realtime error:',m.payload.message);repPaintBadge();repPaintFoot();}
+        else if(m.event==='postgres_changes'){const rec=m.payload&&m.payload.data&&m.payload.data.record;if(!rec||rec.source==='rep_report')refreshRepState();}
+      }
+    };
+    ws.onclose=()=>{if(repWs===ws){clearInterval(repWsHb);repWsHb=null;repWs=null;repLive=false;repPaintBadge();repPaintFoot();if(token&&repPollTimer)repWsRetry=setTimeout(repConnect,10000);}};
+    ws.onerror=()=>{try{ws.close();}catch(e){}};
+  }catch(e){console.warn('[SRN] Realtime unavailable, polling only.',e);}
+}
+// ══════════ END REP REPORT MONITOR ══════════
 const GOOGLE_API_KEY='AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0';
 let addrPending=null,googleMapsReady=false,googleMapsLoading=false,googleMapsCallbacks=[];
 function loadGoogleMaps(){return new Promise((resolve,reject)=>{if(googleMapsReady){resolve();return;}googleMapsCallbacks.push({resolve,reject});if(googleMapsLoading)return;googleMapsLoading=true;window.__googleMapsLoaded=()=>{googleMapsReady=true;googleMapsCallbacks.forEach(cb=>cb.resolve());googleMapsCallbacks=[];};const s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=geocoding&callback=__googleMapsLoaded`;s.onerror=()=>{googleMapsLoading=false;googleMapsCallbacks.forEach(cb=>cb.reject(new Error('Google Maps failed to load')));googleMapsCallbacks=[];};document.head.appendChild(s);});}
