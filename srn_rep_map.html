@@ -1148,13 +1148,9 @@ function initSvObserver() {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       const img = entry.target;
-      const cardEl = img.closest('.shop-card');
-      const shopId = cardEl?.id?.replace('card-', '');
-      if (shopId && svLoaded.has(shopId)) { svObserver.unobserve(img); return; }
       if (img.dataset.src) {
         img.src = img.dataset.src;
         img.removeAttribute('data-src');
-        if (shopId) svLoaded.add(shopId);
       }
       svObserver.unobserve(img);
     });
