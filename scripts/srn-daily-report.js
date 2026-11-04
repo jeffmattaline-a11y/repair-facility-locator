@@ -82,6 +82,30 @@ async function fetchOpenMessagesCount() {
 }
 
 // ---------------------------------------------------------------------------
+// 3b. Facilities Google reports as permanently closed (not dismissed by an admin)
+// ---------------------------------------------------------------------------
+async function fetchGoogleClosures() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/facilities?google_business_status=eq.CLOSED_PERMANENTLY` +
+    `&google_closed_dismissed_at=is.null` +
+    `&select=id,name,city,state,phone,status,google_maps_url,google_closed_detected_at` +
+    `&order=google_closed_detected_at.desc.nullslast&limit=1000`,
+    {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  if (!res.ok) {
+    console.warn(`Google closures query failed: ${res.status}`);
+    return [];
+  }
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
 // 4. Source method display helpers
 // ---------------------------------------------------------------------------
 const SOURCE_LABELS = {
@@ -98,7 +122,46 @@ function sourceChip(method) {
 // ---------------------------------------------------------------------------
 // 5. Build the HTML email body
 // ---------------------------------------------------------------------------
-function buildEmailHtml(facilities, snapshot, openMessages) {
+function buildClosuresHtml(closures) {
+  if (!closures.length) return '';
+  const since = Date.now() - 24 * 60 * 60 * 1000; // sync runs ~6h before this report, so 24h = last night only
+  const fresh = closures.filter(c => c.google_closed_detected_at && new Date(c.google_closed_detected_at).getTime() >= since);
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const rows = fresh.slice(0, 50).map(c => {
+    const link = c.google_maps_url && /^https?:\/\//.test(c.google_maps_url)
+      ? ` <a href="${esc(c.google_maps_url)}" style="color:#b91c1c;font-size:12px;">Google Maps ↗</a>` : '';
+    return `<tr>
+      <td style="padding:8px 16px;border-top:1px solid #fecaca;font-weight:600;color:#7f1d1d;">${esc(c.name)}${link}</td>
+      <td style="padding:8px 16px;border-top:1px solid #fecaca;color:#7f1d1d;">${esc(c.city)}, ${esc(c.state)}</td>
+      <td style="padding:8px 16px;border-top:1px solid #fecaca;color:#7f1d1d;">${esc(c.status)}</td>
+    </tr>`;
+  }).join('');
+  const more = fresh.length > 50 ? `<div style="font-size:12px;color:#991b1b;padding:8px 16px;">…and ${fresh.length - 50} more — see the admin tool.</div>` : '';
+  return `
+      <tr>
+        <td style="padding:24px 32px 8px;">
+          <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;overflow:hidden;">
+            <div style="padding:12px 16px;font-size:13px;font-weight:700;color:#991b1b;letter-spacing:1px;text-transform:uppercase;">
+              🚫 Reported Permanently Closed on Google
+            </div>
+            <div style="padding:0 16px 12px;font-size:13px;color:#7f1d1d;">
+              ${fresh.length ? `<strong>${fresh.length}</strong> newly detected since the last report. ` : 'No new closures since the last report. '}
+              <strong>${closures.length}</strong> total currently flagged (not dismissed). Use the “Closed on Google” filter in the admin tool to review.
+            </div>
+            ${fresh.length ? `<table width="100%" style="font-size:13px;border-collapse:collapse;">
+              <thead><tr style="background:#fee2e2;">
+                <th style="padding:6px 16px;text-align:left;font-size:11px;color:#991b1b;text-transform:uppercase;letter-spacing:1px;">Facility</th>
+                <th style="padding:6px 16px;text-align:left;font-size:11px;color:#991b1b;text-transform:uppercase;letter-spacing:1px;">Location</th>
+                <th style="padding:6px 16px;text-align:left;font-size:11px;color:#991b1b;text-transform:uppercase;letter-spacing:1px;">Status</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>${more}` : ''}
+          </div>
+        </td>
+      </tr>`;
+}
+
+function buildEmailHtml(facilities, snapshot, openMessages, closures = []) {
   const reportDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Chicago',
@@ -297,6 +360,8 @@ function buildEmailHtml(facilities, snapshot, openMessages) {
         </td>
       </tr>` : ''}
 
+      ${buildClosuresHtml(closures)}
+
       ${snapshotRows ? `
       <tr>
         <td style="padding:24px 32px 8px;">
@@ -390,6 +455,12 @@ async function sendEmail(subject, html) {
     const openMessages = await fetchOpenMessagesCount();
     console.log(`Open messages: ${openMessages}`);
 
+    console.log('🚫 Fetching Google closure flags...');
+    const closures = await fetchGoogleClosures();
+    const newClosures = closures.filter(c => c.google_closed_detected_at &&
+      new Date(c.google_closed_detected_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000).length;
+    console.log(`Closed on Google: ${closures.length} flagged, ${newClosures} new.`);
+
     const total = facilities.length;
     const dateStr = new Date().toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago',
@@ -406,13 +477,14 @@ async function sendEmail(subject, html) {
       bySrc.n8n_submission > 0 ? `${bySrc.n8n_submission} Submission` : '',
     ].filter(Boolean).join(' · ');
 
-    const msgAlert = openMessages > 0 ? ` · 💬 ${openMessages} Open` : '';
+    const msgAlert = (openMessages > 0 ? ` · 💬 ${openMessages} Open` : '') +
+                     (newClosures > 0 ? ` · 🚫 ${newClosures} Closed on Google` : '');
 
     const subject = total === 0
       ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}`
       : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}`;
 
-    const html = buildEmailHtml(facilities, snapshot, openMessages);
+    const html = buildEmailHtml(facilities, snapshot, openMessages, closures);
 
     console.log('📧 Sending email...');
     await sendEmail(subject, html);

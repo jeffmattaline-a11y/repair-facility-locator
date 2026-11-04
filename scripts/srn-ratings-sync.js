@@ -22,6 +22,17 @@
  * getPlaceDetails() returns a `success` flag so failed calls are
  * NOT stamped and will be retried on the next run.
  *
+ * Update (2026-11): the same Place Details call now also returns
+ * businessStatus, websiteUri and googleMapsUri, stored in:
+ *   google_business_status   OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+ *   google_website           website listed on the shop's Google profile
+ *   google_maps_url          link to the Google Maps listing
+ *   google_status_checked_at when the shop was last checked (drives staleness)
+ *   google_closed_detected_at when CLOSED_PERMANENTLY was first seen
+ *   google_closed_dismissed_at set by an admin (false alarm); cleared if Google
+ *                              stops reporting the shop closed
+ * No extra API call per shop — only a wider field mask.
+ *
  * Env vars required (GitHub Actions secrets):
  *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
  *   SUPABASE_ANON_KEY     – anon key with UPDATE policy on facilities
@@ -129,7 +140,7 @@ async function getPlaceDetails(placeId) {
     res = await fetch(url, {
       headers: {
         'X-Goog-Api-Key':   GOOGLE_KEY,
-        'X-Goog-FieldMask': 'rating,userRatingCount',
+        'X-Goog-FieldMask': 'rating,userRatingCount,businessStatus,websiteUri,googleMapsUri',
       },
     });
   } catch (err) {
@@ -146,9 +157,12 @@ async function getPlaceDetails(placeId) {
 
   // Places API (New) returns a top-level object, not data.result
   return {
-    success:      true,
-    rating:       data.rating          ?? null,
-    review_count: data.userRatingCount ?? null,
+    success:         true,
+    rating:          data.rating          ?? null,
+    review_count:    data.userRatingCount ?? null,
+    business_status: data.businessStatus  ?? null,
+    website:         data.websiteUri      ?? null,
+    maps_url:        data.googleMapsUri   ?? null,
   };
 }
 
@@ -172,10 +186,11 @@ async function main() {
 
   while (true) {
     const batch = await supabaseGet(
-      `facilities?select=id,name,address,city,state,zip,phone,google_place_id,ratings_updated_at` +
+      `facilities?select=id,name,address,city,state,zip,phone,google_place_id,ratings_updated_at,` +
+      `google_business_status,google_closed_detected_at` +
       `&status=eq.PRF` +
-      `&or=(ratings_updated_at.is.null,ratings_updated_at.lt.${staleThreshold})` +
-      `&order=ratings_updated_at.asc.nullsfirst` +
+      `&or=(google_status_checked_at.is.null,google_status_checked_at.lt.${staleThreshold})` +
+      `&order=google_status_checked_at.asc.nullsfirst` +
       `&limit=1000&offset=${offset}`
     );
 
@@ -199,6 +214,7 @@ async function main() {
   let noPlaceId = 0;
   let noRating  = 0;
   let errors    = 0;
+  let closedNew = 0;
 
   for (const facility of toProcess) {
     try {
@@ -211,7 +227,8 @@ async function main() {
         if (!placeId) {
           console.log(`  ⚠️  No Place ID found: ${facility.name} (${facility.city}, ${facility.state})`);
           await supabasePatch('facilities', facility.id, {
-            ratings_updated_at: new Date().toISOString(),
+            ratings_updated_at:       new Date().toISOString(),
+            google_status_checked_at: new Date().toISOString(),
           });
           noPlaceId++;
           continue;
@@ -231,23 +248,43 @@ async function main() {
         continue;
       }
 
+      const now = new Date().toISOString();
+
+      // Fields every successful call writes (status + website + checked stamp)
+      const patch = {
+        google_place_id:          placeId,
+        ratings_updated_at:       now,
+        google_status_checked_at: now,
+        google_business_status:   details.business_status,
+        google_website:           details.website,
+        google_maps_url:          details.maps_url,
+      };
+
+      // Closed-flag bookkeeping
+      const wasClosed = facility.google_business_status === 'CLOSED_PERMANENTLY';
+      const isClosed  = details.business_status === 'CLOSED_PERMANENTLY';
+      if (isClosed && !wasClosed) {
+        patch.google_closed_detected_at  = now;   // first time we've seen it
+        patch.google_closed_dismissed_at = null;  // any old dismissal no longer applies
+        closedNew++;
+        console.log(`  🚫 PERMANENTLY CLOSED on Google: ${facility.name} (${facility.city}, ${facility.state})`);
+      } else if (!isClosed && wasClosed) {
+        patch.google_closed_detected_at  = null;  // Google no longer reports it closed
+        patch.google_closed_dismissed_at = null;
+        console.log(`  ♻️  No longer reported closed: ${facility.name}`);
+      }
+
       if (details.rating === null && details.review_count === null) {
         // Call succeeded, Google genuinely has no rating for this place.
         console.log(`  ⚠️  No rating data: ${facility.name}`);
-        await supabasePatch('facilities', facility.id, {
-          google_place_id:    placeId,
-          ratings_updated_at: new Date().toISOString(),
-        });
+        await supabasePatch('facilities', facility.id, patch);
         noRating++;
         continue;
       }
 
-      await supabasePatch('facilities', facility.id, {
-        google_place_id:     placeId,
-        google_rating:       details.rating,
-        google_review_count: details.review_count,
-        ratings_updated_at:  new Date().toISOString(),
-      });
+      patch.google_rating       = details.rating;
+      patch.google_review_count = details.review_count;
+      await supabasePatch('facilities', facility.id, patch);
 
       console.log(
         `  ✅ ${facility.name} (${facility.city}, ${facility.state})` +
@@ -265,6 +302,7 @@ async function main() {
   console.log(`  ✅ Updated:         ${updated}`);
   console.log(`  ⚠️  No Place ID:    ${noPlaceId}`);
   console.log(`  ⚠️  No Rating Data: ${noRating}`);
+  console.log(`  🚫 Newly closed:    ${closedNew}`);
   console.log(`  ❌ Errors:          ${errors}`);
   console.log(`  📋 Remaining:       ${Math.max(0, facilities.length - BATCH_SIZE)}`);
   console.log(`\nCompleted: ${new Date().toISOString()}`);
