@@ -1098,14 +1098,34 @@ function renderGoogleExtras(f){
     row.innerHTML=`<strong>Google lists this business as TEMPORARILY CLOSED</strong>${mapLink}`;
   }
   if(hint&&f.google_website&&/^https?:\/\//.test(f.google_website)){
-    const cur=document.getElementById('f-web').value;
-    if(normUrl(cur)!==normUrl(f.google_website)){
-      hint.innerHTML=`Google lists: <a href="${esc(f.google_website)}" target="_blank" rel="noopener">${esc(f.google_website)}</a> <button type="button" class="btn btn-ghost" style="font-size:10px;padding:2px 8px;margin-left:4px" onclick="useGoogleWebsite()">Use this</button>`;
+    const cur=(f.website||'').trim();
+    const gl=`<a href="${esc(f.google_website)}" target="_blank" rel="noopener">${esc(f.google_website)}</a>`;
+    if(!cur){
+      // Website is blank: apply Google's website straight to the profile (no button).
+      document.getElementById('f-web').value=f.google_website;
+      hint.innerHTML=`Auto-filled from Google: ${gl}`;
+      hint.style.display='block';
+      autoApplyGoogleWebsite(f);
+    }else if(normUrl(cur)!==normUrl(f.google_website)){
+      hint.innerHTML=`Google lists a different site: ${gl}`;
       hint.style.display='block';
     }
   }
 }
-function useGoogleWebsite(){const f=data.find(x=>x.id===editId);if(!f||!f.google_website)return;document.getElementById('f-web').value=f.google_website;document.getElementById('gweb-hint').style.display='none';toast('Google website copied in — click Save to keep it.','ok',4000);}
+async function autoApplyGoogleWebsite(f){
+  const gw=f.google_website,id=f.id;
+  try{
+    const res=await withAuthRetry(()=>api.patch(id,{website:gw,edited_on:today(),edited_by:userEmail}));
+    await withAuthRetry(()=>api.logHistory({facility_id:id,facility_name:f.name,changed_by:userEmail+' (Google website auto-fill)',changes:{website:{from:null,to:gw}}})).catch(()=>{});
+    const i=data.findIndex(x=>x.id===id);
+    if(i>-1)data[i]=(res&&res[0])?res[0]:{...data[i],website:gw};
+    toast('Website filled in from Google and saved.','ok',3000);
+  }catch(e){
+    if(editId===id){const inp=document.getElementById('f-web');if(inp&&inp.value===gw)inp.value='';}
+    const h=document.getElementById('gweb-hint');if(h)h.style.display='none';
+    if(!String(e.message).includes('sign back in'))toast('Could not save Google website: '+e.message,'err',6000);
+  }
+}
 async function dismissClosedFlag(){
   const f=data.find(x=>x.id===editId);if(!f)return;
   if(!confirm('Dismiss this "Closed on Google" flag?\n\nUse this when the shop is actually open (Google can be wrong, or matched to the wrong listing). The flag only returns if Google later shows the shop open and then reports it closed again.'))return;
