@@ -420,6 +420,24 @@
   .btn-action.btn-hours:hover { background: #E8F4F9; border-color: var(--sky); color: var(--blue); }
   .btn-action.btn-directions { color: var(--muted); }
 
+  /* ── OPEN / CLOSED BADGE ─────────────────── */
+  .open-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 7px;
+    line-height: 1.3;
+  }
+  .open-badge .ob-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+  .ob-open    { background: #E6F6EC; color: #1A7A4A; border: 1px solid #A9DDBE; }
+  .ob-soon    { background: #FFF4E0; color: #B45F00; border: 1px solid #F3CF93; }
+  .ob-closed  { background: #FDECEC; color: #CA383B; border: 1px solid #F3B9BA; }
+  .ob-unknown { background: #F0F4F8; color: #6B7E96; border: 1px solid #DDE4ED; font-weight: 600; }
+
   /* ── HOURS TOGGLE ROW ──── */
   .card-hours-toggle {
     padding: 0 12px 10px;
@@ -1385,7 +1403,8 @@ function buildCard(shop, index, tier) {
   const rating = shop.google_rating ? parseFloat(shop.google_rating).toFixed(1) : null;
   const reviewCount = shop.google_review_count || null;
   const stars = rating ? renderStars(parseFloat(rating)) : '';
-  const hoursHtml = buildHoursHtml(shop.hours_of_operation);
+  const hoursHtml = buildHoursHtml(shop.hours_of_operation, shop);
+  const statusHtml = buildOpenBadge(shop);
 
   let ribbonHtml = '';
   let tagHtml = '';
@@ -1415,6 +1434,7 @@ function buildCard(shop, index, tier) {
       </div>
       <div class="card-name">${escHtml(shop.name)}</div>
       <div class="card-address">${escHtml(fullAddress)}</div>
+      ${statusHtml}
       <div class="card-meta">
         <div class="card-distance">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -1468,10 +1488,194 @@ function buildCard(shop, index, tier) {
 }
 
 // ── HOURS ─────────────────────────────────────────────────
-function buildHoursHtml(hoursData) {
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const today = days[(new Date().getDay() + 6) % 7]; // Mon=0
+const HOURS_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+// Time zone for each state. Split-zone states get a longitude/latitude tweak below.
+// (Step 2 will replace this guess with the exact UTC offset straight from Google.)
+const STATE_TZ = {
+  AL:'America/Chicago',AK:'America/Anchorage',AZ:'America/Phoenix',AR:'America/Chicago',CA:'America/Los_Angeles',
+  CO:'America/Denver',CT:'America/New_York',DE:'America/New_York',DC:'America/New_York',FL:'America/New_York',
+  GA:'America/New_York',HI:'Pacific/Honolulu',ID:'America/Denver',IL:'America/Chicago',IN:'America/New_York',
+  IA:'America/Chicago',KS:'America/Chicago',KY:'America/New_York',LA:'America/Chicago',ME:'America/New_York',
+  MD:'America/New_York',MA:'America/New_York',MI:'America/New_York',MN:'America/Chicago',MS:'America/Chicago',
+  MO:'America/Chicago',MT:'America/Denver',NE:'America/Chicago',NV:'America/Los_Angeles',NH:'America/New_York',
+  NJ:'America/New_York',NM:'America/Denver',NY:'America/New_York',NC:'America/New_York',ND:'America/Chicago',
+  OH:'America/New_York',OK:'America/Chicago',OR:'America/Los_Angeles',PA:'America/New_York',RI:'America/New_York',
+  SC:'America/New_York',SD:'America/Chicago',TN:'America/Chicago',TX:'America/Chicago',UT:'America/Denver',
+  VT:'America/New_York',VA:'America/New_York',WA:'America/Los_Angeles',WV:'America/New_York',WI:'America/Chicago',
+  WY:'America/Denver',
+  AB:'America/Edmonton',BC:'America/Vancouver',MB:'America/Winnipeg',NB:'America/Halifax',NL:'America/St_Johns',
+  NS:'America/Halifax',ON:'America/Toronto',PE:'America/Halifax',QC:'America/Toronto',SK:'America/Regina',
+  NT:'America/Edmonton',NU:'America/Iqaluit',YT:'America/Whitehorse'
+};
+
+function getShopTZ(shop) {
+  const st  = String(shop.state || '').toUpperCase();
+  const lat = parseFloat(shop.lat), lng = parseFloat(shop.lng);
+  let tz = STATE_TZ[st] || 'America/Chicago';
+  if (isNaN(lat) || isNaN(lng)) return tz;
+  if (st === 'TX' && lng < -104.8) tz = 'America/Denver';                    // El Paso area
+  if (st === 'FL' && lng < -85.0)  tz = 'America/Chicago';                   // western panhandle
+  if (st === 'TN' && lng > -85.5)  tz = 'America/New_York';                  // east Tennessee
+  if (st === 'KY' && lng < -86.0)  tz = 'America/Chicago';                   // western Kentucky
+  if (st === 'IN' && ((lat > 41.2 && lng < -86.6) || (lat < 38.2 && lng < -86.4))) tz = 'America/Chicago';
+  if (st === 'MI' && lat > 45.0 && lng < -87.55) tz = 'America/Chicago';     // western U.P.
+  if (st === 'ND' && lng < -101.5) tz = 'America/Denver';
+  if (st === 'SD' && lng < -100.4) tz = 'America/Denver';
+  if (st === 'NE' && lng < -101.2) tz = 'America/Denver';
+  if (st === 'KS' && lng < -101.4) tz = 'America/Denver';
+  if (st === 'OR' && lng > -117.6 && lat < 44.6) tz = 'America/Denver';      // Malheur County
+  if (st === 'ID' && lat > 45.9)   tz = 'America/Los_Angeles';               // north Idaho
+  return tz;
+}
+
+// What day / minute is it right now in the SHOP's time zone?
+function shopNowInfo(tz, date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, weekday: 'long', hour: 'numeric', minute: 'numeric',
+    hourCycle: 'h23', timeZoneName: 'short'
+  }).formatToParts(date || new Date());
+  const get = t => (parts.find(p => p.type === t) || {}).value;
+  return {
+    day: HOURS_DAYS.indexOf(get('weekday')),
+    minutes: (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10),
+    tzName: get('timeZoneName') || ''
+  };
+}
+
+// Accepts a JSON object ({"Monday":"8:00 AM – 5:00 PM",...}), a JSON string of that,
+// or Google-style weekday_text lines (["Monday: 8:00 AM – 5:00 PM", ...]).
+function normalizeHours(hoursData) {
+  if (!hoursData) return null;
+  let parsed = hoursData;
+  if (typeof parsed === 'string') { try { parsed = JSON.parse(parsed); } catch { return null; } }
+  const out = {};
+  if (Array.isArray(parsed)) {
+    parsed.forEach(line => {
+      const m = /^\s*([A-Za-z]+)\s*:\s*(.*)$/.exec(String(line));
+      if (!m) return;
+      const d = HOURS_DAYS.find(x => x.toLowerCase().startsWith(m[1].toLowerCase().slice(0, 3)));
+      if (d) out[d] = m[2];
+    });
+  } else if (parsed && typeof parsed === 'object') {
+    HOURS_DAYS.forEach(d => {
+      const v = parsed[d] ?? parsed[d.toLowerCase()] ?? parsed[d.slice(0, 3)];
+      if (v !== undefined && v !== null && String(v).trim() !== '') out[d] = String(v);
+    });
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+function cleanHoursText(s) {
+  return String(s)
+    .replace(/[    ]/g, ' ')      // Google uses narrow no-break spaces
+    .replace(/[–—‒−]/g, '-')       // en/em dashes -> hyphen
+    .replace(/\s+/g, ' ').trim().toLowerCase()
+    .replace(/a\.m\./g, 'am').replace(/p\.m\./g, 'pm');
+}
+
+// One day's text -> list of [openMinute, closeMinute] (close can pass 1440 = past midnight).
+// Returns [] for closed, null if the text can't be understood.
+function parseDayRanges(str) {
+  const s = cleanHoursText(str);
+  if (!s) return null;
+  if (/24 ?hours?|open 24/.test(s)) return [[0, 1440]];
+  if (/closed/.test(s) && !/\d/.test(s)) return [];
+  const re = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/g;
+  const to24 = (h, mi, mer) => {
+    if (!mer) return h * 60 + mi;
+    let hh = h % 12; if (mer === 'pm') hh += 12;
+    return hh * 60 + mi;
+  };
+  const out = []; let m;
+  while ((m = re.exec(s))) {
+    const h1 = +m[1], mi1 = +(m[2] || 0), mer1 = m[3];
+    const h2 = +m[4], mi2 = +(m[5] || 0), mer2 = m[6];
+    let o, c;
+    if (mer1 || mer2) {
+      o = to24(h1, mi1, mer1 || mer2);
+      c = to24(h2, mi2, mer2 || mer1);
+      if (!mer1 && mer2 === 'pm' && o > c) o -= 12 * 60;   // "9:00 - 5:00 PM" means 9 AM
+    } else { o = h1 * 60 + mi1; c = h2 * 60 + mi2; }
+    if (c <= o) c += 1440;                                  // closes after midnight
+    out.push([o, c]);
+  }
+  return out.length ? out : null;
+}
+
+function fmtMin(mins) {
+  mins = ((mins % 1440) + 1440) % 1440;
+  let h = Math.floor(mins / 60); const m = mins % 60;
+  const mer = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return m ? `${h}:${String(m).padStart(2, '0')} ${mer}` : `${h} ${mer}`;
+}
+
+// Is the shop open right now (shop-local time)?
+// -> {state:'open'|'soon'|'closed'|'unknown', until, next, tz}
+function getOpenStatus(shop, date) {
+  const hours = normalizeHours(shop.hours_of_operation);
+  if (!hours) return { state: 'unknown' };
+  let now;
+  try { now = shopNowInfo(getShopTZ(shop), date); } catch { return { state: 'unknown' }; }
+  if (now.day < 0) return { state: 'unknown' };
+
+  const days = HOURS_DAYS.map(d => hours[d] === undefined ? [] : parseDayRanges(hours[d]));
+  const today = days[now.day];
+  if (today === null) return { state: 'unknown' };
+  const prev = days[(now.day + 6) % 7] || [];
+  const tz = now.tzName;
+
+  if (today.some(([o, c]) => o === 0 && c >= 1440)) return { state: 'open', allDay: true, tz };
+
+  let closeAt = null;
+  today.forEach(([o, c]) => { if (now.minutes >= o && now.minutes < c) closeAt = Math.max(closeAt ?? 0, c); });
+  prev.forEach(([o, c]) => { if (c > 1440 && now.minutes < c - 1440) closeAt = Math.max(closeAt ?? 0, c - 1440); });
+  if (closeAt !== null) {
+    const left = closeAt - now.minutes;
+    return { state: left <= 60 ? 'soon' : 'open', until: fmtMin(closeAt), minsLeft: left, tz };
+  }
+
+  // Closed right now: when does it open next?
+  const later = today.filter(([o]) => o > now.minutes).sort((a, b) => a[0] - b[0])[0];
+  let next = null;
+  if (later) next = fmtMin(later[0]);
+  else {
+    for (let k = 1; k <= 7; k++) {
+      const r = days[(now.day + k) % 7];
+      if (r && r.length) {
+        const at = fmtMin(Math.min(...r.map(x => x[0])));
+        next = (k === 1 ? 'tomorrow ' : HOURS_DAYS[(now.day + k) % 7].slice(0, 3) + ' ') + at;
+        break;
+      }
+    }
+  }
+  return { state: 'closed', next, tz };
+}
+
+function buildOpenBadge(shop) {
+  const s = getOpenStatus(shop);
+  let cls, text;
+  if (s.state === 'unknown')      { cls = 'ob-unknown'; text = 'Hours not listed'; }
+  else if (s.state === 'closed')  { cls = 'ob-closed';  text = 'Closed' + (s.next ? ` · opens ${s.next} ${s.tz}` : ''); }
+  else if (s.allDay)              { cls = 'ob-open';    text = 'Open 24 hours'; }
+  else if (s.state === 'soon')    { cls = 'ob-soon';    text = `Open · closes ${s.until} ${s.tz}`; }
+  else                            { cls = 'ob-open';    text = `Open · until ${s.until} ${s.tz}`; }
+  const tip = "Based on Google's regular hours, in the shop's local time. Holidays may differ - call to confirm.";
+  return `<div class="open-badge ${cls}" data-open-shop="${escHtml(shop.id)}" title="${escHtml(tip)}"><span class="ob-dot"></span>${escHtml(text)}</div>`;
+}
+
+// Keep badges honest if the page is left open (re-checks every minute)
+function refreshOpenBadges() {
+  document.querySelectorAll('[data-open-shop]').forEach(el => {
+    const shop = shopIndex[el.getAttribute('data-open-shop')];
+    if (shop) el.outerHTML = buildOpenBadge(shop);
+  });
+}
+setInterval(refreshOpenBadges, 60000);
+
+// The fold-down hours list (unchanged look; "today" now follows the shop's own day)
+function buildHoursHtml(hoursData, shop) {
   if (!hoursData) return '<div style="color:var(--muted);font-size:12px;">Hours not available</div>';
 
   let parsed = hoursData;
@@ -1479,18 +1683,20 @@ function buildHoursHtml(hoursData) {
     try { parsed = JSON.parse(parsed); } catch { return `<div style="font-size:12px;color:var(--muted)">${escHtml(hoursData)}</div>`; }
   }
 
-  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-    return days.map(day => {
-      const val = parsed[day] || parsed[day.toLowerCase()] || parsed[day.slice(0,3)] || 'Closed';
-      const isToday = day === today;
-      return `<div class="hours-row">
+  const norm = normalizeHours(parsed);
+  if (!norm) return '<div style="color:var(--muted);font-size:12px;">Hours format not recognized</div>';
+
+  let today = HOURS_DAYS[(new Date().getDay() + 6) % 7];
+  if (shop) { try { today = HOURS_DAYS[shopNowInfo(getShopTZ(shop)).day] || today; } catch {} }
+
+  return HOURS_DAYS.map(day => {
+    const val = norm[day] || 'Closed';
+    const isToday = day === today;
+    return `<div class="hours-row">
         <span class="hours-day${isToday ? ' hours-today' : ''}">${day.slice(0,3)}</span>
         <span class="${isToday ? 'hours-today' : ''}">${escHtml(String(val))}</span>
       </div>`;
-    }).join('');
-  }
-
-  return '<div style="color:var(--muted);font-size:12px;">Hours format not recognized</div>';
+  }).join('');
 }
 
 function toggleHours(shopId, btn) {
