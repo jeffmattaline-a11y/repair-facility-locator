@@ -5,6 +5,11 @@ on:
     # Runs at 2:00 AM Central (8:00 UTC) — before the daily report at 8am Central
     - cron: '0 8 * * *'
   workflow_dispatch:  # Allow manual trigger from GitHub Actions UI
+    inputs:
+      batch_size:
+        description: 'How many shops to process (leave blank for the normal 500)'
+        required: false
+        default: ''
 
 jobs:
   sync-ratings:
@@ -24,4 +29,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_GEOCODING_KEY }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
         run: node scripts/srn-ratings-sync.js
