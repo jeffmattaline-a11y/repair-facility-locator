@@ -33,6 +33,21 @@
  *                              stops reporting the shop closed
  * No extra API call per shop — only a wider field mask.
  *
+ * Update (2026-11, hours): the same call also returns regularOpeningHours
+ * and timeZone, stored in:
+ *   hours_of_operation  JSONB  {"Monday":"8:00 AM – 5:00 PM", ..., "Sunday":"Closed"}
+ *   time_zone           text   IANA zone, e.g. America/Chicago (map uses it so
+ *                              Open/Closed is judged in the SHOP's local time)
+ *   hours_updated_at    timestamptz  last time hours were checked (stamped on
+ *                              every successful call, even if Google lists no hours)
+ * regularOpeningHours is the same Place Details "Enterprise" SKU as rating, and
+ * timeZone is a cheaper "Pro" field, so this adds NO cost per call.
+ * Hours are only overwritten when Google returns a complete 7-day list — a
+ * thin/failed response never wipes good data.
+ * VIP shops are now included alongside PRF (the rep map shows both).
+ * BATCH_SIZE can be overridden with the BATCH_SIZE env var (used by the
+ * manual "Run workflow" box in GitHub Actions for small test runs).
+ *
  * Env vars required (GitHub Actions secrets):
  *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
  *   SUPABASE_ANON_KEY     – anon key with UPDATE policy on facilities
@@ -46,7 +61,7 @@ const SUPABASE_URL        = process.env.SUPABASE_URL;
 const SUPABASE_KEY        = process.env.SUPABASE_ANON_KEY;
 const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
-const BATCH_SIZE          = 500;  // ~500 calls/night keeps monthly well under budget
+const BATCH_SIZE          = parseInt(process.env.BATCH_SIZE, 10) || 500;  // ~500 calls/night keeps monthly well under budget
 const STALE_DAYS          = 30;   // Re-fetch once per month (ratings are stable)
 const DELAY_MS            = 100;  // Polite delay between API calls (ms)
 
@@ -121,6 +136,30 @@ async function findPlaceId(facility) {
   return null;
 }
 
+const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+/**
+ * Google's regularOpeningHours.weekdayDescriptions looks like:
+ *   ["Monday: 8:00 AM – 5:00 PM", "Tuesday: Closed", "Wednesday: Open 24 hours", ...]
+ * (with odd non-breaking spaces before AM/PM). Convert to the object the map reads:
+ *   {"Monday":"8:00 AM – 5:00 PM","Tuesday":"Closed",...}
+ * Returns null unless all 7 days are present, so partial data never overwrites good data.
+ */
+function formatHours(regularOpeningHours) {
+  const lines = regularOpeningHours && regularOpeningHours.weekdayDescriptions;
+  if (!Array.isArray(lines)) return null;
+
+  const out = {};
+  for (const line of lines) {
+    const m = /^\s*([A-Za-z]+)\s*:\s*(.+)$/.exec(String(line));
+    if (!m) continue;
+    const day = DAY_NAMES.find(d => d.toLowerCase().startsWith(m[1].toLowerCase().slice(0, 3)));
+    if (!day) continue;
+    out[day] = m[2].replace(/[\u202f\u2009\u00a0\u2007]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  return DAY_NAMES.every(d => out[d]) ? out : null;
+}
+
 /**
  * Place Details (New): fetch rating + review count for a known place_id.
  *
@@ -133,14 +172,14 @@ async function findPlaceId(facility) {
  * as "no rating exists" and should NOT stamp ratings_updated_at.
  */
 async function getPlaceDetails(placeId) {
-  const url = `https://places.googleapis.com/v1/places/${placeId}`;
+  const url = `https://places.googleapis.com/v1/places/${placeId}?languageCode=en`;
 
   let res;
   try {
     res = await fetch(url, {
       headers: {
         'X-Goog-Api-Key':   GOOGLE_KEY,
-        'X-Goog-FieldMask': 'rating,userRatingCount,businessStatus,websiteUri,googleMapsUri',
+        'X-Goog-FieldMask': 'rating,userRatingCount,businessStatus,websiteUri,googleMapsUri,regularOpeningHours,timeZone',
       },
     });
   } catch (err) {
@@ -163,6 +202,8 @@ async function getPlaceDetails(placeId) {
     business_status: data.businessStatus  ?? null,
     website:         data.websiteUri      ?? null,
     maps_url:        data.googleMapsUri   ?? null,
+    hours:           formatHours(data.regularOpeningHours),
+    time_zone:       (data.timeZone && data.timeZone.id) || null,
   };
 }
 
@@ -182,13 +223,13 @@ async function main() {
   let facilities = [];
   let offset = 0;
 
-  console.log('Fetching facilities needing rating sync...');
+  console.log('Fetching PRF + VIP facilities needing a Google sync...');
 
   while (true) {
     const batch = await supabaseGet(
       `facilities?select=id,name,address,city,state,zip,phone,google_place_id,ratings_updated_at,` +
       `google_business_status,google_closed_detected_at` +
-      `&status=eq.PRF` +
+      `&status=in.(PRF,VIP)` +
       `&or=(google_status_checked_at.is.null,google_status_checked_at.lt.${staleThreshold})` +
       `&order=google_status_checked_at.asc.nullsfirst` +
       `&limit=1000&offset=${offset}`
@@ -215,6 +256,8 @@ async function main() {
   let noRating  = 0;
   let errors    = 0;
   let closedNew = 0;
+  let hoursSaved = 0;
+  let noHours   = 0;
 
   for (const facility of toProcess) {
     try {
@@ -258,7 +301,12 @@ async function main() {
         google_business_status:   details.business_status,
         google_website:           details.website,
         google_maps_url:          details.maps_url,
+        hours_updated_at:         now,   // "hours were checked" (even if Google lists none)
       };
+
+      // Hours + time zone: only written when Google actually returned them
+      if (details.hours) patch.hours_of_operation = details.hours;
+      if (details.time_zone) patch.time_zone = details.time_zone;
 
       // Closed-flag bookkeeping
       const wasClosed = facility.google_business_status === 'CLOSED_PERMANENTLY';
@@ -278,6 +326,7 @@ async function main() {
         // Call succeeded, Google genuinely has no rating for this place.
         console.log(`  ⚠️  No rating data: ${facility.name}`);
         await supabasePatch('facilities', facility.id, patch);
+        if (details.hours) hoursSaved++; else noHours++;
         noRating++;
         continue;
       }
@@ -285,6 +334,7 @@ async function main() {
       patch.google_rating       = details.rating;
       patch.google_review_count = details.review_count;
       await supabasePatch('facilities', facility.id, patch);
+      if (details.hours) hoursSaved++; else noHours++;
 
       console.log(
         `  ✅ ${facility.name} (${facility.city}, ${facility.state})` +
@@ -302,6 +352,8 @@ async function main() {
   console.log(`  ✅ Updated:         ${updated}`);
   console.log(`  ⚠️  No Place ID:    ${noPlaceId}`);
   console.log(`  ⚠️  No Rating Data: ${noRating}`);
+  console.log(`  🕒 Hours saved:     ${hoursSaved}`);
+  console.log(`  ⚠️  No hours on Google: ${noHours}`);
   console.log(`  🚫 Newly closed:    ${closedNew}`);
   console.log(`  ❌ Errors:          ${errors}`);
   console.log(`  📋 Remaining:       ${Math.max(0, facilities.length - BATCH_SIZE)}`);
