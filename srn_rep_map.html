@@ -996,7 +996,7 @@
       🚗 Drive-In
     </button>
   </div>
-  <span class="arrival-note" id="arrivalNote">Pilot Shops visible up to 50 mi · VIP &amp; PRF within selected radius</span>
+  <span class="arrival-note" id="arrivalNote">Pilot · VIP · PRF — all visible up to 50 mi (or selected radius if larger)</span>
 </div>
 
 <!-- MAIN -->
@@ -1180,7 +1180,7 @@ function setArrivalMode(mode) {
   document.getElementById('btnTow').classList.toggle('active', mode === 'tow');
   document.getElementById('btnDrive').classList.toggle('active', mode === 'drive');
   document.getElementById('arrivalNote').textContent = mode === 'tow'
-    ? 'Pilot Shops visible up to 50 mi · VIP & PRF within selected radius'
+    ? 'Pilot · VIP · PRF — all visible up to 50 mi (or selected radius if larger)'
     : 'Pilot · VIP · PRF — all within selected radius';
   // Re-sort and re-render if results exist
   if (allResults.length) {
@@ -1231,8 +1231,9 @@ async function doSearch() {
     // Fetch all facilities (PRF, VIP, Pilot)
     const facilities = await fetchFacilities();
 
-    // Pilot radius is 50mi for tow-in, same as selected radius for drive-in
-    const pilotRadius = arrivalMode === 'tow' ? Math.max(50, radius) : radius;
+    // Tow-In: every tier (Pilot, VIP, PRF) is visible out to at least 50 mi.
+    // Drive-In: every tier uses the selected radius.
+    const effectiveRadius = arrivalMode === 'tow' ? Math.max(50, radius) : radius;
 
     // Attach distances and apply per-tier radius filtering
     const nearby = facilities
@@ -1241,10 +1242,7 @@ async function doSearch() {
         ...f,
         distanceMiles: haversine(loc.lat, loc.lng, parseFloat(f.lat), parseFloat(f.lng))
       }))
-      .filter(f => {
-        if (f.pilot_ocp) return f.distanceMiles <= pilotRadius;
-        return f.distanceMiles <= radius;
-      })
+      .filter(f => f.distanceMiles <= effectiveRadius)
       .sort(sortFn);
 
     allResults = nearby;
