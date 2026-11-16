@@ -1257,7 +1257,7 @@ async function doSearch() {
 }
 
 async function fetchFacilities() {
-  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,notes,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp';
+  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,time_zone,google_business_status,notes,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp';
   let all = [], offset = 0, limit = 1000;
 
   // Fetch PRF facilities
@@ -1510,6 +1510,11 @@ const STATE_TZ = {
 };
 
 function getShopTZ(shop) {
+  // Best source: the exact zone Google gave us (saved by the nightly sync)
+  if (shop.time_zone) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: shop.time_zone }); return shop.time_zone; } catch (e) {}
+  }
+  // Fallback until a shop has been synced: guess from state + location
   const st  = String(shop.state || '').toUpperCase();
   const lat = parseFloat(shop.lat), lng = parseFloat(shop.lng);
   let tz = STATE_TZ[st] || 'America/Chicago';
@@ -1656,7 +1661,9 @@ function getOpenStatus(shop, date) {
 function buildOpenBadge(shop) {
   const s = getOpenStatus(shop);
   let cls, text;
-  if (s.state === 'unknown')      { cls = 'ob-unknown'; text = 'Hours not listed'; }
+  if (shop.google_business_status === 'CLOSED_TEMPORARILY')      { cls = 'ob-closed'; text = 'Temporarily closed (per Google)'; }
+  else if (shop.google_business_status === 'CLOSED_PERMANENTLY') { cls = 'ob-closed'; text = 'Permanently closed (per Google)'; }
+  else if (s.state === 'unknown') { cls = 'ob-unknown'; text = 'Hours not listed'; }
   else if (s.state === 'closed')  { cls = 'ob-closed';  text = 'Closed' + (s.next ? ` · opens ${s.next} ${s.tz}` : ''); }
   else if (s.allDay)              { cls = 'ob-open';    text = 'Open 24 hours'; }
   else if (s.state === 'soon')    { cls = 'ob-soon';    text = `Open · closes ${s.until} ${s.tz}`; }
