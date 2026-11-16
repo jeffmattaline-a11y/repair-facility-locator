@@ -1623,6 +1623,15 @@ async function renderMetrics(){
   const leftPRF=hist.filter(h=>h.changes.status.from==='PRF'&&h.changes.status.to!=='PRF');
   const closedToUPB=leftPRF.filter(h=>h.changes.status.to==='UPB'&&/Google closed auto-update/i.test(h.changed_by||''));
 
+  const facById=new Map(data.map(f=>[f.id,f]));
+  const newIds=new Set(newShopsList.map(f=>f.id));
+  const newPRF=newShopsList.filter(f=>f.status==='PRF');
+  const promotedIds=new Set(becamePRF.filter(h=>!newIds.has(h.facility_id)&&facById.get(h.facility_id)&&facById.get(h.facility_id).status==='PRF').map(h=>h.facility_id));
+  const joinedPRF=newPRF.length+promotedIds.size;
+  const leftOther=leftPRF.filter(h=>!closedToUPB.includes(h));
+  const leftDest={};leftOther.forEach(h=>{const t=h.changes.status.to||'?';leftDest[t]=(leftDest[t]||0)+1;});
+  const leftDestTxt=Object.entries(leftDest).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${v}`).join(' · ')||'none';
+
   // Shipping (combined)
   const nowD=new Date();
   const monthRows=shipRows.filter(r=>{if(!r.shipped_at)return false;const d=new Date(r.shipped_at+'T00:00:00');return d.getFullYear()===nowD.getFullYear()&&d.getMonth()===nowD.getMonth();});
@@ -1653,12 +1662,12 @@ async function renderMetrics(){
   const card=(cls,num,lbl,sub,extra)=>`<div class="metric-card ${cls}"><div class="metric-card-num">${num}</div><div class="metric-card-lbl">${lbl}</div><div class="metric-card-sub">${sub}</div>${extra||''}</div>`;
   const histNote=histOk?'':'<span style="color:#b91c1c">history unavailable</span>';
   const activityCards=[
-    card('mc-web',n0(newShopsList.length),'🏪 New Shops',`✏️ ${newBySrc.manual} manual · 📥 ${newBySrc.bulk_import} bulk · 🌐 ${newBySrc.n8n_submission} web`),
-    card('mc-surveys" style="cursor:default',n0(svNew.length),'📋 New Surveys',svNew.length?`${svNewUnmatched} unmatched`:'none received'),
-    card('mc-rep-closed',n0(newlyFlagged),'🚫 Flagged Closed on Google',`${n0(flaggedOpen)} flags currently open`),
-    card('mc-rep-closed',histOk?n0(closedToUPB.length):'—','⬇ PRF → UPB (Closed)',histOk?'auto-moved after Google flag':histNote),
-    card('mc-prf',histOk?n0(becamePRF.length):'—','⬆ Became PRF',histOk?'status changed to PRF':histNote),
-    card('mc-bulk',histOk?n0(leftPRF.length):'—','⬇ Left PRF',histOk?(leftPRF.length?`${closedToUPB.length} closed · ${leftPRF.length-closedToUPB.length} other`:'no one left PRF'):histNote)
+    card('mc-web',n0(newShopsList.length),'🏪 New Shops',`${newPRF.length} PRF · ${newShopsList.length-newPRF.length} other status<br>✏️ ${newBySrc.manual} manual · 📥 ${newBySrc.bulk_import} bulk · 🌐 ${newBySrc.n8n_submission} web`),
+    card('mc-prf',histOk?n0(joinedPRF):n0(newPRF.length),'⬆ Became PRF',histOk?`${newPRF.length} new shops · ${promotedIds.size} promoted from another status`:`${newPRF.length} new shops (status history unavailable)`),
+    card('mc-rep-closed',histOk?n0(closedToUPB.length):'—','⬇ PRF → UPB (Closed on Google)',histOk?`auto-moved by closed workflow · ${n0(flaggedOpen)} flags open`:histNote),
+    card('mc-bulk',histOk?n0(leftOther.length):'—','⬇ Left PRF — Other Reasons',histOk?leftDestTxt:histNote),
+    card('mc-rep-closed',n0(newlyFlagged),'🚫 Newly Flagged Closed',`detected by Google in this period`),
+    card('mc-surveys" style="cursor:default',n0(svNew.length),'📋 New Surveys',svNew.length?`${svNewUnmatched} unmatched`:'none received')
   ].join('');
 
   // ── Recent PRF movement table ──
@@ -1672,7 +1681,6 @@ async function renderMetrics(){
 
   // ── Network totals ──
   const netCards=[
-    card('mc-total',n0(prfCount+vipCount),'🏪 Shops in Network',`${n0(prfCount)} PRF · ${n0(vipCount)} VIP`),
     card('mc-total',n0(total),'Total Facilities',`${Math.round(prfCount/total*100)}% PRF`),
     card('mc-msgs',n0(msgOpen),'💬 Open Messages',`${n0(msgTotal)} total · ${n0(msgRep)} rep reports ever`),
     `<div class="metric-card mc-surveys" onclick="document.getElementById('metrics-ov').classList.remove('open');openAllSurveysOv()"><div class="metric-card-num">${n0(svTotal)}</div><div class="metric-card-lbl">📋 Claims Surveys</div><div class="metric-card-sub">${n0(svTotal-svUnmatched)} matched · <span style="color:#b91c1c;font-weight:700">${n0(svUnmatched)} unmatched</span></div></div>`
@@ -1690,6 +1698,7 @@ async function renderMetrics(){
   const periodSel=`<select onchange="setMetricsDays(this.value)" style="font-size:12px;padding:3px 8px;border:1px solid var(--border2);border-radius:6px;background:#fff;font-family:inherit;text-transform:none;letter-spacing:0">${[7,30,90].map(d=>`<option value="${d}"${d===days?' selected':''}>Last ${d} days</option>`).join('')}</select>`;
   document.getElementById('metrics-body').innerHTML=
     `<div class="metrics-section">${repBanner}</div>
+     <div class="metrics-section"><div class="metric-card mc-hero"><div class="hero-stat"><div class="hero-num">${n0(prfCount+vipCount)}</div><div class="hero-lbl">🏪 Total Shops in Network — PRF + VIP</div><div class="hero-sub">${n0(prfCount)} PRF · ${n0(vipCount)} VIP</div></div></div></div>
      <div class="metrics-section"><div class="metrics-section-title" style="display:flex;align-items:center;justify-content:space-between">Activity ${periodSel}</div><div class="metrics-grid">${activityCards}</div></div>
      <div class="metrics-section"><div class="metrics-section-title">PRF Movement — Recent Status Changes</div><table class="status-table"><thead><tr><th>Facility</th><th>Change</th><th>By</th><th>When</th></tr></thead><tbody>${moveRows}</tbody></table></div>
      <div class="metrics-section"><div class="metrics-section-title">Network Overview</div><div class="metrics-grid">${netCards}</div></div>
