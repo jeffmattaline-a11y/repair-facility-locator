@@ -1,5 +1,6 @@
 // srn-daily-report.js
-// Queries Supabase for facilities added in the last 24 hours and sends a formatted email report.
+// Runs ~9:15 AM Central. Queries Supabase for activity in the last 24 hours (i.e. since the
+// previous morning's report, covering the overnight sync) and sends a formatted email report.
 
 import fetch from 'node-fetch';
 import nodemailer from 'nodemailer';
@@ -12,45 +13,34 @@ const {
   REPORT_RECIPIENT,
 } = process.env;
 
+const ADMIN_URL = 'https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html';
+const HEADERS = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  'Content-Type': 'application/json',
+};
+const sinceIso = () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
 // ---------------------------------------------------------------------------
-// 1. Query Supabase for new facilities in the last 24 hours
+// 1. New facilities in the last 24 hours
 // ---------------------------------------------------------------------------
 async function fetchNewFacilities() {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/facilities?added_at=gte.${since}&select=id,name,city,state,zip,phone,status,source_method,added_at,added_by&order=added_at.desc`;
-
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Supabase query failed: ${res.status} ${await res.text()}`);
-  }
-
+  const url = `${SUPABASE_URL}/rest/v1/facilities?added_at=gte.${sinceIso()}&select=id,name,city,state,zip,phone,status,source_method,added_at,added_by&order=added_at.desc`;
+  const res = await fetch(url, { headers: HEADERS });
+  if (!res.ok) throw new Error(`Supabase query failed: ${res.status} ${await res.text()}`);
   return res.json();
 }
 
 // ---------------------------------------------------------------------------
-// 2. Query Supabase for network-wide status snapshot (aggregated)
+// 2. Network-wide status snapshot (paginated)
 // ---------------------------------------------------------------------------
 async function fetchStatusSnapshot() {
-  // Fetch only status + source_method, paginated to avoid timeout
   const PAGE = 1000;
   let from = 0, all = [], done = false;
   while (!done) {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/facilities?select=status,source_method&limit=${PAGE}&offset=${from}`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: HEADERS }
     );
     if (!res.ok) return [];
     const batch = await res.json();
@@ -62,46 +52,53 @@ async function fetchStatusSnapshot() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Query open (unaddressed) messages count
+// 3. Open (unaddressed) messages count
 // ---------------------------------------------------------------------------
 async function fetchOpenMessagesCount() {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/facility_messages?is_addressed=eq.false&select=id`,
-    {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'count=exact',
-        'Range': '0-0',
-      },
-    }
+    { headers: { ...HEADERS, Prefer: 'count=exact', Range: '0-0' } }
   );
   if (!res.ok) return 0;
-  const range = res.headers.get('content-range');
-  return parseInt(range?.split('/')[1] || '0', 10);
+  return parseInt(res.headers.get('content-range')?.split('/')[1] || '0', 10);
 }
 
 // ---------------------------------------------------------------------------
-// 3b. Query rep reports received in the last 24 hours
+// 3b. Rep reports received in the last 24 hours
 // ---------------------------------------------------------------------------
 async function fetchRepReportsCount() {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/facility_messages?source=eq.rep_report&received_at=gte.${since}&select=id`,
-    {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'count=exact',
-        'Range': '0-0',
-      },
-    }
+    `${SUPABASE_URL}/rest/v1/facility_messages?source=eq.rep_report&received_at=gte.${sinceIso()}&select=id`,
+    { headers: { ...HEADERS, Prefer: 'count=exact', Range: '0-0' } }
   );
   if (!res.ok) return 0;
-  const range = res.headers.get('content-range');
-  return parseInt(range?.split('/')[1] || '0', 10);
+  return parseInt(res.headers.get('content-range')?.split('/')[1] || '0', 10);
+}
+
+// ---------------------------------------------------------------------------
+// 3c. Facilities Google reports as permanently closed
+//     newlyDetected = detected in last 24h (not dismissed); totalFlagged = all not dismissed
+// ---------------------------------------------------------------------------
+async function fetchClosedOnGoogle() {
+  const PAGE = 1000;
+  let from = 0, all = [], done = false;
+  while (!done) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/facilities?google_business_status=eq.CLOSED_PERMANENTLY&select=id,google_closed_detected_at,google_closed_dismissed_at&limit=${PAGE}&offset=${from}`,
+      { headers: HEADERS }
+    );
+    if (!res.ok) return { newlyDetected: 0, totalFlagged: 0 };
+    const batch = await res.json();
+    all = all.concat(batch);
+    if (batch.length < PAGE) done = true;
+    else from += PAGE;
+  }
+  const open = all.filter(f => !f.google_closed_dismissed_at);
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const newlyDetected = open.filter(
+    f => f.google_closed_detected_at && new Date(f.google_closed_detected_at).getTime() >= cutoff
+  ).length;
+  return { newlyDetected, totalFlagged: open.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +118,7 @@ function sourceChip(method) {
 // ---------------------------------------------------------------------------
 // 5. Build the HTML email body
 // ---------------------------------------------------------------------------
-function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
+function buildEmailHtml(facilities, snapshot, openMessages, repReports, closed) {
   const reportDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     timeZone: 'America/Chicago',
@@ -266,7 +263,7 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
             <span style="font-size:22px;">💬</span>
             <div>
               <div style="font-size:14px;font-weight:700;color:#6b21a8;">${openMessages} Open Message${openMessages === 1 ? '' : 's'} Awaiting Response</div>
-              <div style="font-size:12px;color:#7e22ce;margin-top:2px;">Facilities have unaddressed contact form messages. <a href="https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html" style="color:#7e22ce;font-weight:600;">Open Admin Tool →</a></div>
+              <div style="font-size:12px;color:#7e22ce;margin-top:2px;">Facilities have unaddressed contact form messages. <a href="${ADMIN_URL}" style="color:#7e22ce;font-weight:600;">Open Admin Tool →</a></div>
             </div>
           </div>
         </td>
@@ -279,9 +276,20 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
           <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;">
             <span style="font-size:22px;">🔧</span>
             <div>
-              <div style="font-size:14px;font-weight:700;color:#c2410c;">${repReports} Rep Report${repReports === 1 ? '' : 's'} Submitted Today</div>
-              <div style="font-size:12px;color:#ea580c;margin-top:2px;">Field reps submitted facility issue reports in the last 24 hours. <a href="https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html" style="color:#ea580c;font-weight:600;">Review in Admin Tool →</a></div>
+              <div style="font-size:14px;font-weight:700;color:#c2410c;">${repReports} Rep Report${repReports === 1 ? '' : 's'} Submitted in the Last 24 Hours</div>
+              <div style="font-size:12px;color:#ea580c;margin-top:2px;">Field reps submitted facility issue reports since yesterday's report. <a href="${ADMIN_URL}" style="color:#ea580c;font-weight:600;">Review in Admin Tool →</a></div>
             </div>
+          </div>
+        </td>
+      </tr>` : '';
+
+  const closedBanner = closed.totalFlagged > 0 ? `
+      <!-- Closed on Google -->
+      <tr>
+        <td style="padding:16px 32px 8px;">
+          <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 18px;">
+            <div style="font-size:13px;font-weight:700;color:#991b1b;letter-spacing:1px;text-transform:uppercase;">🚫 Reported Permanently Closed on Google</div>
+            <div style="font-size:12px;color:#991b1b;margin-top:6px;line-height:1.5;"><strong>${closed.newlyDetected}</strong> newly detected since the last report. <strong>${closed.totalFlagged}</strong> total currently flagged (not dismissed). Use the “Closed on Google” filter in the <a href="${ADMIN_URL}" style="color:#991b1b;font-weight:600;">admin tool</a> to review.</div>
           </div>
         </td>
       </tr>` : '';
@@ -320,7 +328,7 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
       <!-- Source Breakdown Banner -->
       <tr>
         <td style="padding:16px 32px 4px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">New Today by Source</div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">New in Last 24 Hours by Source</div>
           <div>${sourceChips}</div>
         </td>
       </tr>
@@ -341,6 +349,8 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
           </table>
         </td>
       </tr>` : ''}
+
+      ${closedBanner}
 
       ${snapshotRows ? `
       <!-- Network Snapshot -->
@@ -383,7 +393,7 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
       <!-- Footer -->
       <tr>
         <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;text-align:center;">
-          <a href="https://jeffmattaline-a11y.github.io/repair-facility-locator/srn_admin.html"
+          <a href="${ADMIN_URL}"
              style="color:#225981;font-size:13px;text-decoration:none;font-weight:600;">Open SRN Admin Tool →</a>
           <div style="font-size:11px;color:#9ca3af;margin-top:6px;">
             Shield Repair Network · American Auto Shield · Automated daily report — do not reply
@@ -401,14 +411,12 @@ function buildEmailHtml(facilities, snapshot, openMessages, repReports) {
 
 // ---------------------------------------------------------------------------
 // 6. Send the email via Gmail SMTP (App Password)
+//    REPORT_RECIPIENT may be a comma-separated list of addresses.
 // ---------------------------------------------------------------------------
 async function sendEmail(subject, html) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
-    auth: {
-      user: GMAIL_USER,
-      pass: GMAIL_APP_PASSWORD,
-    },
+    auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
   });
 
   const info = await transporter.sendMail({
@@ -440,7 +448,11 @@ async function sendEmail(subject, html) {
 
     console.log('🔧 Fetching rep reports (last 24h)...');
     const repReports = await fetchRepReportsCount();
-    console.log(`Rep reports today: ${repReports}`);
+    console.log(`Rep reports (24h): ${repReports}`);
+
+    console.log('🚫 Fetching Closed-on-Google flags...');
+    const closed = await fetchClosedOnGoogle();
+    console.log(`Closed on Google: ${closed.newlyDetected} new, ${closed.totalFlagged} total flagged`);
 
     const total = facilities.length;
     const dateStr = new Date().toLocaleDateString('en-US', {
@@ -460,12 +472,13 @@ async function sendEmail(subject, html) {
 
     const msgAlert = openMessages > 0 ? ` · 💬 ${openMessages} Open` : '';
     const repAlert = repReports > 0 ? ` · 🔧 ${repReports} Rep Report${repReports === 1 ? '' : 's'}` : '';
+    const closedAlert = closed.newlyDetected > 0 ? ` · 🚫 ${closed.newlyDetected} Closed on Google` : '';
 
     const subject = total === 0
-      ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}${repAlert}`
-      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}${repAlert}`;
+      ? `SRN Daily Report — No New Facilities (${dateStr})${msgAlert}${repAlert}${closedAlert}`
+      : `SRN Daily Report — ${total} New Facilit${total === 1 ? 'y' : 'ies'} Added (${dateStr})${srcParts ? ' · ' + srcParts : ''}${msgAlert}${repAlert}${closedAlert}`;
 
-    const html = buildEmailHtml(facilities, snapshot, openMessages, repReports);
+    const html = buildEmailHtml(facilities, snapshot, openMessages, repReports, closed);
 
     console.log('📧 Sending email...');
     await sendEmail(subject, html);
