@@ -2,31 +2,54 @@ name: SRN Daily Facilities Report
 
 on:
   schedule:
-    # Runs every day at 8:00 AM Central Time (13:00 UTC)
-    - cron: '0 13 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI for testing
+    # GitHub cron is UTC-only and ignores daylight saving. Both times are listed;
+    # the "Check Central time" step below lets only the one that lands on 9 AM Central run.
+    - cron: '15 14 * * *'   # 9:15 AM CDT (summer)
+    - cron: '15 15 * * *'   # 9:15 AM CST (winter)
+  workflow_dispatch: # Manual trigger from the GitHub UI (always runs)
+
+# Least privilege: this job only needs to read the repo
+permissions:
+  contents: read
 
 jobs:
   send-report:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Central time
+        id: gate
+        run: |
+          HOUR=$(TZ=America/Chicago date +%H)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$HOUR" = "09" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Central hour is $HOUR, not 09 - skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: steps.gate.outputs.run == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        if: steps.gate.outputs.run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
         run: npm install node-fetch@3 nodemailer@6
 
       - name: Run daily report script
+        if: steps.gate.outputs.run == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          REPORT_RECIPIENT: Jeff.Mattaline@carshield.com
+          # Recipient list now lives in a GitHub secret (repo is public).
+          # Value = comma-separated addresses, e.g. a@x.com, b@x.com
+          REPORT_RECIPIENT: ${{ secrets.REPORT_RECIPIENT }}
         run: node scripts/srn-daily-report.js
