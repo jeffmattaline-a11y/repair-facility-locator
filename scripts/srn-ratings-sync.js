@@ -50,7 +50,7 @@
  *
  * Env vars required (GitHub Actions secrets):
  *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
- *   SUPABASE_ANON_KEY     – anon key with UPDATE policy on facilities
+ *   SUPABASE_SERVICE_KEY  – private service-role key (anon can no longer write to facilities)
  *   GOOGLE_GEOCODING_KEY  – unrestricted server-side key with Places API enabled
  *
  * Schedule: runs via .github/workflows/srn-ratings-sync.yml
@@ -58,7 +58,7 @@
  */
 
 const SUPABASE_URL        = process.env.SUPABASE_URL;
-const SUPABASE_KEY        = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_KEY        = process.env.SUPABASE_SERVICE_KEY;
 const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
 const BATCH_SIZE          = parseInt(process.env.BATCH_SIZE, 10) || 500;  // ~500 calls/night keeps monthly well under budget
@@ -216,7 +216,7 @@ async function main() {
   console.log(`Started: ${new Date().toISOString()}\n`);
 
   if (!SUPABASE_URL || !SUPABASE_KEY || !GOOGLE_KEY) {
-    console.error('❌ Missing required env vars. Check SUPABASE_URL, SUPABASE_ANON_KEY, GOOGLE_GEOCODING_KEY.');
+    console.error('❌ Missing required env vars. Check SUPABASE_URL, SUPABASE_SERVICE_KEY, GOOGLE_GEOCODING_KEY.');
     process.exit(1);
   }
 
