@@ -1269,7 +1269,7 @@ async function doSearch() {
 }
 
 async function fetchFacilities() {
-  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,time_zone,google_business_status,notes,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp';
+  const select = 'id,name,address,city,state,zip,phone,lat,lng,status,hours_of_operation,time_zone,google_business_status,google_rating,google_review_count,accepts_shipped,added_at,pilot_ocp';
   let all = [], offset = 0, limit = 1000;
 
   // Fetch PRF facilities
