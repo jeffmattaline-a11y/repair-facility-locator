@@ -1145,8 +1145,9 @@
 // ── CONFIG ────────────────────────────────────────────────
 const SUPABASE_URL       = 'https://amfawopeshfzuxusruyq.supabase.co';
 const SUPABASE_KEY       = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtZmF3b3Blc2hmenV4dXNydXlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzI4NjMsImV4cCI6MjA5MDEwODg2M30.7G3rRdmzzMqKjUAJ33NfWxGPW_zDRpkeZIgDszzFWW8';
-const GOOGLE_MAPS_KEY    = 'AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0'; // Maps JS + Street View (HTTP referrer restricted)
-const GOOGLE_GEOCODING_KEY = 'AIzaSyA_dZ6DHViMGA72WUqsX0jj_I9F9iXan4k'; // Geocoding only (unrestricted)
+const GOOGLE_MAPS_KEY    = 'AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0'; // Maps JS + Geocoder + Street View (HTTP referrer restricted — safe to be public)
+// NOTE: the unrestricted server-side key must NEVER appear in this file (public repo).
+// Search geocoding now uses google.maps.Geocoder (Maps JS API) with the referrer-restricted key above.
 
 // ── STATE ─────────────────────────────────────────────────
 let allResults = [];
@@ -1208,6 +1209,22 @@ function initMap() {
 }
 
 // ── SEARCH ────────────────────────────────────────────────
+// Browser-side geocoding via the Maps JS Geocoder (covered by the referrer-restricted key).
+// Returns the same shape the old REST call did: { results: [{ geometry: { location: {lat,lng} } }] }
+function geocodeQuery(query) {
+  return new Promise((resolve) => {
+    if (!window.google || !google.maps || !google.maps.Geocoder) { resolve({ results: [], status: 'MAPS_NOT_LOADED' }); return; }
+    new google.maps.Geocoder().geocode({ address: query, region: 'us' }, (results, status) => {
+      if (status === 'OK' && results && results.length) {
+        const l = results[0].geometry.location;
+        resolve({ results: [{ geometry: { location: { lat: l.lat(), lng: l.lng() } } }], status });
+      } else {
+        resolve({ results: [], status });
+      }
+    });
+  });
+}
+
 async function doSearch() {
   const query = document.getElementById('searchInput').value.trim();
   const radius = parseInt(document.getElementById('radiusSelect').value);
@@ -1218,10 +1235,7 @@ async function doSearch() {
 
   try {
     // Geocode the search query
-    const geoResp = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_GEOCODING_KEY}`
-    );
-    const geoData = await geoResp.json();
+    const geoData = await geocodeQuery(query);
     if (!geoData.results?.length) { showEmpty('Location not found', 'Try a different ZIP code or city.'); return; }
 
     const loc = geoData.results[0].geometry.location;
@@ -2097,9 +2111,9 @@ document.getElementById('reportModal').addEventListener('click', e => {
 });
 </script>
 
-<!-- Google Maps JS (replace YOUR_KEY with your actual key) -->
+<!-- Google Maps JS (referrer-restricted key; geocoding library needed for search) -->
 <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0&callback=initMap">
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDwoSc3gzSDgAo7KWdZ2C_9ydYg17C9aN0&libraries=geocoding&callback=initMap">
 </script>
 
 </body>
