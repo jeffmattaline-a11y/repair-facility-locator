@@ -1,7 +1,7 @@
 const https = require('https');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY; // private service-role key (anon can no longer write to facilities)
 const GOOGLE_API_KEY = process.env.GOOGLE_GEOCODING_KEY;
 
 function supabaseFetch(path, method = 'GET', body = null) {
@@ -12,8 +12,8 @@ function supabaseFetch(path, method = 'GET', body = null) {
       path: url.pathname + url.search,
       method,
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
       }
