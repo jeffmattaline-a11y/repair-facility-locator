@@ -1,37 +1,398 @@
-name: SRN Nightly Ratings Sync
+/**
+ * SRN Google Ratings Sync
+ * ─────────────────────────────────────────────────────────────
+ * Nightly GitHub Actions script. For each PRF facility:
+ *   1. Finds its Google Place ID (via Text Search if not cached)
+ *   2. Fetches current rating + review count (Places API New)
+ *   3. Patches the Supabase record
+ *
+ * Cost optimizations vs. prior version:
+ *   - getPlaceDetails() migrated to Places API (New) with strict
+ *     field mask (places.rating, places.userRatingCount only).
+ *     This eliminates the "Atmosphere Data" SKU (~$300/mo) and
+ *     keeps Place Details in the free Basic Data tier.
+ *   - STALE_DAYS increased 5 → 30 (ratings don't change daily)
+ *   - BATCH_SIZE reduced 4000 → 500 (safety cap, ~500 calls/night)
+ *
+ * Bug fix (2026-08-27): getPlaceDetails() previously returned `null`
+ * for BOTH an API error (e.g. 403) and a successful call with no
+ * rating data. The caller treated both cases identically and stamped
+ * ratings_updated_at either way — meaning a failing API call would
+ * get marked "checked" and silently skipped for STALE_DAYS. Now
+ * getPlaceDetails() returns a `success` flag so failed calls are
+ * NOT stamped and will be retried on the next run.
+ *
+ * Update (2026-11): the same Place Details call now also returns
+ * businessStatus, websiteUri and googleMapsUri, stored in:
+ *   google_business_status   OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+ *   google_website           website listed on the shop's Google profile
+ *   google_maps_url          link to the Google Maps listing
+ *   google_status_checked_at when the shop was last checked (drives staleness)
+ *   google_closed_detected_at when CLOSED_PERMANENTLY was first seen
+ *   google_closed_dismissed_at set by an admin (false alarm); cleared if Google
+ *                              stops reporting the shop closed
+ * No extra API call per shop — only a wider field mask.
+ *
+ * Update (2026-11, hours): the same call also returns regularOpeningHours
+ * and timeZone, stored in:
+ *   hours_of_operation  JSONB  {"Monday":"8:00 AM – 5:00 PM", ..., "Sunday":"Closed"}
+ *   time_zone           text   IANA zone, e.g. America/Chicago (map uses it so
+ *                              Open/Closed is judged in the SHOP's local time)
+ *   hours_updated_at    timestamptz  last time hours were checked (stamped on
+ *                              every successful call, even if Google lists no hours)
+ * regularOpeningHours is the same Place Details "Enterprise" SKU as rating, and
+ * timeZone is a cheaper "Pro" field, so this adds NO cost per call.
+ * Hours are only overwritten when Google returns a complete 7-day list — a
+ * thin/failed response never wipes good data.
+ * VIP shops are now included alongside PRF (the rep map shows both).
+ * BATCH_SIZE can be overridden with the BATCH_SIZE env var (used by the
+ * manual "Run workflow" box in GitHub Actions for small test runs).
+ *
+ * Env vars required (GitHub Actions secrets):
+ *   SUPABASE_URL          – https://amfawopeshfzuxusruyq.supabase.co
+ *   SUPABASE_SERVICE_KEY  – private service-role key (anon can no longer write to facilities)
+ *   GOOGLE_GEOCODING_KEY  – unrestricted server-side key with Places API enabled
+ *
+ * Schedule: runs via .github/workflows/srn-ratings-sync.yml
+ * ─────────────────────────────────────────────────────────────
+ */
 
-on:
-  schedule:
-    # Runs at 2:00 AM Central (8:00 UTC) — before the daily report at 8am Central
-    - cron: '0 8 * * *'
-  workflow_dispatch:  # Allow manual trigger from GitHub Actions UI
-    inputs:
-      batch_size:
-        description: 'How many shops to process (leave blank for the normal 500)'
-        required: false
-        default: ''
+const SUPABASE_URL        = process.env.SUPABASE_URL;
+const SUPABASE_KEY        = process.env.SUPABASE_SERVICE_KEY;
+const GOOGLE_KEY          = process.env.GOOGLE_GEOCODING_KEY;
 
-# Least privilege: this job only needs to read the repo
-permissions:
-  contents: read
+const BATCH_SIZE          = parseInt(process.env.BATCH_SIZE, 10) || 500;  // ~500 calls/night keeps monthly well under budget
+const STALE_DAYS          = 30;   // Re-fetch once per month (ratings are stable)
+const DELAY_MS            = 100;  // Polite delay between API calls (ms)
 
-jobs:
-  sync-ratings:
-    runs-on: ubuntu-latest
+// ─── Helpers ───────────────────────────────────────────────────
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+async function supabaseGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+    },
+  });
+  if (!res.ok) throw new Error(`Supabase GET failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
 
-      - name: Run Ratings Sync
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_GEOCODING_KEY }}
-          BATCH_SIZE: ${{ github.event.inputs.batch_size }}
-        run: node scripts/srn-ratings-sync.js
+async function supabasePatch(table, id, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Supabase PATCH failed for ${id}: ${res.status} ${text}`);
+  let rows = [];
+  try { rows = JSON.parse(text); } catch(e) {}
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error(`PATCH matched 0 rows for id=${id} — check RLS policies or id format`);
+  }
+}
+
+// ─── Google Places helpers ──────────────────────────────────────
+
+/**
+ * Text Search: find a Place ID by facility name + address
+ * Returns place_id string or null
+ */
+async function findPlaceId(facility) {
+  const query = encodeURIComponent(
+    `${facility.name} ${facility.address || ''} ${facility.city || ''} ${facility.state || ''}`
+  );
+  const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json` +
+    `?input=${query}&inputtype=textquery&fields=place_id,name&key=${GOOGLE_KEY}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data.status === 'OK' && data.candidates && data.candidates.length > 0) {
+    return data.candidates[0].place_id;
+  }
+
+  // Fallback: Text Search (broader)
+  if (data.status !== 'OK') {
+    const tsUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json` +
+      `?query=${query}&key=${GOOGLE_KEY}`;
+    const tsRes = await fetch(tsUrl);
+    const tsData = await tsRes.json();
+    if (tsData.status === 'OK' && tsData.results && tsData.results.length > 0) {
+      return tsData.results[0].place_id;
+    }
+  }
+
+  return null;
+}
+
+const DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+/**
+ * Google's regularOpeningHours.weekdayDescriptions looks like:
+ *   ["Monday: 8:00 AM – 5:00 PM", "Tuesday: Closed", "Wednesday: Open 24 hours", ...]
+ * (with odd non-breaking spaces before AM/PM). Convert to the object the map reads:
+ *   {"Monday":"8:00 AM – 5:00 PM","Tuesday":"Closed",...}
+ * Returns null unless all 7 days are present, so partial data never overwrites good data.
+ */
+function formatHours(regularOpeningHours) {
+  const lines = regularOpeningHours && regularOpeningHours.weekdayDescriptions;
+  if (!Array.isArray(lines)) return null;
+
+  const out = {};
+  for (const line of lines) {
+    const m = /^\s*([A-Za-z]+)\s*:\s*(.+)$/.exec(String(line));
+    if (!m) continue;
+    const day = DAY_NAMES.find(d => d.toLowerCase().startsWith(m[1].toLowerCase().slice(0, 3)));
+    if (!day) continue;
+    out[day] = m[2].replace(/[\u202f\u2009\u00a0\u2007]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  return DAY_NAMES.every(d => out[d]) ? out : null;
+}
+
+/**
+ * Place Details (New): fetch rating + review count for a known place_id.
+ *
+ * Returns { success: true, rating, review_count } if the API call
+ * succeeded (rating/review_count may still legitimately be null if
+ * Google has no rating for this place).
+ *
+ * Returns { success: false } if the API call itself failed (network
+ * error, 403, 404, etc.) — the caller should NOT treat this the same
+ * as "no rating exists" and should NOT stamp ratings_updated_at.
+ */
+async function getPlaceDetails(placeId) {
+  const url = `https://places.googleapis.com/v1/places/${placeId}?languageCode=en`;
+
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: {
+        'X-Goog-Api-Key':   GOOGLE_KEY,
+        'X-Goog-FieldMask': 'rating,userRatingCount,businessStatus,websiteUri,googleMapsUri,regularOpeningHours,timeZone',
+      },
+    });
+  } catch (err) {
+    console.warn(`  ⚠️  Places API (New) network error for ${placeId}: ${err.message}`);
+    return { success: false };
+  }
+
+  if (!res.ok) {
+    console.warn(`  ⚠️  Places API (New) error for ${placeId}: ${res.status}`);
+    // 404 = Google no longer recognises this Place ID (retired/changed). Flag it so the
+    // caller can look up a fresh ID instead of retrying the dead one forever.
+    return { success: false, notFound: res.status === 404 };
+  }
+
+  const data = await res.json();
+
+  // Places API (New) returns a top-level object, not data.result
+  return {
+    success:         true,
+    rating:          data.rating          ?? null,
+    review_count:    data.userRatingCount ?? null,
+    business_status: data.businessStatus  ?? null,
+    website:         data.websiteUri      ?? null,
+    maps_url:        data.googleMapsUri   ?? null,
+    hours:           formatHours(data.regularOpeningHours),
+    time_zone:       (data.timeZone && data.timeZone.id) || null,
+  };
+}
+
+// ─── Main ───────────────────────────────────────────────────────
+
+async function main() {
+  console.log('━━━ SRN Google Ratings Sync ━━━');
+  console.log(`Started: ${new Date().toISOString()}\n`);
+
+  if (!SUPABASE_URL || !SUPABASE_KEY || !GOOGLE_KEY) {
+    console.error('❌ Missing required env vars. Check SUPABASE_URL, SUPABASE_SERVICE_KEY, GOOGLE_GEOCODING_KEY.');
+    process.exit(1);
+  }
+
+  const staleThreshold = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  let facilities = [];
+  let offset = 0;
+
+  console.log('Fetching PRF + VIP facilities needing a Google sync...');
+
+  while (true) {
+    const batch = await supabaseGet(
+      `facilities?select=id,name,address,city,state,zip,phone,google_place_id,ratings_updated_at,` +
+      `google_business_status,google_closed_detected_at` +
+      `&status=in.(PRF,VIP)` +
+      `&or=(google_status_checked_at.is.null,google_status_checked_at.lt.${staleThreshold})` +
+      `&order=google_status_checked_at.asc.nullsfirst` +
+      `&limit=1000&offset=${offset}`
+    );
+
+    if (!batch || batch.length === 0) break;
+    facilities = facilities.concat(batch);
+    offset += 1000;
+    if (batch.length < 1000) break;
+  }
+
+  console.log(`Found ${facilities.length} facilities needing rating sync.\n`);
+
+  if (facilities.length === 0) {
+    console.log('✅ All ratings are current. Nothing to do.');
+    return;
+  }
+
+  const toProcess = facilities.slice(0, BATCH_SIZE);
+  console.log(`Processing ${toProcess.length} facilities this run (batch limit: ${BATCH_SIZE})...\n`);
+
+  let updated   = 0;
+  let noPlaceId = 0;
+  let noRating  = 0;
+  let errors    = 0;
+  let closedNew = 0;
+  let hoursSaved = 0;
+  let noHours   = 0;
+
+  for (const facility of toProcess) {
+    try {
+      let placeId = facility.google_place_id;
+
+      if (!placeId) {
+        await sleep(DELAY_MS);
+        placeId = await findPlaceId(facility);
+
+        if (!placeId) {
+          console.log(`  ⚠️  No Place ID found: ${facility.name} (${facility.city}, ${facility.state})`);
+          await supabasePatch('facilities', facility.id, {
+            ratings_updated_at:       new Date().toISOString(),
+            google_status_checked_at: new Date().toISOString(),
+          });
+          noPlaceId++;
+          continue;
+        }
+
+        console.log(`  🔍 Found Place ID for ${facility.name}: ${placeId}`);
+      }
+
+      await sleep(DELAY_MS);
+      let details = await getPlaceDetails(placeId);
+
+      // Stale Place ID (404): re-find it by name + address and retry once.
+      // If Google can't find the shop at all, clear the dead ID and stamp it as checked
+      // so it stops sitting at the front of the queue every night.
+      if (!details.success && details.notFound) {
+        console.log(`  🔄 Place ID no longer valid, re-searching: ${facility.name}`);
+        await sleep(DELAY_MS);
+        const freshId = await findPlaceId(facility);
+        if (!freshId) {
+          const stamp = new Date().toISOString();
+          await supabasePatch('facilities', facility.id, {
+            google_place_id:          null,
+            ratings_updated_at:       stamp,
+            google_status_checked_at: stamp,
+          });
+          console.log(`  ⚠️  Cleared dead Place ID, nothing found on Google: ${facility.name}`);
+          noPlaceId++;
+          continue;
+        }
+        if (freshId !== placeId) {
+          placeId = freshId;
+          console.log(`  🔍 New Place ID for ${facility.name}: ${placeId}`);
+          await sleep(DELAY_MS);
+          details = await getPlaceDetails(placeId);
+        }
+      }
+
+      if (!details.success) {
+        // API call itself failed — do NOT stamp ratings_updated_at,
+        // so this facility stays "stale" and gets retried next run.
+        console.log(`  ❌ API call failed, will retry next run: ${facility.name}`);
+        errors++;
+        continue;
+      }
+
+      const now = new Date().toISOString();
+
+      // Fields every successful call writes (status + website + checked stamp)
+      const patch = {
+        google_place_id:          placeId,
+        ratings_updated_at:       now,
+        google_status_checked_at: now,
+        google_business_status:   details.business_status,
+        google_website:           details.website,
+        google_maps_url:          details.maps_url,
+        hours_updated_at:         now,   // "hours were checked" (even if Google lists none)
+      };
+
+      // Hours + time zone: only written when Google actually returned them
+      if (details.hours) patch.hours_of_operation = details.hours;
+      if (details.time_zone) patch.time_zone = details.time_zone;
+
+      // Closed-flag bookkeeping
+      const wasClosed = facility.google_business_status === 'CLOSED_PERMANENTLY';
+      const isClosed  = details.business_status === 'CLOSED_PERMANENTLY';
+      if (isClosed && !wasClosed) {
+        patch.google_closed_detected_at  = now;   // first time we've seen it
+        patch.google_closed_dismissed_at = null;  // any old dismissal no longer applies
+        closedNew++;
+        console.log(`  🚫 PERMANENTLY CLOSED on Google: ${facility.name} (${facility.city}, ${facility.state})`);
+      } else if (!isClosed && wasClosed) {
+        patch.google_closed_detected_at  = null;  // Google no longer reports it closed
+        patch.google_closed_dismissed_at = null;
+        console.log(`  ♻️  No longer reported closed: ${facility.name}`);
+      }
+
+      if (details.rating === null && details.review_count === null) {
+        // Call succeeded, Google genuinely has no rating for this place.
+        console.log(`  ⚠️  No rating data: ${facility.name}`);
+        await supabasePatch('facilities', facility.id, patch);
+        if (details.hours) hoursSaved++; else noHours++;
+        noRating++;
+        continue;
+      }
+
+      patch.google_rating       = details.rating;
+      patch.google_review_count = details.review_count;
+      await supabasePatch('facilities', facility.id, patch);
+      if (details.hours) hoursSaved++; else noHours++;
+
+      console.log(
+        `  ✅ ${facility.name} (${facility.city}, ${facility.state})` +
+        ` → ⭐ ${details.rating} (${details.review_count?.toLocaleString()} reviews)`
+      );
+      updated++;
+
+    } catch (err) {
+      console.error(`  ❌ Error processing ${facility.name}: ${err.message}`);
+      errors++;
+    }
+  }
+
+  console.log('\n━━━ Sync Summary ━━━');
+  console.log(`  ✅ Updated:         ${updated}`);
+  console.log(`  ⚠️  No Place ID:    ${noPlaceId}`);
+  console.log(`  ⚠️  No Rating Data: ${noRating}`);
+  console.log(`  🕒 Hours saved:     ${hoursSaved}`);
+  console.log(`  ⚠️  No hours on Google: ${noHours}`);
+  console.log(`  🚫 Newly closed:    ${closedNew}`);
+  console.log(`  ❌ Errors:          ${errors}`);
+  console.log(`  📋 Remaining:       ${Math.max(0, facilities.length - BATCH_SIZE)}`);
+  console.log(`\nCompleted: ${new Date().toISOString()}`);
+
+  if (facilities.length > BATCH_SIZE) {
+    console.log(`\nℹ️  ${facilities.length - BATCH_SIZE} facilities remain — will continue in nightly runs.`);
+  }
+}
+
+main().catch(err => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});
