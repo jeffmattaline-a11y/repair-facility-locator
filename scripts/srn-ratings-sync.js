@@ -189,7 +189,9 @@ async function getPlaceDetails(placeId) {
 
   if (!res.ok) {
     console.warn(`  ⚠️  Places API (New) error for ${placeId}: ${res.status}`);
-    return { success: false };
+    // 404 = Google no longer recognises this Place ID (retired/changed). Flag it so the
+    // caller can look up a fresh ID instead of retrying the dead one forever.
+    return { success: false, notFound: res.status === 404 };
   }
 
   const data = await res.json();
@@ -281,7 +283,33 @@ async function main() {
       }
 
       await sleep(DELAY_MS);
-      const details = await getPlaceDetails(placeId);
+      let details = await getPlaceDetails(placeId);
+
+      // Stale Place ID (404): re-find it by name + address and retry once.
+      // If Google can't find the shop at all, clear the dead ID and stamp it as checked
+      // so it stops sitting at the front of the queue every night.
+      if (!details.success && details.notFound) {
+        console.log(`  🔄 Place ID no longer valid, re-searching: ${facility.name}`);
+        await sleep(DELAY_MS);
+        const freshId = await findPlaceId(facility);
+        if (!freshId) {
+          const stamp = new Date().toISOString();
+          await supabasePatch('facilities', facility.id, {
+            google_place_id:          null,
+            ratings_updated_at:       stamp,
+            google_status_checked_at: stamp,
+          });
+          console.log(`  ⚠️  Cleared dead Place ID, nothing found on Google: ${facility.name}`);
+          noPlaceId++;
+          continue;
+        }
+        if (freshId !== placeId) {
+          placeId = freshId;
+          console.log(`  🔍 New Place ID for ${facility.name}: ${placeId}`);
+          await sleep(DELAY_MS);
+          details = await getPlaceDetails(placeId);
+        }
+      }
 
       if (!details.success) {
         // API call itself failed — do NOT stamp ratings_updated_at,
