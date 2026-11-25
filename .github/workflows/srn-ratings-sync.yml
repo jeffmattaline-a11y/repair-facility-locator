@@ -31,7 +31,7 @@ jobs:
       - name: Run Ratings Sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GOOGLE_GEOCODING_KEY: ${{ secrets.GOOGLE_GEOCODING_KEY }}
           BATCH_SIZE: ${{ github.event.inputs.batch_size }}
         run: node scripts/srn-ratings-sync.js
